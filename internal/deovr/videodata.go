@@ -110,10 +110,35 @@ func set3DFormat(s gql.FullSceneParts, videoData *VideoData) {
 		case "DOME":
 			videoData.Is3d = true
 			videoData.ScreenType = "dome"
+			videoData.StereoMode = "sbs"
+			continue
+		case "SPHERE":
+			videoData.Is3d = true
+			videoData.ScreenType = "sphere"
+			videoData.StereoMode = "sbs"
+			continue
+		case "FISHEYE":
+			videoData.Is3d = true
+			videoData.ScreenType = "fisheye"
+			videoData.StereoMode = "sbs"
+			continue
+		case "MKX200":
+			videoData.Is3d = true
+			videoData.ScreenType = "mkx200"
+			videoData.StereoMode = "sbs"
+			continue
+		case "RF52":
+			videoData.Is3d = true
+			videoData.ScreenType = "rf52"
+			videoData.StereoMode = "sbs"
 			continue
 		case "SBS":
 			videoData.Is3d = true
 			videoData.StereoMode = "sbs"
+			continue
+		case "TB":
+			videoData.Is3d = true
+			videoData.StereoMode = "tb"
 			continue
 		}
 	}

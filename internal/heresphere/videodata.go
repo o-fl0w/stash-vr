@@ -23,6 +23,8 @@ type VideoData struct {
 	Tags           []Tag    `json:"tags"`
 	Projection     string   `json:"projection"`
 	Stereo         string   `json:"stereo"`
+	Lens           string   `json:"lens"`
+	Fov            float32  `json:"fov"`
 	Scripts        []Script `json:"scripts"`
 }
 
@@ -143,9 +145,38 @@ func set3DFormat(s gql.FullSceneParts, videoData *VideoData) {
 		switch tag.Name {
 		case "DOME":
 			videoData.Projection = "equirectangular"
+			videoData.Stereo = "sbs"
 			continue
+		case "SPHERE":
+			videoData.Projection = "equirectangular360"
+			videoData.Stereo = "sbs"
+			continue
+		case "FISHEYE":
+			videoData.Projection = "fisheye"
+			videoData.Stereo = "sbs"
+			continue
+		case "MKX200":
+			videoData.Projection = "fisheye"
+			videoData.Stereo = "sbs"
+			videoData.Lens = "MKX200"
+			videoData.Fov = 200.0
+			continue
+		case "RF52":
+			videoData.Projection = "fisheye"
+			videoData.Stereo = "sbs"
+			videoData.Fov = 190.0
+			continue
+		case "CUBEMAP":
+			videoData.Projection = "cubemap"
+			videoData.Stereo = "sbs"
+		case "EAC":
+			videoData.Projection = "equiangularCubemap"
+			videoData.Stereo = "sbs"
 		case "SBS":
 			videoData.Stereo = "sbs"
+			continue
+		case "TB":
+			videoData.Stereo = "tb"
 			continue
 		}
 	}
