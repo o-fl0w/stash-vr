@@ -14,16 +14,16 @@ Both will automatically load their respective configuration files and launch the
 ## Installation
 See [docker_compose.yml](docker-compose.yml) for details.
 
-Provide the url to your stash graphql through environment variable `STASH_GRAPHQL_URL`, something like `http://<stash.host>:<9999>/graphql`.
+* `STASH_GRAPHQL_URL` Url to your stash graphql - something like `http://<stash.host>:<9999>/graphql`
+* `STASH_API_KEY` Api key to you stash if it's using authentication. 
 
 stash-vr listens on port `9666`, user docker port binding to change.
 
 ## Features
 * Show following sections in DeoVR/HereSphere:
   - All (ALL your scenes)
-  - Sections from your front page
-  - Saved searches
-
+  - Filters from your stash front page
+  - Your other saved filters
 * Provide transcoding endpoints to your videos served by stash
 
 ### HereSphere:
