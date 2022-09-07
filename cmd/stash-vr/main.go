@@ -23,11 +23,12 @@ func main() {
 }
 
 func run(cfg config.Application) error {
-	logger.Log.Info().Msg(fmt.Sprintf("%#v", cfg))
+	logger.Log.Info().Str("config", fmt.Sprintf("%#v", cfg)).Send()
 
 	r := router.Build(cfg)
 	//r := LogRouter{router.Build(cfg)}
 
+	logger.Log.Info().Str("address", listenAddress).Msg("Starting server...")
 	err := http.ListenAndServe(listenAddress, r)
 	if err != nil {
 		return fmt.Errorf("run: %w", err)
