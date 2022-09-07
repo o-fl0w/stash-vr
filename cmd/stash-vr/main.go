@@ -26,7 +26,6 @@ func run(cfg config.Application) error {
 	logger.Log.Info().Str("config", fmt.Sprintf("%#v", cfg)).Send()
 
 	r := router.Build(cfg)
-	//r := LogRouter{router.Build(cfg)}
 
 	logger.Log.Info().Str("address", listenAddress).Msg("Starting server...")
 	err := http.ListenAndServe(listenAddress, r)
@@ -35,17 +34,4 @@ func run(cfg config.Application) error {
 	}
 
 	return nil
-}
-
-type LogRouter struct {
-	h http.Handler
-}
-
-func (lr LogRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logger.Log.Debug().
-		Str("method", r.Method).
-		Str("uri", r.URL.String()).
-		Str("user-agent", r.Header.Get("User-Agent")).
-		Str("remote addr", r.RemoteAddr).Send()
-	lr.h.ServeHTTP(w, r)
 }
