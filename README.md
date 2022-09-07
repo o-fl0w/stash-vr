@@ -39,3 +39,23 @@ stash-vr listens on port `9666`, user docker port binding to change.
 
 ### DeoVR
 * Cue points from markers.
+
+## 3D
+Both DeoVR and HereSphere has algorithms to automatically detect and handle 3D videos.
+It's not foolproof and to manually configure the players with custom layout/mesh-settings you can tag your scenes in stash as follows:
+
+* Mesh:
+  - `DOME` 180° equirectangular
+  - `SPHERE` 360° equirectangular
+  - `FISHEYE` 180° fisheye
+  - `MKX200` 200° fisheye
+  - `RF52` 190° Canon fisheye
+  - `CUBEMAP` Cubemap (lacks support in DeoVR?)
+  - `EAC` Equi-Angular Cubemap (lacks support in DeoVR?)
+* Layout:
+  - `SBS` Side-by-side (Default)
+  - `TB` Top-bottom
+
+If a mesh is provided but no layout then default layout `SBS` will be used.
+
+Most common combination is DOME/SBS meaning most VR videos only need the `DOME` tag.
