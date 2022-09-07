@@ -17,7 +17,7 @@ See [docker_compose.yml](docker-compose.yml) for details.
 * `STASH_GRAPHQL_URL` Url to your stash graphql - something like `http://<stash.host>:<9999>/graphql`
 * `STASH_API_KEY` Api key to you stash if it's using authentication. 
 
-stash-vr listens on port `9666`, user docker port binding to change.
+stash-vr listens on port `9666`, use docker port binding to change.
 
 ## Features
 * Show following sections in DeoVR/HereSphere:
