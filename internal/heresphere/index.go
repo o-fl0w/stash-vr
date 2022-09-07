@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"net/http"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 )
@@ -23,18 +22,18 @@ type Library struct {
 	_savedFilterId string
 }
 
-func buildIndex(ctx context.Context, serverUrl string, baseUrl string) (Index, error) {
+func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Index, error) {
 	index := Index{Access: 1}
 
-	if err := sectionsCustom(ctx, serverUrl, baseUrl, "", &index.Library); err != nil {
+	if err := sectionsCustom(ctx, client, baseUrl, "", &index.Library); err != nil {
 		return Index{}, fmt.Errorf("sectionsCustom: %w", err)
 	}
 
-	if err := sectionsByFrontPage(ctx, serverUrl, baseUrl, "", &index.Library); err != nil {
+	if err := sectionsByFrontPage(ctx, client, baseUrl, "", &index.Library); err != nil {
 		return Index{}, fmt.Errorf("sectionsByFrontPage: %w", err)
 	}
 
-	if err := sectionsBySavedFilters(ctx, serverUrl, baseUrl, "?:", &index.Library); err != nil {
+	if err := sectionsBySavedFilters(ctx, client, baseUrl, "?:", &index.Library); err != nil {
 		return Index{}, fmt.Errorf("sectionsBySavedFilters: %w", err)
 	}
 
@@ -45,9 +44,7 @@ func buildIndex(ctx context.Context, serverUrl string, baseUrl string) (Index, e
 	return index, nil
 }
 
-func sectionsCustom(ctx context.Context, serverUrl string, baseUrl string, prefix string, destination *[]Library) error {
-	client := graphql.NewClient(serverUrl, http.DefaultClient)
-
+func sectionsCustom(ctx context.Context, client graphql.Client, baseUrl string, prefix string, destination *[]Library) error {
 	library := Library{
 		Name: fmt.Sprintf("%s%s", prefix, "All"),
 	}
@@ -64,10 +61,8 @@ func sectionsCustom(ctx context.Context, serverUrl string, baseUrl string, prefi
 	return nil
 }
 
-func sectionsByFrontPage(ctx context.Context, serverUrl string, baseUrl string, prefix string, destination *[]Library) error {
-	client := graphql.NewClient(serverUrl, http.DefaultClient)
-
-	ids, err := stash.FindFrontPageSavedFilterIds(ctx, serverUrl)
+func sectionsByFrontPage(ctx context.Context, client graphql.Client, baseUrl string, prefix string, destination *[]Library) error {
+	ids, err := stash.FindFrontPageSavedFilterIds(ctx, client)
 	if err != nil {
 		return fmt.Errorf("FindFrontPageSavedFilterIds: %w", err)
 	}
@@ -103,9 +98,7 @@ func sectionsByFrontPage(ctx context.Context, serverUrl string, baseUrl string, 
 	return nil
 }
 
-func sectionsBySavedFilters(ctx context.Context, serverUrl string, baseUrl string, prefix string, destination *[]Library) error {
-	client := graphql.NewClient(serverUrl, http.DefaultClient)
-
+func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl string, prefix string, destination *[]Library) error {
 	savedFiltersResponse, err := gql.FindSavedFilters(ctx, client)
 	if err != nil {
 		return fmt.Errorf("FindSavedFilters: %w", err)
@@ -146,9 +139,7 @@ func sectionsBySavedFilters(ctx context.Context, serverUrl string, baseUrl strin
 	return nil
 }
 
-func sectionsByTags(ctx context.Context, serverUrl string, baseUrl string, prefix string, destination *[]Library) error {
-	client := graphql.NewClient(serverUrl, http.DefaultClient)
-
+func sectionsByTags(ctx context.Context, client graphql.Client, baseUrl string, prefix string, destination *[]Library) error {
 	findTagsResponse, err := gql.FindTags(ctx, client)
 	if err != nil {
 		return fmt.Errorf("FindTags: %w", err)

@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"net/http"
 	"stash-vr/internal/stash/gql"
 )
 
-func FindFrontPageSavedFilterIds(ctx context.Context, serverUrl string) ([]string, error) {
-	client := graphql.NewClient(serverUrl, http.DefaultClient)
-
+func FindFrontPageSavedFilterIds(ctx context.Context, client graphql.Client) ([]string, error) {
 	configurationResponse, err := gql.UIConfiguration(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("UIConfiguration: %w", err)

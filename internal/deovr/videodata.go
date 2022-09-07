@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"net/http"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 )
@@ -54,9 +53,7 @@ type VideoSource struct {
 	Url        string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, serverUrl string, videoId string) (VideoData, error) {
-	client := graphql.NewClient(serverUrl, http.DefaultClient)
-
+func buildVideoData(ctx context.Context, client graphql.Client, videoId string) (VideoData, error) {
 	findSceneResponse, err := gql.FindScene(ctx, client, videoId)
 	if err != nil {
 		return VideoData{}, fmt.Errorf("FindScene: %w", err)

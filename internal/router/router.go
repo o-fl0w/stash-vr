@@ -6,17 +6,20 @@ import (
 	"stash-vr/internal/config"
 	"stash-vr/internal/deovr"
 	"stash-vr/internal/heresphere"
+	"stash-vr/internal/stash"
 	"strings"
 )
 
 func Build(cfg config.Application) *httprouter.Router {
+	gqlClient := stash.NewClient(cfg.StashGraphQLUrl, cfg.StashApiKey)
+
 	router := httprouter.New()
 
-	hsHttpHandler := heresphere.HttpHandler{Config: cfg}
+	hsHttpHandler := heresphere.HttpHandler{Client: gqlClient}
 	router.POST("/heresphere", hsHttpHandler.Index)
 	router.POST("/heresphere/:videoId", hsHttpHandler.VideoData)
 
-	dvHttpHandler := deovr.HttpHandler{Config: cfg}
+	dvHttpHandler := deovr.HttpHandler{Client: gqlClient}
 	router.GET("/deovr", dvHttpHandler.Index)
 	router.GET("/deovr/:videoId", dvHttpHandler.VideoData)
 

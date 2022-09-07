@@ -4,20 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Khan/genqlient/graphql"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"stash-vr/internal/config"
 )
 
 type HttpHandler struct {
-	Config config.Application
+	Client graphql.Client
 }
 
-func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+func (h *HttpHandler) Index(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	ctx := context.Background()
 	baseUrl := fmt.Sprintf("http://%s", req.Host)
 
-	index, err := buildIndex(ctx, h.Config.StashGraphQLUrl, baseUrl)
+	index, err := buildIndex(ctx, h.Client, baseUrl)
 	if err != nil {
 		log.Error().Err(err).Msg("heresphere: buildIndex")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -29,11 +29,11 @@ func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request, _ httproute
 	}
 }
 
-func (h HttpHandler) VideoData(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	ctx := context.Background()
 	videoId := params.ByName("videoId")
 
-	videoData, err := buildVideoData(ctx, h.Config.StashGraphQLUrl, videoId)
+	videoData, err := buildVideoData(ctx, h.Client, videoId)
 	if err != nil {
 		log.Error().Str("videoId", videoId).Err(err).Msg("heresphere: buildVideoData")
 		w.WriteHeader(http.StatusInternalServerError)

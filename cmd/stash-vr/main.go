@@ -23,7 +23,8 @@ func main() {
 }
 
 func run(cfg config.Application) error {
-	logger.Log.Info().Str("config", fmt.Sprintf("%#v", cfg)).Send()
+
+	logger.Log.Info().Str("STASH_GRAPHQL_URL", cfg.StashGraphQLUrl).Bool("STASH_API_KEY?", cfg.StashApiKey != "").Send()
 
 	r := router.Build(cfg)
 
