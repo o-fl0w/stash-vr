@@ -1,0 +1,182 @@
+type SceneFileType {
+  size: String
+  duration: Float
+  video_codec: String
+  audio_codec: String
+  width: Int
+  height: Int
+  framerate: Float
+  bitrate: Int
+}
+
+type ScenePathsType {
+  screenshot: String # Resolver
+  preview: String # Resolver
+  stream: String # Resolver
+  webp: String # Resolver
+  vtt: String # Resolver
+  chapters_vtt: String # Resolver
+  sprite: String # Resolver
+  funscript: String # Resolver
+  interactive_heatmap: String # Resolver
+  caption: String # Resolver
+}
+
+type SceneMovie {
+  movie: Movie!
+  scene_index: Int
+}
+
+type SceneCaption {
+  language_code: String!
+  caption_type: String!
+}
+
+type Scene {
+  id: ID!
+  checksum: String
+  oshash: String
+  title: String
+  details: String
+  url: String
+  date: String
+  rating: Int
+  organized: Boolean!
+  o_counter: Int
+  path: String!
+  phash: String
+  interactive: Boolean!
+  interactive_speed: Int
+  captions: [SceneCaption!]
+  created_at: Time!
+  updated_at: Time!
+  file_mod_time: Time
+
+  file: SceneFileType! # Resolver
+  paths: ScenePathsType! # Resolver
+
+  scene_markers: [SceneMarker!]!
+  galleries: [Gallery!]!
+  studio: Studio
+  movies: [SceneMovie!]!
+  tags: [Tag!]!
+  performers: [Performer!]!
+  stash_ids: [StashID!]!
+
+  """Return valid stream paths"""
+  sceneStreams: [SceneStreamEndpoint!]!
+}
+
+input SceneMovieInput {
+  movie_id: ID!
+  scene_index: Int
+}
+
+input SceneUpdateInput {
+  clientMutationId: String
+  id: ID!
+  title: String
+  details: String
+  url: String
+  date: String
+  rating: Int
+  organized: Boolean
+  studio_id: ID
+  gallery_ids: [ID!]
+  performer_ids: [ID!]
+  movies: [SceneMovieInput!]
+  tag_ids: [ID!]
+  """This should be a URL or a base64 encoded data URL"""
+  cover_image: String
+  stash_ids: [StashIDInput!]
+}
+
+enum BulkUpdateIdMode {
+  SET
+  ADD
+  REMOVE
+}
+
+input BulkUpdateIds {
+  ids: [ID!]
+  mode: BulkUpdateIdMode!
+}
+
+input BulkSceneUpdateInput {
+  clientMutationId: String
+  ids: [ID!]
+  title: String
+  details: String
+  url: String
+  date: String
+  rating: Int
+  organized: Boolean
+  studio_id: ID
+  gallery_ids: BulkUpdateIds
+  performer_ids: BulkUpdateIds
+  tag_ids: BulkUpdateIds
+  movie_ids:  BulkUpdateIds
+}
+
+input SceneDestroyInput {
+  id: ID!
+  delete_file: Boolean
+  delete_generated: Boolean
+}
+
+input ScenesDestroyInput {
+  ids: [ID!]!
+  delete_file: Boolean
+  delete_generated: Boolean
+}
+
+type FindScenesResultType {
+  count: Int!
+  """Total duration in seconds"""
+  duration: Float!
+  """Total file size in bytes"""
+  filesize: Float!
+  scenes: [Scene!]!
+}
+
+input SceneParserInput {
+  ignoreWords: [String!],
+  whitespaceCharacters: String,
+  capitalizeTitle: Boolean,
+  ignoreOrganized: Boolean
+}
+
+type SceneMovieID {
+  movie_id: ID!
+  scene_index: String
+}
+
+type SceneParserResult {
+  scene: Scene!
+  title: String
+  details: String
+  url: String
+  date: String
+  rating: Int
+  studio_id: ID
+  gallery_ids: [ID!]
+  performer_ids: [ID!]
+  movies: [SceneMovieID!]
+  tag_ids: [ID!]
+}
+
+type SceneParserResultType {
+  count: Int!
+  results: [SceneParserResult!]!
+}
+
+input SceneHashInput {
+  checksum: String
+  oshash: String
+}
+
+type SceneStreamEndpoint {
+  url: String!
+  mime_type: String
+  label: String
+}

@@ -1,0 +1,146 @@
+enum GenderEnum {
+  MALE
+  FEMALE
+  TRANSGENDER_MALE
+  TRANSGENDER_FEMALE
+  INTERSEX
+  NON_BINARY
+}
+
+type Performer {
+  id: ID!
+  checksum: String!
+  name: String
+  url: String
+  gender: GenderEnum
+  twitter: String
+  instagram: String
+  birthdate: String
+  ethnicity: String
+  country: String
+  eye_color: String
+  height: String
+  measurements: String
+  fake_tits: String
+  career_length: String
+  tattoos: String
+  piercings: String
+  aliases: String
+  favorite: Boolean!
+  tags: [Tag!]!
+  ignore_auto_tag: Boolean!
+
+  image_path: String # Resolver
+  scene_count: Int # Resolver
+  image_count: Int # Resolver
+  gallery_count: Int # Resolver
+  scenes: [Scene!]!
+  stash_ids: [StashID!]!
+  rating: Int
+  details: String
+  death_date: String
+  hair_color: String
+  weight: Int
+  created_at: Time!
+  updated_at: Time!
+  movie_count: Int
+  movies: [Movie!]!
+}
+
+input PerformerCreateInput {
+  name: String!
+  url: String
+  gender: GenderEnum
+  birthdate: String
+  ethnicity: String
+  country: String
+  eye_color: String
+  height: String
+  measurements: String
+  fake_tits: String
+  career_length: String
+  tattoos: String
+  piercings: String
+  aliases: String
+  twitter: String
+  instagram: String
+  favorite: Boolean
+  tag_ids: [ID!]
+  """This should be a URL or a base64 encoded data URL"""
+  image: String
+  stash_ids: [StashIDInput!]
+  rating: Int
+  details: String
+  death_date: String
+  hair_color: String
+  weight: Int
+  ignore_auto_tag: Boolean
+}
+
+input PerformerUpdateInput {
+  id: ID!
+  name: String
+  url: String
+  gender: GenderEnum
+  birthdate: String
+  ethnicity: String
+  country: String
+  eye_color: String
+  height: String
+  measurements: String
+  fake_tits: String
+  career_length: String
+  tattoos: String
+  piercings: String
+  aliases: String
+  twitter: String
+  instagram: String
+  favorite: Boolean
+  tag_ids: [ID!]
+  """This should be a URL or a base64 encoded data URL"""
+  image: String
+  stash_ids: [StashIDInput!]
+  rating: Int
+  details: String
+  death_date: String
+  hair_color: String
+  weight: Int
+  ignore_auto_tag: Boolean
+}
+
+input BulkPerformerUpdateInput {
+  clientMutationId: String
+  ids: [ID!]
+  url: String
+  gender: GenderEnum
+  birthdate: String
+  ethnicity: String
+  country: String
+  eye_color: String
+  height: String
+  measurements: String
+  fake_tits: String
+  career_length: String
+  tattoos: String
+  piercings: String
+  aliases: String
+  twitter: String
+  instagram: String
+  favorite: Boolean
+  tag_ids: BulkUpdateIds
+  rating: Int
+  details: String
+  death_date: String
+  hair_color: String
+  weight: Int
+  ignore_auto_tag: Boolean
+}
+
+input PerformerDestroyInput {
+  id: ID!
+}
+
+type FindPerformersResultType {
+  count: Int!
+  performers: [Performer!]!
+}

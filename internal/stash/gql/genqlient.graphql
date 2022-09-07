@@ -1,0 +1,95 @@
+query UIConfiguration{
+    configuration{
+        ui
+    }
+}
+
+query FindSavedFilters{
+    findSavedFilters{
+        ...SavedFilterParts
+    }
+}
+
+query FindSavedFilter($id: ID!){
+    findSavedFilter(id: $id){
+        ...SavedFilterParts
+    }
+}
+
+query FindTags{
+    findTags(tag_filter: {scene_count: {modifier: GREATER_THAN, value: 1}}){tags {
+        ...TagParts
+        scene_count
+    }}
+}
+
+
+# @genqlient(for: "SceneFilterType.has_markers", omitempty: true)
+query FindScenesByFilter(
+    $scene_filter: SceneFilterType){
+    findScenes(scene_filter: $scene_filter, filter: {per_page: -1}){
+        scenes {
+            ...ScenePreviewParts
+        }}
+}
+
+
+
+query FindScenesByTags($tags: [ID!]){
+    findScenes(scene_filter: {tags: {modifier: INCLUDES, value: $tags}}, filter: {per_page: -1}){
+        scenes {
+            ...ScenePreviewParts, tags {
+                ...TagParts
+            }
+        }}
+}
+
+query FindScene($id: ID){
+    findScene(id:$id){
+        ...FullSceneParts
+    }
+}
+
+fragment SavedFilterParts on SavedFilter{
+    id, name, filter
+}
+
+fragment TagParts on Tag{
+    id,name
+}
+
+fragment ScenePreviewParts on Scene{
+    id, title, file{duration}, paths {screenshot}
+}
+
+fragment FullSceneParts on Scene{
+    id, title, rating, details, created_at,
+    file{video_codec,size,duration,width, height},
+    paths{screenshot, preview, stream},
+    ...ScriptParts
+    ...StreamsParts
+    tags {
+        ...TagParts
+    },
+    studio{
+        id, name, rating
+    },
+    scene_markers {
+        seconds, title
+    },
+    performers {
+       id, name, rating
+    }
+}
+
+fragment StreamsParts on Scene{
+    file{height}
+    sceneStreams{url, mime_type, label}
+}
+
+fragment ScriptParts on Scene{
+    interactive
+    paths {
+        funscript
+    }
+}
