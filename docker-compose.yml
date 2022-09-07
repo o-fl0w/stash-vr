@@ -1,0 +1,10 @@
+version: "3.0"
+services:
+  stash-vr:
+    image: ofl0w/stash-vr:latest
+    container_name: stash-vr
+    restart: unless-stopped
+    ports:
+      - "9666:9666"
+    environment:
+      STASH_GRAPHQL_URL: "http://localhost:9999/graphql"
