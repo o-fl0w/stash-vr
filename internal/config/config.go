@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"sync"
 )
 
 const (
@@ -14,12 +15,18 @@ type Application struct {
 	StashApiKey     string
 }
 
-func Load() Application {
-	config := Application{
-		StashGraphQLUrl: getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
-		StashApiKey:     getEnvOrDefault(envKeyStashApiKey, ""),
-	}
-	return config
+var cfg Application
+
+var once sync.Once
+
+func Get() Application {
+	once.Do(func() {
+		cfg = Application{
+			StashGraphQLUrl: getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
+			StashApiKey:     getEnvOrDefault(envKeyStashApiKey, ""),
+		}
+	})
+	return cfg
 }
 
 func getEnvOrDefault(key string, defaultValue string) string {

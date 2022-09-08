@@ -1,11 +1,10 @@
 package deovr
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
@@ -13,8 +12,8 @@ type HttpHandler struct {
 	Client graphql.Client
 }
 
-func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-	ctx := context.Background()
+func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	baseUrl := fmt.Sprintf("http://%s", req.Host)
 
 	index, err := buildIndex(ctx, h.Client, baseUrl)
@@ -29,9 +28,9 @@ func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request, _ httproute
 	}
 }
 
-func (h HttpHandler) VideoData(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	ctx := context.Background()
-	videoId := params.ByName("videoId")
+func (h HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	videoId := chi.URLParam(req, "videoId")
 
 	videoData, err := buildVideoData(ctx, h.Client, videoId)
 	if err != nil {

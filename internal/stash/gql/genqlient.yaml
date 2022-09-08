@@ -4,7 +4,7 @@ schema:
   - schema/schema.graphql
   - schema/types/*.graphql
 operations:
-  - genqlient.graphql
+  - query.graphql
 generated: generated.go
 package: gql
 use_struct_references: true

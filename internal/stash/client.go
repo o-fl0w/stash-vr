@@ -3,6 +3,7 @@ package stash
 import (
 	"github.com/Khan/genqlient/graphql"
 	"net/http"
+	"stash-vr/internal/config"
 )
 
 type authTransport struct {
@@ -14,10 +15,11 @@ func (t authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return http.DefaultTransport.RoundTrip(req)
 }
 
-func NewClient(serverUrl string, apiKey string) graphql.Client {
+func NewClient() graphql.Client {
 	htc := http.Client{}
+	apiKey := config.Get().StashApiKey
 	if apiKey != "" {
 		htc.Transport = authTransport{key: apiKey}
 	}
-	return graphql.NewClient(serverUrl, &htc)
+	return graphql.NewClient(config.Get().StashGraphQLUrl, &htc)
 }

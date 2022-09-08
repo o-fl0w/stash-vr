@@ -4,6 +4,14 @@ query UIConfiguration{
     }
 }
 
+query FindCredentials{
+    configuration {
+        general {
+            username, password
+        }
+    }
+}
+
 query FindSavedFilters{
     findSavedFilters{
         ...SavedFilterParts

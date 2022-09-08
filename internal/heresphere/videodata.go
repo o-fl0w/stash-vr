@@ -193,20 +193,4 @@ func setStreamSources(s gql.FullSceneParts, videoData *VideoData) {
 		}
 		videoData.Media = append(videoData.Media, e)
 	}
-
-	// Workaround for HereSphere select box bug:
-	// instead of sending sources per stream we send every source as a stream with a single source
-	//for _, stream := range stash.GetStreams(s) {
-	//	for _, source := range stream.Sources {
-	//		e := Media{
-	//			Name: fmt.Sprintf("%s %d", stream.Name, source.Resolution),
-	//			Sources: []Source{{
-	//				Resolution: source.Resolution,
-	//				Url:        source.Url,
-	//			}},
-	//		}
-	//		videoData.Media = append(videoData.Media, e)
-	//	}
-	//}
-
 }

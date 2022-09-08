@@ -13,20 +13,17 @@ import (
 const listenAddress = ":9666"
 
 func main() {
-	cfg := config.Load()
-
-	if err := run(cfg); err != nil {
+	if err := run(); err != nil {
 		logger.Log.Warn().Err(err).Msg("EXIT with ERROR")
 	} else {
 		logger.Log.Info().Msg("EXIT without error")
 	}
 }
 
-func run(cfg config.Application) error {
+func run() error {
+	logger.Log.Info().Str("config", fmt.Sprintf("%+v", config.Get())).Send()
 
-	logger.Log.Info().Str("STASH_GRAPHQL_URL", cfg.StashGraphQLUrl).Bool("STASH_API_KEY?", cfg.StashApiKey != "").Send()
-
-	r := router.Build(cfg)
+	r := router.Build()
 
 	logger.Log.Info().Str("address", listenAddress).Msg("Starting server...")
 	err := http.ListenAndServe(listenAddress, r)
