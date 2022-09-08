@@ -2,8 +2,10 @@ package stash
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
+	"stash-vr/internal/config"
 	"stash-vr/internal/logger"
 	"stash-vr/internal/stash/gql"
 	"strconv"
@@ -21,6 +23,22 @@ type Source struct {
 }
 
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
+
+// stash adds query parameter 'apikey' for direct stream but not for transcoded streams - it should, workaround for now
+func apiKeyed(streamUrl string) string {
+	u, err := url.Parse(streamUrl)
+	if err != nil {
+		return ""
+	}
+	values := u.Query()
+	if values.Has("apikey") {
+		return streamUrl
+	}
+	values.Set("apikey", config.Get().StashApiKey)
+	u.RawQuery = values.Encode()
+	s := u.String()
+	return s
+}
 
 func GetStreams(fsp gql.FullSceneParts, sortResolutionAsc bool) []Stream {
 	var streams []Stream
@@ -54,6 +72,14 @@ func GetStreams(fsp gql.FullSceneParts, sortResolutionAsc bool) []Stream {
 			Name:    "transcoded",
 			Sources: mp4Sources,
 		})
+	}
+
+	if config.Get().StashApiKey != "" {
+		for i, stream := range streams {
+			for j, source := range stream.Sources {
+				streams[i].Sources[j].Url = apiKeyed(source.Url)
+			}
+		}
 	}
 
 	return streams
