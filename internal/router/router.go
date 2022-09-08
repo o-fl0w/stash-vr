@@ -21,7 +21,7 @@ func Build() *chi.Mux {
 
 	dvHttpHandler := deovr.HttpHandler{Client: gqlClient}
 	router.Get("/deovr", dvHttpHandler.Index)
-	router.Get("/deovr/:videoId", dvHttpHandler.VideoData)
+	router.Get("/deovr/{videoId}", dvHttpHandler.VideoData)
 
 	router.Get("/", redirector)
 
