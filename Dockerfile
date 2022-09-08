@@ -11,7 +11,7 @@ RUN go mod download && go mod verify
 
 COPY ./cmd ./cmd/
 COPY ./internal ./internal/
-COPY ./pkg ./pkg/
+#COPY ./pkg ./pkg/
 
 RUN go generate ./cmd/stash-vr/ && go build -o ./stash-vr ./cmd/stash-vr/
 
