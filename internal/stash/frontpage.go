@@ -14,10 +14,13 @@ func FindFrontPageSavedFilterIds(ctx context.Context, client graphql.Client) ([]
 	}
 
 	var savedFilters []string
-	fpcs := configurationResponse.Configuration.Ui["frontPageContent"].([]interface{})
-	for _, sfo := range fpcs {
-		sfm := sfo.(map[string]interface{})
-		savedFilters = append(savedFilters, fmt.Sprintf("%.f", sfm["savedFilterId"].(float64)))
+	frontPageFilters := configurationResponse.Configuration.Ui["frontPageContent"].([]interface{})
+	for _, _filter := range frontPageFilters {
+		filter := _filter.(map[string]interface{})
+		typeName := filter["__typename"].(string)
+		if typeName == "SavedFilter" {
+			savedFilters = append(savedFilters, fmt.Sprintf("%.f", filter["savedFilterId"].(float64)))
+		}
 	}
 
 	return savedFilters, nil
