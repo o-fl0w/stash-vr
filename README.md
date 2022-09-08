@@ -59,3 +59,6 @@ It's not foolproof and to manually configure the players with custom layout/mesh
 If a mesh is provided but no layout then default layout `SBS` will be used.
 
 Most common combination is DOME/SBS meaning most VR videos only need the `DOME` tag.
+
+## Known issues/Missing features
+* Premade Filters (i.e. Recently Released Scenes etc.) from stash front page are not supported.
