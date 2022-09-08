@@ -1,9 +1,10 @@
 # stash-vr
-Self-hosted service for watching your [stash](https://github.com/stashapp/stash) library in VR.
+Watch your [stash](https://github.com/stashapp/stash) library in VR.
 
-Basically a thin client/server for clients listed below.
+Install stash-vr, point it to your stash instance and point your VR video player to stash-vr.\
+stash-vr will relay your library information and display/play them in your video player ui.
 
-## Supported clients
+## Supported video players
 * HereSphere
 * DeoVR
 
