@@ -65,8 +65,8 @@ func buildVideoData(ctx context.Context, client graphql.Client, videoId string) 
 		Title:          s.Title,
 		Description:    s.Details,
 		DateAdded:      s.Created_at.Format("2006-01-02"),
-		ThumbnailImage: s.Paths.Screenshot,
-		ThumbnailVideo: s.Paths.Preview,
+		ThumbnailImage: stash.ApiKeyed(s.Paths.Screenshot),
+		ThumbnailVideo: stash.ApiKeyed(s.Paths.Preview),
 		Duration:       int(s.File.Duration) * 1000,
 		Rating:         float32(s.Rating),
 	}

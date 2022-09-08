@@ -67,8 +67,8 @@ func buildVideoData(ctx context.Context, client graphql.Client, videoId string) 
 		Id:           s.Id,
 		VideoLength:  int(s.File.Duration),
 		SkipIntro:    0,
-		VideoPreview: s.Paths.Preview,
-		ThumbnailUrl: s.Paths.Screenshot,
+		VideoPreview: stash.ApiKeyed(s.Paths.Preview),
+		ThumbnailUrl: stash.ApiKeyed(s.Paths.Screenshot),
 	}
 
 	setStreamSources(s, &videoData)

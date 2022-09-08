@@ -47,6 +47,8 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Ind
 	//	return Index{}, fmt.Errorf("sectionsByTags: %w", err)
 	//}
 
+	log.Info().Str("route", "index").Int("#categories", len(index.Scenes)).Send()
+
 	return index, nil
 }
 
@@ -99,8 +101,6 @@ func sectionsByFrontPage(ctx context.Context, client graphql.Client, baseUrl str
 		*destination = append(*destination, scene)
 	}
 
-	log.Info().Int("#sections", len(*destination)).Str("source", "Front Page").Msg("Sections built")
-
 	return nil
 }
 
@@ -139,8 +139,6 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 
 		*destination = append(*destination, scene)
 	}
-
-	log.Info().Int("#sections", len(*destination)).Str("source", "Saved Filters").Msg("Sections built")
 
 	return nil
 }
@@ -187,8 +185,6 @@ func sectionsByTags(ctx context.Context, client graphql.Client, baseUrl string, 
 		}
 		*destination = append(*destination, scene)
 	}
-
-	log.Info().Int("#sections", len(*destination)).Str("source", "Tags").Msg("Sections built")
 
 	return nil
 }
