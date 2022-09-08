@@ -34,8 +34,8 @@ query FindTags{
 
 # @genqlient(for: "SceneFilterType.has_markers", omitempty: true)
 query FindScenesByFilter(
-    $scene_filter: SceneFilterType){
-    findScenes(scene_filter: $scene_filter, filter: {per_page: -1}){
+    $scene_filter: SceneFilterType, $sort: String, $direction: SortDirectionEnum){
+    findScenes(scene_filter: $scene_filter, filter: {sort: $sort, direction: $direction, per_page: -1}){
         scenes {
             ...ScenePreviewParts
         }}

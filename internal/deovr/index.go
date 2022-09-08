@@ -57,7 +57,7 @@ func sectionsCustom(ctx context.Context, client graphql.Client, baseUrl string, 
 		Name: fmt.Sprintf("%s%s", prefix, "All"),
 	}
 	sceneFilter := gql.SceneFilterType{}
-	scenesResponse, err := gql.FindScenesByFilter(ctx, client, &sceneFilter)
+	scenesResponse, err := gql.FindScenesByFilter(ctx, client, &sceneFilter, "", gql.SortDirectionEnumAsc)
 	if err != nil {
 		return fmt.Errorf("FindScenesByFilter: %w", err)
 	}
@@ -81,12 +81,12 @@ func sectionsByFrontPage(ctx context.Context, client graphql.Client, baseUrl str
 			return fmt.Errorf("FindSavedFilter: %w", err)
 		}
 
-		sceneFilter, err := stash.ParseJsonFilter(savedFilterResponse.FindSavedFilter.Filter)
+		filter, err := stash.ParseJsonEncodedFilter(savedFilterResponse.FindSavedFilter.Filter)
 		if err != nil {
-			return fmt.Errorf("ParseJsonFilter: %w", err)
+			return fmt.Errorf("ParseJsonEncodedFilter: %w", err)
 		}
 
-		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &sceneFilter)
+		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
 		if err != nil {
 			return fmt.Errorf("FindScenesByFilter: %w", err)
 		}
@@ -115,12 +115,12 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 			continue
 		}
 
-		sceneFilter, err := stash.ParseJsonFilter(savedFilter.Filter)
+		filter, err := stash.ParseJsonEncodedFilter(savedFilter.Filter)
 		if err != nil {
-			return fmt.Errorf("ParseJsonFilter: %w", err)
+			return fmt.Errorf("ParseJsonEncodedFilter: %w", err)
 		}
 
-		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &sceneFilter)
+		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
 		if err != nil {
 			return fmt.Errorf("FindSceneIdsByFilters: %w", err)
 		}

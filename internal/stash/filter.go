@@ -3,57 +3,71 @@ package stash
 import (
 	"encoding/json"
 	"fmt"
-	"stash-vr/internal/logger"
 	"stash-vr/internal/stash/gql"
 	"strconv"
 )
 
-type Criterion struct {
-	modifier string
-	typ      string
-	value    interface{}
+type JsonFilter struct {
+	SortBy  string   `json:"sortby"`
+	SortDir string   `json:"sortdir,omitempty"`
+	C       []string `json:"c"`
 }
 
-func ParseJsonFilter(j string) (gql.SceneFilterType, error) {
-	criteria, err := parseFilter(j)
+type JsonCriterion struct {
+	Modifier string      `json:"modifier"`
+	Type     string      `json:"type"`
+	Value    interface{} `json:"value"`
+}
+
+type Filter struct {
+	SortBy      string
+	SortDir     gql.SortDirectionEnum
+	SceneFilter gql.SceneFilterType
+}
+
+func ParseJsonEncodedFilter(raw string) (Filter, error) {
+	var filter JsonFilter
+
+	err := json.Unmarshal([]byte(raw), &filter)
 	if err != nil {
-		logger.Log.Error().Str("input", j).Msg("Failed to parse Json filter")
-		return gql.SceneFilterType{}, fmt.Errorf("parseFilter: %w", err)
+		return Filter{}, fmt.Errorf("unmarshal: '%w'", err)
 	}
-
-	sceneFilter := gql.SceneFilterType{}
-	for _, rawCriterion := range criteria {
-		criterion := parseRawCriterion(rawCriterion.(string))
-		parseCriterion(criterion, &sceneFilter)
-	}
-	return sceneFilter, nil
-}
-
-func parseFilter(f string) ([]interface{}, error) {
-	var filter interface{}
-
-	err := json.Unmarshal([]byte(f), &filter)
+	sf, err := getSceneFilter(filter.C)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal: '%w'", err)
+		return Filter{}, fmt.Errorf("getSceneFilter: %w", err)
 	}
-	return filter.(map[string]interface{})["c"].([]interface{}), nil
+
+	sortDir := gql.SortDirectionEnumAsc
+	if filter.SortDir == "desc" {
+		sortDir = gql.SortDirectionEnumDesc
+	}
+	return Filter{SortBy: filter.SortBy, SortDir: sortDir, SceneFilter: sf}, nil
 }
 
-func parseRawCriterion(raw string) Criterion {
-	var c interface{}
-	_ = json.Unmarshal([]byte(raw), &c)
+func parseJsonCriterion(raw string) (JsonCriterion, error) {
+	var c JsonCriterion
 
-	cmap := c.(map[string]interface{})
-
-	return Criterion{
-		modifier: cmap["modifier"].(string),
-		typ:      cmap["type"].(string),
-		value:    cmap["value"].(interface{}),
+	err := json.Unmarshal([]byte(raw), &c)
+	if err != nil {
+		return JsonCriterion{}, fmt.Errorf("unmarshal: '%w'", err)
 	}
+	return c, nil
 }
 
-func parseCriterion(criterion Criterion, sceneFilter *gql.SceneFilterType) {
-	switch criterion.typ {
+func getSceneFilter(jsonCriteria []string) (gql.SceneFilterType, error) {
+	sf := gql.SceneFilterType{}
+	for _, jsonCriterion := range jsonCriteria {
+		c, err := parseJsonCriterion(jsonCriterion)
+		if err != nil {
+			return gql.SceneFilterType{}, fmt.Errorf("parseJsonCriterion: %w", err)
+		}
+		setSceneFilterCriterion(c, &sf)
+	}
+	return sf, nil
+}
+
+func setSceneFilterCriterion(criterion JsonCriterion, sceneFilter *gql.SceneFilterType) {
+	switch criterion.Type {
 	//HierarchicalMultiCriterionInput
 	case "tags":
 		c := parseHierarchicalMultiCriterionInput(criterion)
@@ -149,8 +163,8 @@ func parseCriterion(criterion Criterion, sceneFilter *gql.SceneFilterType) {
 	}
 }
 
-func parseHierarchicalMultiCriterionInput(c Criterion) gql.HierarchicalMultiCriterionInput {
-	items := c.value.(map[string]interface{})["items"].([]interface{})
+func parseHierarchicalMultiCriterionInput(c JsonCriterion) gql.HierarchicalMultiCriterionInput {
+	items := c.Value.(map[string]interface{})["items"].([]interface{})
 	var ids []string
 	for _, item := range items {
 		id := item.(map[string]interface{})["id"].(string)
@@ -159,21 +173,21 @@ func parseHierarchicalMultiCriterionInput(c Criterion) gql.HierarchicalMultiCrit
 
 	return gql.HierarchicalMultiCriterionInput{
 		Value:    ids,
-		Modifier: gql.CriterionModifier(c.modifier),
+		Modifier: gql.CriterionModifier(c.Modifier),
 	}
 }
 
-func parseStringCriterionInput(c Criterion) gql.StringCriterionInput {
-	s := c.value.(string)
+func parseStringCriterionInput(c JsonCriterion) gql.StringCriterionInput {
+	s := c.Value.(string)
 	return gql.StringCriterionInput{
 		Value:    s,
-		Modifier: gql.CriterionModifier(c.modifier),
+		Modifier: gql.CriterionModifier(c.Modifier),
 	}
 }
 
-func parseIntCriterionInput(c Criterion) gql.IntCriterionInput {
-	v := c.value.(map[string]interface{})["value"].(float64)
-	_v2 := c.value.(map[string]interface{})["value2"]
+func parseIntCriterionInput(c JsonCriterion) gql.IntCriterionInput {
+	v := c.Value.(map[string]interface{})["value"].(float64)
+	_v2 := c.Value.(map[string]interface{})["value2"]
 	var v2 float64
 	if _v2 != nil {
 		v2 = _v2.(float64)
@@ -181,24 +195,24 @@ func parseIntCriterionInput(c Criterion) gql.IntCriterionInput {
 	return gql.IntCriterionInput{
 		Value:    int(v),
 		Value2:   int(v2),
-		Modifier: gql.CriterionModifier(c.modifier),
+		Modifier: gql.CriterionModifier(c.Modifier),
 	}
 }
 
-func parseBool(c Criterion) bool {
-	b, _ := strconv.ParseBool(c.value.(string))
+func parseBool(c JsonCriterion) bool {
+	b, _ := strconv.ParseBool(c.Value.(string))
 	return b
 }
 
-func parsePHashDuplicationCriterionInput(c Criterion) gql.PHashDuplicationCriterionInput {
-	b, _ := strconv.ParseBool(c.value.(string))
+func parsePHashDuplicationCriterionInput(c JsonCriterion) gql.PHashDuplicationCriterionInput {
+	b, _ := strconv.ParseBool(c.Value.(string))
 	return gql.PHashDuplicationCriterionInput{
 		Duplicated: b,
 	}
 }
 
-func parseResolutionCriterionInput(c Criterion) gql.ResolutionCriterionInput {
-	s := c.value.(string)
+func parseResolutionCriterionInput(c JsonCriterion) gql.ResolutionCriterionInput {
+	s := c.Value.(string)
 	var rs gql.ResolutionEnum
 
 	switch s {
@@ -232,23 +246,23 @@ func parseResolutionCriterionInput(c Criterion) gql.ResolutionCriterionInput {
 
 	return gql.ResolutionCriterionInput{
 		Value:    rs,
-		Modifier: gql.CriterionModifier(c.modifier),
+		Modifier: gql.CriterionModifier(c.Modifier),
 	}
 }
 
-func parseString(c Criterion) string {
-	s := c.value.(string)
+func parseString(c JsonCriterion) string {
+	s := c.Value.(string)
 	return s
 }
 
-func parseMultiCriterionInput(c Criterion) gql.MultiCriterionInput {
-	cs := c.value.([]interface{})
+func parseMultiCriterionInput(c JsonCriterion) gql.MultiCriterionInput {
+	cs := c.Value.([]interface{})
 	var ss []string
 	for _, c := range cs {
 		ss = append(ss, c.(string))
 	}
 	return gql.MultiCriterionInput{
 		Value:    ss,
-		Modifier: gql.CriterionModifier(c.modifier),
+		Modifier: gql.CriterionModifier(c.Modifier),
 	}
 }
