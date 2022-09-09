@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"github.com/davecgh/go-spew/spew"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 )
@@ -111,6 +112,7 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 	}
 
 	for _, savedFilter := range savedFiltersResponse.FindSavedFilters {
+		log.Debug().Msg(fmt.Sprintf("saved filter=%s", spew.Sdump(savedFilter)))
 		if savedFilter.Name == "" || containsSavedFilterId(savedFilter.Id, *destination) {
 			continue
 		}
@@ -120,6 +122,7 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 			return fmt.Errorf("ParseJsonEncodedFilter: %w", err)
 		}
 
+		log.Debug().Msg(fmt.Sprintf("scene filter=%s", spew.Sdump(filter)))
 		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
 		if err != nil {
 			return fmt.Errorf("FindScenesByFilter: %w", err)

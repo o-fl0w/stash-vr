@@ -90,7 +90,7 @@ func getMp4Sources(sps gql.StreamsParts) []Source {
 		if strings.Contains(lowerCaseLabel, "mp4") {
 			resolution, err := parseResolutionFromLabel(lowerCaseLabel)
 			if err != nil {
-				logger.Log.Warn().Str("label", lowerCaseLabel).Msg("Unmatched stream label")
+				logger.Get().Warn().Str("label", lowerCaseLabel).Msg("Unmatched stream label")
 				continue
 			}
 
