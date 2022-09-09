@@ -2,17 +2,20 @@ package config
 
 import (
 	"os"
+	"strings"
 	"sync"
 )
 
 const (
 	envKeyStashGraphQLUrl = "STASH_GRAPHQL_URL"
 	envKeyStashApiKey     = "STASH_API_KEY"
+	envKeyLogLevel        = "LOG_LEVEL"
 )
 
 type Application struct {
 	StashGraphQLUrl string
 	StashApiKey     string
+	LogLevel        string
 }
 
 var cfg Application
@@ -24,6 +27,7 @@ func Get() Application {
 		cfg = Application{
 			StashGraphQLUrl: getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
 			StashApiKey:     getEnvOrDefault(envKeyStashApiKey, ""),
+			LogLevel:        strings.ToLower(getEnvOrDefault(envKeyLogLevel, "info")),
 		}
 	})
 	return cfg
