@@ -8,4 +8,5 @@ services:
       - "9666:9666"
     environment:
       STASH_GRAPHQL_URL: "http://localhost:9999/graphql"
-      #STASH_API_KEY: "xxx" # uncomment and set this if you've configured stash to use authentication
+      #STASH_API_KEY: "xxx" # uncomment and set if you've configured stash to use authentication
+      #LOG_LEVEL: "debug"
