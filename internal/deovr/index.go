@@ -192,7 +192,7 @@ func sectionsByTags(ctx context.Context, client graphql.Client, baseUrl string, 
 func getPreviewVideoData(baseUrl string, s gql.ScenePreviewParts) PreviewVideoData {
 	return PreviewVideoData{
 		Id:           s.Id,
-		ThumbnailUrl: s.Paths.Screenshot,
+		ThumbnailUrl: stash.ApiKeyed(s.Paths.Screenshot),
 		Title:        s.Title,
 		VideoLength:  int(s.File.Duration),
 		VideoUrl:     videoDataUrl(baseUrl, s.Id),
