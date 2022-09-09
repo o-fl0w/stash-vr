@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"stash-vr/internal/util"
 	"strings"
 	"sync"
 )
@@ -39,4 +40,10 @@ func getEnvOrDefault(key string, defaultValue string) string {
 	} else {
 		return val
 	}
+}
+
+func (a Application) Redacted() Application {
+	a.StashGraphQLUrl = util.Redacted(a.StashGraphQLUrl)
+	a.StashApiKey = util.Redacted(a.StashApiKey)
+	return a
 }

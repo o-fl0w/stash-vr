@@ -8,6 +8,7 @@ import (
 	"stash-vr/internal/heresphere"
 	"stash-vr/internal/logger"
 	"stash-vr/internal/stash"
+	"stash-vr/internal/util"
 	"strings"
 	"time"
 )
@@ -57,7 +58,7 @@ func requestLogger(next http.Handler) http.Handler {
 		if r.TLS != nil {
 			scheme = "https"
 		}
-		url := fmt.Sprintf("%s://%s%s", scheme, r.Host, r.RequestURI)
+		url := fmt.Sprintf("%s://%s%s", scheme, util.Redacted(r.Host), r.RequestURI)
 
 		l.
 			Trace().

@@ -24,7 +24,7 @@ func main() {
 }
 
 func run() error {
-	logger.Get().Info().Str("config", fmt.Sprintf("%+v", config.Get())).Send()
+	logger.Get().Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
 
 	r := router.Build()
 
