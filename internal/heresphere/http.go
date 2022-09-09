@@ -2,11 +2,11 @@ package heresphere
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"net/http"
+	"stash-vr/internal/util"
 )
 
 type HttpHandler struct {
@@ -51,7 +51,7 @@ func readVideoData(ctx context.Context, w http.ResponseWriter, client graphql.Cl
 func write(w http.ResponseWriter, data interface{}) error {
 	w.Header().Add("HereSphere-JSON-Version", "1")
 	w.Header().Add("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(data)
+	err := util.NewJsonEncoder(w).Encode(data)
 	if err != nil {
 		return fmt.Errorf("json encode: %w", err)
 	}

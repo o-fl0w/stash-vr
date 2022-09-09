@@ -122,7 +122,7 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 
 		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
 		if err != nil {
-			return fmt.Errorf("FindSceneIdsByFilters: %w", err)
+			return fmt.Errorf("FindScenesByFilter: %w", err)
 		}
 		if len(scenesResponse.FindScenes.Scenes) == 0 {
 			continue

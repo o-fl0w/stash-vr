@@ -1,21 +1,23 @@
 package stash
 
 import (
-	_url "net/url"
 	"stash-vr/internal/config"
+	"strings"
 )
 
 func ApiKeyed(url string) string {
-	u, err := _url.Parse(url)
-	if err != nil {
-		return ""
-	}
-	values := u.Query()
-	if values.Has("apikey") {
+	if strings.Contains(url, "apikey") {
 		return url
 	}
-	values.Set("apikey", config.Get().StashApiKey)
-	u.RawQuery = values.Encode()
-	s := u.String()
+	sb := strings.Builder{}
+	sb.WriteString(url)
+	if strings.Contains(url, "?") {
+		sb.WriteString("&")
+	} else {
+		sb.WriteString("?")
+	}
+	sb.WriteString("apikey=")
+	sb.WriteString(config.Get().StashApiKey)
+	s := sb.String()
 	return s
 }
