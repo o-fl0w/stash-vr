@@ -73,17 +73,20 @@ func sectionsByFrontPage(ctx context.Context, client graphql.Client, baseUrl str
 	for _, id := range ids {
 		savedFilterResponse, err := gql.FindSavedFilter(ctx, client, id)
 		if err != nil {
-			return fmt.Errorf("FindSavedFilter: %w", err)
+			log.Warn().Err(err).Str("filterId", id).Msg("FindSavedFilter: Skipping")
+			continue
 		}
 
 		filter, err := stash.ParseJsonEncodedFilter(savedFilterResponse.FindSavedFilter.Filter)
 		if err != nil {
-			return fmt.Errorf("ParseJsonEncodedFilter: %w", err)
+			log.Warn().Err(err).Str("filterId", id).Msg("ParseJsonEncodedFilter: Skipping")
+			continue
 		}
 
 		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
 		if err != nil {
-			return fmt.Errorf("FindScenesByFilter: %w", err)
+			log.Warn().Err(err).Str("filterId", id).Msg("FindScenesByFilter: Skipping")
+			continue
 		}
 
 		library := Library{
@@ -119,13 +122,15 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 
 		filter, err := stash.ParseJsonEncodedFilter(savedFilter.Filter)
 		if err != nil {
-			return fmt.Errorf("ParseJsonEncodedFilter: %w", err)
+			log.Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("ParseJsonEncodedFilter: Skipping")
+			continue
 		}
 		log.Debug().Msg(fmt.Sprintf("ParseJsonEncodedFilter:\n%s", util.AsJsonStr(filter)))
 
 		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
 		if err != nil {
-			return fmt.Errorf("FindScenesByFilter: %w", err)
+			log.Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("FindScenesByFilter: Skipping")
+			continue
 		}
 		if len(scenesResponse.FindScenes.Scenes) == 0 {
 			log.Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("0 videos, skipping")
