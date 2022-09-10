@@ -59,7 +59,7 @@ query FindScene($id: ID){
 }
 
 fragment SavedFilterParts on SavedFilter{
-    id, name, filter
+    id, name, filter, mode
 }
 
 fragment TagParts on Tag{
