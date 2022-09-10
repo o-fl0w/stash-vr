@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"net/http"
-	"stash-vr/internal/util"
+	"stash-vr/internal/api/common"
 )
 
 type HttpHandler struct {
@@ -18,13 +19,13 @@ func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
 
 	index, err := buildIndex(ctx, h.Client, baseUrl)
 	if err != nil {
-		log.Error().Err(err).Msg("buildIndex")
+		log.Ctx(ctx).Error().Err(err).Msg("buildIndex")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err := write(w, index); err != nil {
-		log.Error().Err(err).Str("handler", "index").Msg("write")
+	if err := common.Write(ctx, w, index); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("handler", "index").Msg("write")
 	}
 }
 
@@ -34,21 +35,11 @@ func (h HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 
 	videoData, err := buildVideoData(ctx, h.Client, videoId)
 	if err != nil {
-		log.Error().Str("videoId", videoId).Err(err).Msg("buildVideoData")
+		log.Ctx(ctx).Error().Str("videoId", videoId).Err(err).Msg("buildVideoData")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := write(w, videoData); err != nil {
-		log.Error().Err(err).Str("handler", "videodata").Msg("write")
+	if err := common.Write(ctx, w, videoData); err != nil {
+		log.Ctx(ctx).Error().Err(err).Str("handler", "videodata").Msg("write")
 	}
-}
-
-func write(w http.ResponseWriter, data interface{}) error {
-	w.Header().Add("Content-Type", "application/json")
-	log.Trace().Msg(fmt.Sprintf("write:\n%s", util.AsJsonStr(data)))
-	err := util.NewJsonEncoder(w).Encode(data)
-	if err != nil {
-		return fmt.Errorf("json encode: %w", err)
-	}
-	return nil
 }

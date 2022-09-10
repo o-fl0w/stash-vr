@@ -24,8 +24,18 @@ query FindSavedFilter($id: ID!){
     }
 }
 
-query FindTags{
-    findTags(tag_filter: {scene_count: {modifier: GREATER_THAN, value: 1}}){tags {
+query FindAllNonEmptyTags{
+    findTags(tag_filter: {scene_count: {modifier: GREATER_THAN, value: 1}}){
+        tags {
+        ...TagParts
+        scene_count
+    }}
+}
+
+query FindTags(
+    $tag_filter: TagFilterType, $sort: String, $direction: SortDirectionEnum){
+    findTags(tag_filter: $tag_filter, filter: {sort: $sort, direction: $direction, per_page: -1}){
+        tags {
         ...TagParts
         scene_count
     }}

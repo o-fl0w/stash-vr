@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 	"stash-vr/internal/stash/gql"
 )
 
@@ -20,6 +21,8 @@ func FindFrontPageSavedFilterIds(ctx context.Context, client graphql.Client) ([]
 		typeName := filter["__typename"].(string)
 		if typeName == "SavedFilter" {
 			savedFilters = append(savedFilters, fmt.Sprintf("%.f", filter["savedFilterId"].(float64)))
+		} else {
+			log.Warn().Str("type", typeName).Msg("Unsupported filter type in front page, skipping")
 		}
 	}
 

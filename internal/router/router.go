@@ -3,12 +3,12 @@ package router
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"net/http"
-	"stash-vr/internal/deovr"
-	"stash-vr/internal/heresphere"
-	"stash-vr/internal/logger"
+	"stash-vr/internal/api/deovr"
+	"stash-vr/internal/api/heresphere"
+	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
-	"stash-vr/internal/util"
 	"strings"
 	"time"
 )
@@ -20,13 +20,8 @@ func Build() *chi.Mux {
 
 	router.Use(requestLogger)
 
-	hsHttpHandler := heresphere.HttpHandler{Client: gqlClient}
-	router.Post("/heresphere", hsHttpHandler.Index)
-	router.Post("/heresphere/{videoId}", hsHttpHandler.VideoData)
-
-	dvHttpHandler := deovr.HttpHandler{Client: gqlClient}
-	router.Get("/deovr", dvHttpHandler.Index)
-	router.Get("/deovr/{videoId}", dvHttpHandler.VideoData)
+	router.Mount("/heresphere", heresphere.Router(gqlClient))
+	router.Mount("/deovr", deovr.Router(gqlClient))
 
 	router.Get("/", redirector)
 
@@ -48,25 +43,26 @@ func redirector(w http.ResponseWriter, req *http.Request) {
 
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		l := logger.Get()
-
-		next.ServeHTTP(w, r)
-
 		scheme := "http"
 		if r.TLS != nil {
 			scheme = "https"
 		}
-		url := fmt.Sprintf("%s://%s%s", scheme, util.Redacted(r.Host), r.RequestURI)
+		url := fmt.Sprintf("%s://%s%s", scheme, config.Redacted(r.Host), r.RequestURI)
 
-		l.
-			Trace().
+		baseLogger := log.With().
 			Str("method", r.Method).
-			Str("url", url).
+			Str("url", url).Logger()
+
+		baseLogger.Trace().
 			Str("proto", r.Proto).
 			Str("user_agent", r.UserAgent()).
+			Msg("Incoming request")
+
+		start := time.Now()
+		next.ServeHTTP(w, r)
+
+		baseLogger.Trace().
 			Dur("ms", time.Since(start)).
-			Msg("-> request")
+			Msg("Request handled")
 	})
 }

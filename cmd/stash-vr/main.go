@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"stash-vr/internal/config"
-	"stash-vr/internal/logger"
+	_ "stash-vr/internal/logger"
 	"stash-vr/internal/router"
 )
 
@@ -14,18 +15,18 @@ const listenAddress = ":9666"
 
 func main() {
 	if err := run(); err != nil {
-		logger.Get().Warn().Err(err).Msg("EXIT with ERROR")
+		log.Warn().Err(err).Msg("EXIT with ERROR")
 	} else {
-		logger.Get().Info().Msg("EXIT without error")
+		log.Info().Msg("EXIT without error")
 	}
 }
 
 func run() error {
-	logger.Get().Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
+	log.Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
 
 	r := router.Build()
 
-	logger.Get().Info().Msg(fmt.Sprintf("Server listening on %s", listenAddress))
+	log.Info().Msg(fmt.Sprintf("Server listening on %s", listenAddress))
 	err := http.ListenAndServe(listenAddress, r)
 	if err != nil {
 		return fmt.Errorf("run: %w", err)

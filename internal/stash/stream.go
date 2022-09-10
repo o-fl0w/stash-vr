@@ -2,10 +2,10 @@ package stash
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"regexp"
 	"sort"
 	"stash-vr/internal/config"
-	"stash-vr/internal/logger"
 	"stash-vr/internal/stash/gql"
 	"strconv"
 	"strings"
@@ -90,7 +90,7 @@ func getMp4Sources(sps gql.StreamsParts) []Source {
 		if strings.Contains(lowerCaseLabel, "mp4") {
 			resolution, err := parseResolutionFromLabel(lowerCaseLabel)
 			if err != nil {
-				logger.Get().Warn().Str("label", lowerCaseLabel).Msg("Unmatched stream label")
+				log.Warn().Str("label", lowerCaseLabel).Msg("Unmatched stream label")
 				continue
 			}
 

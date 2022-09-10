@@ -17,7 +17,7 @@ func AsJsonStr(obj interface{}) string {
 	sb := new(strings.Builder)
 	enc := json.NewEncoder(sb)
 	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
+	enc.SetIndent("", "")
 	_ = enc.Encode(obj)
 	return fmt.Sprint(sb)
 }
