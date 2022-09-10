@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"net/http"
 	"stash-vr/internal/config"
 	"stash-vr/internal/logger"
@@ -14,8 +13,6 @@ import (
 const listenAddress = ":9666"
 
 func main() {
-	spew.Config.DisablePointerAddresses = true
-	spew.Config.DisableCapacities = true
 	if err := run(); err != nil {
 		logger.Get().Warn().Err(err).Msg("EXIT with ERROR")
 	} else {

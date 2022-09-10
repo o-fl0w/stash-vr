@@ -45,6 +45,7 @@ func (h HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 
 func write(w http.ResponseWriter, data interface{}) error {
 	w.Header().Add("Content-Type", "application/json")
+	log.Trace().Msg(fmt.Sprintf("write:\n%s", util.AsJsonStr(data)))
 	err := util.NewJsonEncoder(w).Encode(data)
 	if err != nil {
 		return fmt.Errorf("json encode: %w", err)

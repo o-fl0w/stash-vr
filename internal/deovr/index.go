@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"github.com/davecgh/go-spew/spew"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/util"
 )
 
 type Index struct {
@@ -48,7 +48,7 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Ind
 	//	return Index{}, fmt.Errorf("sectionsByTags: %w", err)
 	//}
 
-	log.Info().Str("route", "index").Int("#categories", len(index.Scenes)).Send()
+	log.Info().Int("sectionCount", len(index.Scenes)).Msg("Index built")
 
 	return index, nil
 }
@@ -112,8 +112,14 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 	}
 
 	for _, savedFilter := range savedFiltersResponse.FindSavedFilters {
-		log.Debug().Msg(fmt.Sprintf("saved filter=%s", spew.Sdump(savedFilter)))
-		if savedFilter.Name == "" || containsSavedFilterId(savedFilter.Id, *destination) {
+		log.Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg(fmt.Sprintf("FindSavedFilters::Filter:\n%s", util.AsJsonStr(savedFilter.Filter)))
+
+		if savedFilter.Name == "" {
+			log.Debug().Str("filterId", savedFilter.Id).Msg("Empty filter name, skipping")
+			continue
+		}
+		if containsSavedFilterId(savedFilter.Id, *destination) {
+			log.Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Filter has already been added, skipping")
 			continue
 		}
 
@@ -121,13 +127,14 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 		if err != nil {
 			return fmt.Errorf("ParseJsonEncodedFilter: %w", err)
 		}
+		log.Debug().Msg(fmt.Sprintf("ParseJsonEncodedFilter:\n%s", util.AsJsonStr(filter)))
 
-		log.Debug().Msg(fmt.Sprintf("scene filter=%s", spew.Sdump(filter)))
 		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
 		if err != nil {
 			return fmt.Errorf("FindScenesByFilter: %w", err)
 		}
 		if len(scenesResponse.FindScenes.Scenes) == 0 {
+			log.Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("0 videos, skipping")
 			continue
 		}
 
@@ -139,6 +146,7 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, baseUrl 
 		for _, s := range scenesResponse.FindScenes.Scenes {
 			scene.List = append(scene.List, getPreviewVideoData(baseUrl, s.ScenePreviewParts))
 		}
+		log.Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Int("videoCount", len(scene.List)).Msg("Section added from Saved Filter")
 
 		*destination = append(*destination, scene)
 	}
