@@ -35,6 +35,7 @@ stash-vr listens on port `9666`, use docker port binding to change.
     - Studio:\<Studio>
     - Performer:\<Performer>
     - @:\<Marker>
+    - ?:\<Saved Filter>
 * Funscript support
 * Ratings
 
