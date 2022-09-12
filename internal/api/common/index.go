@@ -6,6 +6,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/stash"
+	"stash-vr/internal/stash/filter/scenefilter"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strings"
@@ -20,16 +21,16 @@ type Section struct {
 func BuildIndex(ctx context.Context, client graphql.Client) []Section {
 	var sections []Section
 
-	if err := sectionsCustom(ctx, client, "", &sections); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("sectionsCustom")
+	if err := sectionsDefault(ctx, client, "", &sections); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build default sections")
 	}
 
 	if err := sectionsByFrontPage(ctx, client, "", &sections); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("sectionsByFrontPage")
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
 	}
 
 	if err := sectionsBySavedFilters(ctx, client, "?:", &sections); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("sectionsBySavedFilters")
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
 	}
 
 	//if err := sectionsByTags(ctx, client, baseUrl, "#:", &index.Scenes, &sections); err != nil {
@@ -41,12 +42,12 @@ func BuildIndex(ctx context.Context, client graphql.Client) []Section {
 	return sections
 }
 
-func sectionsCustom(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {
+func sectionsDefault(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {
 	section := Section{Name: fmt.Sprintf("%s%s", prefix, "All")}
-	var sceneFilter gql.SceneFilterType
-	scenesResponse, err := gql.FindScenesByFilter(ctx, client, &sceneFilter, "", gql.SortDirectionEnumAsc)
+
+	scenesResponse, err := gql.FindAllScenes(ctx, client)
 	if err != nil {
-		return fmt.Errorf("FindScenesByFilter: %w", err)
+		return fmt.Errorf("FindAllScenes: %w", err)
 	}
 	for _, s := range scenesResponse.FindScenes.Scenes {
 		section.PreviewPartsList = append(section.PreviewPartsList, s.ScenePreviewParts)
@@ -57,47 +58,16 @@ func sectionsCustom(ctx context.Context, client graphql.Client, prefix string, d
 }
 
 func sectionsByFrontPage(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {
-	ids, err := stash.FindFrontPageSavedFilterIds(ctx, client)
+	savedSceneFilters, err := stash.FindSavedSceneFiltersByFrontPage(ctx, client)
 	if err != nil {
-		return fmt.Errorf("FindFrontPageSavedFilterIds: %w", err)
+		return fmt.Errorf("FindSavedSceneFiltersByFrontPage: %w", err)
 	}
 
-	for _, id := range ids {
-		savedFilterResponse, err := gql.FindSavedFilter(ctx, client, id)
+	for _, savedFilter := range savedSceneFilters {
+		section, err := sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter)
 		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", id).Msg("FindSavedFilter: Skipping")
+			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsByFrontPage: sectionFromSavedSceneFilter")
 			continue
-		}
-
-		savedFilter := savedFilterResponse.FindSavedFilter.SavedFilterParts
-
-		if savedFilter.Mode != gql.FilterModeScenes {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).Str("mode", string(savedFilter.Mode)).Msg("Unsupported filter mode, skipping")
-			continue
-		}
-
-		filter, err := stash.ParseJsonEncodedFilter(savedFilter.Filter)
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", id).RawJSON("jsonFilter", []byte(savedFilter.Filter)).Msg("ParseJsonEncodedFilter: Skipping")
-			continue
-		}
-
-		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).
-				Str("filterId", savedFilter.Id).
-				RawJSON("jsonFilter", []byte(savedFilter.Filter)).
-				RawJSON("parsedFilter", []byte(util.AsJsonStr(filter))).
-				Msg("FindScenesByFilter: Skipping")
-			continue
-		}
-
-		section := Section{
-			Name:     getFilterName(prefix, savedFilter),
-			FilterId: savedFilter.Id,
-		}
-		for _, s := range scenesResponse.FindScenes.Scenes {
-			section.PreviewPartsList = append(section.PreviewPartsList, s.ScenePreviewParts)
 		}
 		*destination = append(*destination, section)
 
@@ -108,49 +78,21 @@ func sectionsByFrontPage(ctx context.Context, client graphql.Client, prefix stri
 }
 
 func sectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {
-	savedFiltersResponse, err := gql.FindSavedFilters(ctx, client)
+	savedFiltersResponse, err := gql.FindSavedSceneFilters(ctx, client)
 	if err != nil {
-		return fmt.Errorf("FindSavedFilters: %w", err)
+		return fmt.Errorf("FindSavedSceneFilters: %w", err)
 	}
 
 	for _, savedFilter := range savedFiltersResponse.FindSavedFilters {
-		if savedFilter.Mode != gql.FilterModeScenes {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Str("mode", string(savedFilter.Mode)).Msg("Unsupported filter mode, skipping")
-			continue
-		}
-
 		if containsSavedFilterId(savedFilter.Id, *destination) {
-			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Filter has already been added, skipping")
+			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Filter already added, skipping")
 			continue
 		}
 
-		filter, err := stash.ParseJsonEncodedFilter(savedFilter.Filter)
+		section, err := sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter.SavedFilterParts)
 		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).RawJSON("jsonFilter", []byte(savedFilter.Filter)).Msg("ParseJsonEncodedFilter: Skipping")
+			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsBySavedFilters: sectionFromSavedSceneFilter")
 			continue
-		}
-
-		scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filter.SceneFilter, filter.SortBy, filter.SortDir)
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).
-				Str("filterId", savedFilter.Id).
-				RawJSON("jsonFilter", []byte(savedFilter.Filter)).
-				RawJSON("parsedFilter", []byte(util.AsJsonStr(filter))).
-				Msg("FindScenesByFilter: Skipping")
-			continue
-		}
-		if len(scenesResponse.FindScenes.Scenes) == 0 {
-			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("0 videos, skipping")
-			continue
-		}
-
-		section := Section{
-			Name:     getFilterName(prefix, savedFilter.SavedFilterParts),
-			FilterId: savedFilter.Id,
-		}
-
-		for _, s := range scenesResponse.FindScenes.Scenes {
-			section.PreviewPartsList = append(section.PreviewPartsList, s.ScenePreviewParts)
 		}
 		*destination = append(*destination, section)
 
@@ -158,6 +100,35 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix s
 	}
 
 	return nil
+}
+
+func sectionFromSavedSceneFilter(ctx context.Context, client graphql.Client, prefix string, savedFilter gql.SavedFilterParts) (Section, error) {
+	if savedFilter.Mode != gql.FilterModeScenes {
+		return Section{}, fmt.Errorf("not a scene filter, mode='%s'", savedFilter.Mode)
+	}
+
+	filterQuery, err := scenefilter.ParseJsonEncodedFilter(savedFilter.Filter)
+	if err != nil {
+		return Section{}, fmt.Errorf("ParseJsonEncodedFilter: %w", err)
+	}
+
+	scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filterQuery.SceneFilter, &filterQuery.FilterOpts)
+	if err != nil {
+		return Section{}, fmt.Errorf("FindScenesByFilter savedFilter=%+v parsedFilter=%+v: %w", savedFilter, util.AsJsonStr(filterQuery), err)
+	}
+
+	if len(scenesResponse.FindScenes.Scenes) == 0 {
+		return Section{}, fmt.Errorf("0 videos found")
+	}
+
+	section := Section{
+		Name:     getFilterName(prefix, savedFilter),
+		FilterId: savedFilter.Id,
+	}
+	for _, s := range scenesResponse.FindScenes.Scenes {
+		section.PreviewPartsList = append(section.PreviewPartsList, s.ScenePreviewParts)
+	}
+	return section, nil
 }
 
 func sectionsByTags(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {

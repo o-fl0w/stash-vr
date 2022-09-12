@@ -1,8 +1,8 @@
 package util
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"strings"
 )
@@ -19,5 +19,7 @@ func AsJsonStr(obj interface{}) string {
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", "")
 	_ = enc.Encode(obj)
-	return fmt.Sprint(sb)
+	compacted := bytes.Buffer{}
+	_ = json.Compact(&compacted, []byte(sb.String()))
+	return compacted.String()
 }

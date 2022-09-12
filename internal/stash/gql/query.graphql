@@ -12,8 +12,8 @@ query FindCredentials{
     }
 }
 
-query FindSavedFilters{
-    findSavedFilters{
+query FindSavedSceneFilters{
+    findSavedFilters(mode: SCENES){
         ...SavedFilterParts
     }
 }
@@ -27,31 +27,34 @@ query FindSavedFilter($id: ID!){
 query FindAllNonEmptyTags{
     findTags(tag_filter: {scene_count: {modifier: GREATER_THAN, value: 1}}){
         tags {
-        ...TagParts
-        scene_count
-    }}
+            ...TagParts
+            scene_count
+        }}
 }
 
 query FindTags(
     $tag_filter: TagFilterType, $sort: String, $direction: SortDirectionEnum){
     findTags(tag_filter: $tag_filter, filter: {sort: $sort, direction: $direction, per_page: -1}){
         tags {
-        ...TagParts
-        scene_count
-    }}
+            ...TagParts
+            scene_count
+        }}
 }
-
 
 # @genqlient(for: "SceneFilterType.has_markers", omitempty: true)
 query FindScenesByFilter(
-    $scene_filter: SceneFilterType, $sort: String, $direction: SortDirectionEnum){
-    findScenes(scene_filter: $scene_filter, filter: {sort: $sort, direction: $direction, per_page: -1}){
+    $scene_filter: SceneFilterType, $filterOpts: FindFilterType){
+    findScenes(scene_filter: $scene_filter, filter: $filterOpts){
         scenes {
             ...ScenePreviewParts
         }}
 }
 
-
+query FindAllScenes{findScenes(filter: {per_page: -1}){
+    scenes {
+        ...ScenePreviewParts
+    }}
+}
 
 query FindScenesByTags($tags: [ID!]){
     findScenes(scene_filter: {tags: {modifier: INCLUDES, value: $tags}}, filter: {per_page: -1}){
@@ -96,7 +99,7 @@ fragment FullSceneParts on Scene{
         seconds, title
     },
     performers {
-       id, name, rating
+        id, name, rating
     }
 }
 
