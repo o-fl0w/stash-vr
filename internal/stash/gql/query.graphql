@@ -1,3 +1,9 @@
+query Version{
+    version {
+        version
+    }
+}
+
 query UIConfiguration{
     configuration{
         ui

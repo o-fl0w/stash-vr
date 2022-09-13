@@ -2,26 +2,24 @@ package router
 
 import (
 	"fmt"
+	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"stash-vr/internal/api/deovr"
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/config"
-	"stash-vr/internal/stash"
 	"strings"
 	"time"
 )
 
-func Build() *chi.Mux {
-	gqlClient := stash.NewClient()
-
+func Build(client graphql.Client) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Use(requestLogger)
 
-	router.Mount("/heresphere", heresphere.Router(gqlClient))
-	router.Mount("/deovr", deovr.Router(gqlClient))
+	router.Mount("/heresphere", heresphere.Router(client))
+	router.Mount("/deovr", deovr.Router(client))
 
 	router.Get("/", redirector)
 
@@ -36,9 +34,6 @@ func redirector(w http.ResponseWriter, req *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}
-	//else if strings.Contains(userAgent, "Deo VR") {
-	//	http.Redirect(w, req, "/deovr", 307)
-	//}
 }
 
 func requestLogger(next http.Handler) http.Handler {
