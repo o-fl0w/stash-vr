@@ -11,6 +11,20 @@ import (
 	"strings"
 )
 
+type UpdateVideoData struct {
+	Rating     *float32 `json:"rating,omitempty"`
+	Tags       *[]Tag   `json:"tags,omitempty"`
+	DeleteFile *bool    `json:"deleteFile,omitempty"`
+}
+
+func (v UpdateVideoData) IsUpdateRequest() bool {
+	return v.Rating != nil || v.Tags != nil
+}
+
+func (v UpdateVideoData) IsDeleteRequest() bool {
+	return v.DeleteFile != nil && *v.DeleteFile
+}
+
 type sceneUpdateInput struct {
 	Rating       *int
 	TagIds       *[]string
@@ -155,4 +169,13 @@ func update(ctx context.Context, client graphql.Client, videoId string, updateRe
 		}
 		log.Ctx(ctx).Debug().Str("videoId", videoId).Interface("new performers", *input.TagIds).Msg("Performers updated")
 	}
+}
+
+func destroy(ctx context.Context, client graphql.Client, videoId string) error {
+	_, err := gql.SceneDestroy(ctx, client, videoId)
+	if err != nil {
+		return fmt.Errorf("SceneDestroy: %w", err)
+	}
+	log.Ctx(ctx).Debug().Str("videoId", videoId).Msg("Requested stash to delete scene, file and generated content")
+	return nil
 }

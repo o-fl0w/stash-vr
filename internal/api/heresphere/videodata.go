@@ -73,17 +73,13 @@ type Script struct {
 	Url  string `json:"url"`
 }
 
-type UpdateVideoData struct {
-	Rating *float32 `json:"rating,omitempty"`
-	Tags   *[]Tag   `json:"tags,omitempty"`
-}
-
-func buildVideoData(ctx context.Context, client graphql.Client, videoId string, updateReq UpdateVideoData) (VideoData, error) {
-	update(ctx, client, videoId, updateReq)
-
+func buildVideoData(ctx context.Context, client graphql.Client, videoId string) (VideoData, error) {
 	findSceneResponse, err := gql.FindScene(ctx, client, videoId)
 	if err != nil {
 		return VideoData{}, fmt.Errorf("FindScene: %w", err)
+	}
+	if findSceneResponse.FindScene == nil {
+		return VideoData{}, fmt.Errorf("find scene: video not found")
 	}
 	s := findSceneResponse.FindScene.FullSceneParts
 

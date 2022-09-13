@@ -37,3 +37,7 @@ mutation StudioCreate($name: String!){
 mutation PerformerCreate($name: String!){
     performerCreate(input: {name: $name, details: "# created by stash-vr"}){id}
 }
+
+mutation SceneDestroy($id: ID!){
+    sceneDestroy(input: {id: $id, delete_file: true, delete_generated: true})
+}
