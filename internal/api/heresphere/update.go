@@ -84,7 +84,7 @@ func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, updateR
 			tagType, tagName, found := strings.Cut(tagReq.Name, ":")
 			tagType = strings.ToLower(tagType)
 			if !found {
-				log.Ctx(ctx).Debug().Str("name", tagReq.Name).Msg("Tag not handled")
+				log.Ctx(ctx).Debug().Str("name", tagReq.Name).Msg("Tag not categorized, skipping")
 				continue
 			}
 
@@ -113,7 +113,10 @@ func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, updateR
 					input.PerformerIds = &[]string{}
 				}
 				*input.PerformerIds = append(*input.PerformerIds, id)
+			case legendSceneMarker:
+				log.Ctx(ctx).Info().Str("name", tagReq.Name).Msg("Scene marker tag not yet supported")
 			default:
+				log.Ctx(ctx).Info().Str("name", tagReq.Name).Msg("Undefined category for tag")
 			}
 		}
 	}
@@ -122,7 +125,7 @@ func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, updateR
 
 func update(ctx context.Context, client graphql.Client, videoId string, updateReq UpdateVideoData) {
 	input := sceneUpdateInputFromReq(ctx, client, updateReq)
-	log.Ctx(ctx).Debug().Str("videoId", videoId).Interface("update req", updateReq).Interface("update input", input).Send()
+	log.Ctx(ctx).Trace().Str("videoId", videoId).Interface("update req", updateReq).Interface("update input", input).Send()
 
 	if input.Rating != nil {
 		_, err := gql.SceneUpdateRating(ctx, client, videoId, *input.Rating)
