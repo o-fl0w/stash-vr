@@ -33,9 +33,10 @@ func redirector(w http.ResponseWriter, req *http.Request) {
 
 	if strings.Contains(userAgent, "HereSphere") {
 		http.Redirect(w, req, "/heresphere", 307)
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
+
+	w.WriteHeader(http.StatusBadRequest)
 }
 
 func requestLogger(next http.Handler) http.Handler {
