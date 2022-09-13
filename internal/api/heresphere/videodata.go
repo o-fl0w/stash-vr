@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
@@ -26,6 +27,7 @@ type VideoData struct {
 	DateAdded      string   `json:"dateAdded"`
 	Duration       int      `json:"duration"`
 	Rating         float32  `json:"rating"`
+	IsFavorite     bool     `json:"isFavorite"`
 	Projection     string   `json:"projection"`
 	Stereo         string   `json:"stereo"`
 	Fov            float32  `json:"fov"`
@@ -34,10 +36,9 @@ type VideoData struct {
 	Tags           []Tag    `json:"tags"`
 	Media          []Media  `json:"media"`
 
-	WriteRating bool `json:"writeRating"`
-	WriteTags   bool `json:"writeTags"`
-
-	_track int
+	WriteFavorite bool `json:"writeFavorite"`
+	WriteRating   bool `json:"writeRating"`
+	WriteTags     bool `json:"writeTags"`
 }
 
 type Tag struct {
@@ -85,9 +86,12 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 		DateAdded:      s.Created_at.Format("2006-01-02"),
 		Duration:       int(s.File.Duration) * 1000,
 		Rating:         float32(s.Rating),
+		WriteFavorite:  true,
 		WriteRating:    true,
 		WriteTags:      true,
 	}
+
+	setIsFavorite(s, &videoData)
 
 	setStreamSources(s, &videoData)
 	set3DFormat(s, &videoData)
@@ -223,5 +227,14 @@ func setStreamSources(s gql.FullSceneParts, videoData *VideoData) {
 			e.Sources = append(e.Sources, vs)
 		}
 		videoData.Media = append(videoData.Media, e)
+	}
+}
+
+func setIsFavorite(s gql.FullSceneParts, videoData *VideoData) {
+	for _, t := range s.Tags {
+		if t.Name == config.Get().FavoriteTag {
+			videoData.IsFavorite = true
+			return
+		}
 	}
 }

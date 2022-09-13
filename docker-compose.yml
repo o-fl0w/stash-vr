@@ -9,4 +9,5 @@ services:
     environment:
       STASH_GRAPHQL_URL: "http://localhost:9999/graphql"
       #STASH_API_KEY: "xxx" # uncomment and set if you've configured stash to use authentication
+      FAVORITE_TAG: "FAVORITE"
       #LOG_LEVEL: "debug"

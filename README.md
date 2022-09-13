@@ -17,6 +17,7 @@ See [docker_compose.yml](docker-compose.yml) for details.
 
 * `STASH_GRAPHQL_URL` Url to your stash graphql - something like `http://<stash.host>:<9999>/graphql`
 * `STASH_API_KEY` Api key to your stash if it's using authentication. 
+* `FAVORITE_TAG` Name of tag in stash to hold scenes marked as [favorites](#favorites) (will be created if not existing)
 
 stash-vr listens on port `9666`, use docker port binding to change.
 
@@ -28,15 +29,15 @@ stash-vr listens on port `9666`, use docker port binding to change.
 * Provide transcoding endpoints to your videos served by stash
 
 ### HereSphere:
-* Ratings
 * Two-way sync
   * Rating
   * Tags
   * Studio
   * Performers
   * Markers
+  * Favorites
 * Delete scenes
-* Funscript support
+* Funscript
 
 ### DeoVR
 * Markers
@@ -66,12 +67,24 @@ Same workflow goes for setting studio and performers but with different prefixes
 Markers in stash need a primary tag. Marker title is optional.
 To create a marker using HereSphere open your video and create a "tag" on any track using `Video Tags`.
 The naming format is:
-* `<tag>:<title>` - will create a Marker in stash titled `<title>` with the primary tag `<tag>`
-* `<tag>` - will create a Marker in stash with primary tag `<tag>` and no title.
+* `<tag>:<title>` will create a Marker in stash titled `<title>` with the primary tag `<tag>`
+* `<tag>` will create a Marker in stash with primary tag `<tag>` and no title.
   
 Set the start time using HereSphere controls. 
 Tags (markers) in HereSphere has support for both a start and end time. 
 Stash currently defines Markers as having a start time only. This means the end time set in HereSphere will be ignored.
+
+#### Favorites
+When the favorite-feature of HereSphere is first used stash-vr will create a tag in stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your video.
+
+**Tip:** Create a filter using that tag, so it shows up in HereSphere for quick access to favorites.
+
+#### Rating
+HereSphere uses fractions for ratings, i.e. 4.5 is a valid rating. Stash uses whole number.
+If you set a half star in HereSphere stash-vr will round up the rating. That is if you set a rating of 3.5 the video will receive a rating of 4 in stash.
+In other words, click anywhere on a star to set the rating to that amount of stars.
+
+**Exception:** To remove a rating, rate the video 0.5 (half a star). 
 
 ## 3D
 Both DeoVR and HereSphere has algorithms to automatically detect and handle 3D videos.

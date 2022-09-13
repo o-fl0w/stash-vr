@@ -9,6 +9,7 @@ import (
 const (
 	envKeyStashGraphQLUrl = "STASH_GRAPHQL_URL"
 	envKeyStashApiKey     = "STASH_API_KEY"
+	envKeyFavoriteTag     = "FAVORITE_TAG"
 	envKeyLogLevel        = "LOG_LEVEL"
 	envKeyDisableRedact   = "DISABLE_REDACT"
 )
@@ -16,6 +17,7 @@ const (
 type Application struct {
 	StashGraphQLUrl  string
 	StashApiKey      string
+	FavoriteTag      string
 	LogLevel         string
 	IsRedactDisabled bool
 }
@@ -29,6 +31,7 @@ func Get() Application {
 		cfg = Application{
 			StashGraphQLUrl:  getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
 			StashApiKey:      getEnvOrDefault(envKeyStashApiKey, ""),
+			FavoriteTag:      getEnvOrDefault(envKeyFavoriteTag, "FAVORITE"),
 			LogLevel:         strings.ToLower(getEnvOrDefault(envKeyLogLevel, "info")),
 			IsRedactDisabled: getEnvOrDefault(envKeyDisableRedact, "false") == "true",
 		}
