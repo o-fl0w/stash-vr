@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"stash-vr/internal/api/deovr"
@@ -17,6 +18,7 @@ func Build(client graphql.Client) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Use(requestLogger)
+	router.Use(middleware.Recoverer)
 
 	router.Mount("/heresphere", heresphere.Router(client))
 	router.Mount("/deovr", deovr.Router(client))

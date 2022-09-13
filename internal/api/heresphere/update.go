@@ -33,6 +33,9 @@ type sceneUpdateInput struct {
 }
 
 func findOrCreateTag(ctx context.Context, client graphql.Client, name string) (string, error) {
+	if name == "" {
+		return "", fmt.Errorf("empty tag name")
+	}
 	findResponse, err := gql.FindTagByName(ctx, client, name)
 	if err != nil {
 		return "", fmt.Errorf("FindTagByName name='%s': %w", name, err)
@@ -50,6 +53,9 @@ func findOrCreateTag(ctx context.Context, client graphql.Client, name string) (s
 }
 
 func findOrCreateStudio(ctx context.Context, client graphql.Client, name string) (string, error) {
+	if name == "" {
+		return "", fmt.Errorf("empty studio name")
+	}
 	findResponse, err := gql.FindStudioByName(ctx, client, name)
 	if err != nil {
 		return "", fmt.Errorf("FindStudioByName name='%s': %w", name, err)
@@ -67,6 +73,9 @@ func findOrCreateStudio(ctx context.Context, client graphql.Client, name string)
 }
 
 func findOrCreatePerformer(ctx context.Context, client graphql.Client, name string) (string, error) {
+	if name == "" {
+		return "", fmt.Errorf("empty performer name")
+	}
 	findResponse, err := gql.FindPerformerByName(ctx, client, name)
 	if err != nil {
 		return "", fmt.Errorf("FindPerformerByName name='%s': %w", name, err)
@@ -83,7 +92,41 @@ func findOrCreatePerformer(ctx context.Context, client graphql.Client, name stri
 	}
 }
 
-func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, updateReq UpdateVideoData) sceneUpdateInput {
+type SceneMarker struct {
+	tag   string
+	title string
+	start float64
+}
+
+func setSceneMarkers(ctx context.Context, client graphql.Client, videoId string, markers []SceneMarker) error {
+	response, err := gql.FindSceneMarkers(ctx, client, videoId)
+	if err != nil {
+		return fmt.Errorf("FindSceneMarkers: %w", err)
+	}
+	for _, smt := range response.SceneMarkerTags {
+		for _, sm := range smt.Scene_markers {
+			if _, err := gql.SceneMarkerDestroy(ctx, client, sm.Id); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Str("videoId", videoId).Str("sceneMarkerId", sm.Id).Str("sceneMarkerTitle", sm.Title).Msg("Failed to delete scene marker")
+				continue
+			}
+		}
+	}
+	for _, m := range markers {
+		tagId, err := findOrCreateTag(ctx, client, m.tag)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Str("videoId", videoId).Msg("findOrCreateTag")
+			continue
+		}
+		_, err = gql.SceneMarkerCreate(ctx, client, videoId, tagId, m.start, m.title)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Str("videoId", videoId).Interface("marker", m).Msg("SceneMarkerCreate")
+			continue
+		}
+	}
+	return nil
+}
+
+func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, videoId string, updateReq UpdateVideoData) sceneUpdateInput {
 	input := sceneUpdateInput{}
 	if updateReq.Rating != nil {
 		if *updateReq.Rating == 0.5 {
@@ -94,16 +137,11 @@ func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, updateR
 		}
 	}
 	if updateReq.Tags != nil {
+		var sceneMarkers []SceneMarker
 		for _, tagReq := range *updateReq.Tags {
-			tagType, tagName, found := strings.Cut(tagReq.Name, ":")
-			tagType = strings.ToLower(tagType)
-			if !found {
-				log.Ctx(ctx).Debug().Str("name", tagReq.Name).Msg("Tag not categorized, skipping")
-				continue
-			}
+			tagType, tagName, isCategorized := strings.Cut(tagReq.Name, ":")
 
-			switch tagType {
-			case legendTag, legendFull[legendTag]:
+			if isCategorized && legendTag.IsMatch(tagType) {
 				id, err := findOrCreateTag(ctx, client, tagName)
 				if err != nil {
 					log.Ctx(ctx).Warn().Err(err).Msg("findOrCreateTag")
@@ -112,13 +150,13 @@ func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, updateR
 					input.TagIds = &[]string{}
 				}
 				*input.TagIds = append(*input.TagIds, id)
-			case legendStudio, legendFull[legendStudio]:
+			} else if isCategorized && legendStudio.IsMatch(tagType) {
 				id, err := findOrCreateStudio(ctx, client, tagName)
 				if err != nil {
 					log.Ctx(ctx).Warn().Err(err).Msg("findOrCreateStudio")
 				}
 				input.StudioId = &id
-			case legendPerformer, legendFull[legendPerformer]:
+			} else if isCategorized && legendPerformer.IsMatch(tagType) {
 				id, err := findOrCreatePerformer(ctx, client, tagName)
 				if err != nil {
 					log.Ctx(ctx).Warn().Err(err).Msg("findOrCreatePerformer")
@@ -127,10 +165,25 @@ func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, updateR
 					input.PerformerIds = &[]string{}
 				}
 				*input.PerformerIds = append(*input.PerformerIds, id)
-			case legendSceneMarker:
-				log.Ctx(ctx).Info().Str("name", tagReq.Name).Msg("Scene marker tag not yet supported")
-			default:
-				log.Ctx(ctx).Info().Str("name", tagReq.Name).Msg("Undefined category for tag")
+			} else {
+				var markerTitle string
+
+				markerPrimaryTag := tagType
+				if isCategorized {
+					markerTitle = tagName
+				}
+				log.Ctx(ctx).Debug().Str("primary tag", markerPrimaryTag).Str("title", markerTitle).Msg("Scene marker")
+				sceneMarkers = append(sceneMarkers, SceneMarker{
+					tag:   markerPrimaryTag,
+					title: markerTitle,
+					start: float64(tagReq.Start) / 1000,
+				})
+			}
+		}
+		if len(sceneMarkers) != 0 {
+			err := setSceneMarkers(ctx, client, videoId, sceneMarkers)
+			if err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Failed to set scene markers")
 			}
 		}
 	}
@@ -138,7 +191,7 @@ func sceneUpdateInputFromReq(ctx context.Context, client graphql.Client, updateR
 }
 
 func update(ctx context.Context, client graphql.Client, videoId string, updateReq UpdateVideoData) {
-	input := sceneUpdateInputFromReq(ctx, client, updateReq)
+	input := sceneUpdateInputFromReq(ctx, client, videoId, updateReq)
 	log.Ctx(ctx).Trace().Str("videoId", videoId).Interface("update req", updateReq).Interface("update input", input).Send()
 
 	if input.Rating != nil {

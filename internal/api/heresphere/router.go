@@ -20,7 +20,7 @@ func Router(client graphql.Client) http.Handler {
 
 func logContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := log.With().Str("module", "deovr").Logger().WithContext(r.Context())
+		ctx := log.With().Str("module", "heresphere").Logger().WithContext(r.Context())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

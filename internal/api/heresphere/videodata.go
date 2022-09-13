@@ -7,21 +7,14 @@ import (
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
+	"strings"
 )
 
-const (
-	legendTag         = "#"
-	legendStudio      = "$"
-	legendPerformer   = "@"
-	legendSceneMarker = "!"
+var (
+	legendTag       = NewLegend("#", "Tag")
+	legendStudio    = NewLegend("$", "Studio")
+	legendPerformer = NewLegend("@", "Performer")
 )
-
-var legendFull = map[string]string{
-	legendTag:         legendTag,
-	legendStudio:      "Studio",
-	legendPerformer:   "Performer",
-	legendSceneMarker: legendSceneMarker,
-}
 
 type VideoData struct {
 	Access int `json:"access"`
@@ -113,7 +106,7 @@ func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
 
 	if s.Studio != nil {
 		t := Tag{
-			Name:   fmt.Sprintf("%s:%s", legendFull[legendStudio], s.Studio.Name),
+			Name:   fmt.Sprintf("%s:%s", legendStudio.Full, s.Studio.Name),
 			Rating: float32(s.Studio.Rating),
 			Start:  0,
 			End:    durationPerItem,
@@ -124,7 +117,7 @@ func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
 
 	for i, tag := range s.Tags {
 		t := Tag{
-			Name:  fmt.Sprintf("%s:%s", legendFull[legendTag], tag.Name),
+			Name:  fmt.Sprintf("%s:%s", legendTag.Short, tag.Name),
 			Start: durationPerItem + i*durationPerItem,
 			End:   durationPerItem + (i+1)*durationPerItem,
 			Track: util.Ptr(1),
@@ -138,7 +131,7 @@ func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
 	durationPerItem := int(s.File.Duration * 1000 / float64(itemCount))
 	for i, p := range s.Performers {
 		t := Tag{
-			Name:   fmt.Sprintf("%s:%s", legendFull[legendPerformer], p.Name),
+			Name:   fmt.Sprintf("%s:%s", legendPerformer.Full, p.Name),
 			Start:  i * durationPerItem,
 			End:    (i + 1) * durationPerItem,
 			Track:  util.Ptr(2),
@@ -150,8 +143,14 @@ func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
 
 func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 	for _, sm := range s.Scene_markers {
+		sb := strings.Builder{}
+		sb.WriteString(sm.Primary_tag.Name)
+		if sm.Title != "" {
+			sb.WriteString(":")
+			sb.WriteString(sm.Title)
+		}
 		t := Tag{
-			Name:  fmt.Sprintf("%s:%s", legendFull[legendSceneMarker], sm.Title),
+			Name:  sb.String(),
 			Start: int(sm.Seconds * 1000),
 			End:   0,
 			Track: util.Ptr(0),

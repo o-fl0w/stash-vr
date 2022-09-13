@@ -95,6 +95,12 @@ query FindScene($id: ID){
     }
 }
 
+query FindSceneMarkers($scene_id: ID!){
+    sceneMarkerTags(scene_id: $scene_id){
+        scene_markers{id, primary_tag{name}, title}
+    }
+}
+
 fragment SavedFilterParts on SavedFilter{
     id, name, filter, mode
 }
@@ -120,7 +126,9 @@ fragment FullSceneParts on Scene{
         id, name, rating
     },
     scene_markers {
-        id, seconds, title
+        id, seconds, title, primary_tag {
+            id, name
+        }
     },
     performers {
         id, name, rating
