@@ -12,7 +12,7 @@ func Router(client graphql.Client) http.Handler {
 	r := chi.NewRouter()
 	r.Use(logContext)
 	r.Get("/", httpHandler.Index)
-	r.Get("/{videoId}", httpHandler.VideoData)
+	r.Get("/{sceneId}", httpHandler.VideoData)
 	return r
 }
 

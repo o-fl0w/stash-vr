@@ -31,11 +31,11 @@ func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
 
 func (h HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	videoId := chi.URLParam(req, "videoId")
+	sceneId := chi.URLParam(req, "sceneId")
 
-	videoData, err := buildVideoData(ctx, h.Client, videoId)
+	videoData, err := buildVideoData(ctx, h.Client, sceneId)
 	if err != nil {
-		log.Ctx(ctx).Error().Str("videoId", videoId).Err(err).Msg("buildVideoData")
+		log.Ctx(ctx).Error().Str("sceneId", sceneId).Err(err).Msg("buildVideoData")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

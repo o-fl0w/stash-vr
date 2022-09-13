@@ -66,8 +66,8 @@ type Script struct {
 	Url  string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, client graphql.Client, videoId string) (VideoData, error) {
-	findSceneResponse, err := gql.FindScene(ctx, client, videoId)
+func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) (VideoData, error) {
+	findSceneResponse, err := gql.FindScene(ctx, client, sceneId)
 	if err != nil {
 		return VideoData{}, fmt.Errorf("FindScene: %w", err)
 	}

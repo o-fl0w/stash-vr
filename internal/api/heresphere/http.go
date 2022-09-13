@@ -35,7 +35,7 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 
 	ctx := req.Context()
-	videoId := chi.URLParam(req, "videoId")
+	sceneId := chi.URLParam(req, "sceneId")
 
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -46,17 +46,17 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 	var updateVideoData UpdateVideoData
 	err = json.Unmarshal(body, &updateVideoData)
 	if err != nil {
-		log.Debug().Err(err).Str("id", videoId).Bytes("body", body).Msg("videodata: body: unmarshal")
+		log.Debug().Err(err).Str("id", sceneId).Bytes("body", body).Msg("videodata: body: unmarshal")
 	} else {
 		if updateVideoData.IsUpdateRequest() {
-			update(ctx, h.Client, videoId, updateVideoData)
+			update(ctx, h.Client, sceneId, updateVideoData)
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
 		if updateVideoData.IsDeleteRequest() {
-			if err := destroy(ctx, h.Client, videoId); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Str("videoId", videoId).Msg("Failed to fulfill delete request")
+			if err := destroy(ctx, h.Client, sceneId); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Str("sceneId", sceneId).Msg("Failed to fulfill delete request")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -65,14 +65,14 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	videoData, err := buildVideoData(ctx, h.Client, videoId)
+	videoData, err := buildVideoData(ctx, h.Client, sceneId)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("id", videoId).Msg("buildVideoData")
+		log.Ctx(ctx).Error().Err(err).Str("id", sceneId).Msg("buildVideoData")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if err := common.Write(ctx, w, videoData); err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("id", videoId).Msg("videodata: write response")
+		log.Ctx(ctx).Error().Err(err).Str("id", sceneId).Msg("videodata: write response")
 	}
 
 }
