@@ -45,7 +45,7 @@ stash-vr listens on port `9666`, use docker port binding to change.
 ## Usage
 ### HereSphere
 ##### Two-way sync
-To enable two-way sync with stash all toggles (`Overwrite tags` etc.) needs to be toggled in the cogwheel at the bottom right of library view in HereSphere.
+To enable two-way sync with stash all toggles (`Overwrite tags` etc.) needs to be on, in the cogwheel at the bottom right of preview view in HereSphere.
 #### Manage metadata
 Video metadata is handled using `Video Tags`.
 
