@@ -86,8 +86,8 @@ In other words, click anywhere on a star to set the rating to that amount of sta
 
 **Exception:** To remove a rating, rate the video 0.5 (half a star). 
 
-## 3D
-Both DeoVR and HereSphere has algorithms to automatically detect and handle 3D videos.
+## VR
+Both DeoVR and HereSphere has algorithms to automatically detect and handle VR videos.
 It's not foolproof and to manually configure the players with custom layout/mesh-settings you can tag your scenes in stash as follows:
 
 * Mesh:
