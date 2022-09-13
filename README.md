@@ -28,17 +28,50 @@ stash-vr listens on port `9666`, use docker port binding to change.
 * Provide transcoding endpoints to your videos served by stash
 
 ### HereSphere:
-* Display and update ratings, tags and performers within HereSphere UI
-  - Legend:
-    - #:\<Tag>
-    - Studio:\<Studio> (Shorthand '$')
-    - Performer:\<Performer> (Shorthand '@')
-    - !:\<Marker>
-    - ?:\<Saved Filter>
+* Ratings
+* Two-way sync
+  * Rating
+  * Tags
+  * Studio
+  * Performers
+  * Markers
+* Delete scenes
 * Funscript support
 
 ### DeoVR
-* Cue points from markers.
+* Markers
+
+## Usage
+### HereSphere
+##### Two-way sync
+To enable two-way sync with stash all toggles (`Overwrite tags` etc.) needs to be toggled in the cogwheel at the bottom right of library view in HereSphere.
+#### Manage metadata
+Video metadata is handled using `Video Tags`.
+
+To tag a video open it in HereSphere and click `Video Tags` above the seekbar.
+On any track insert a new tag and prefix it with `#:` i.e. `#:MusicVideo`.
+This will create the tag/studio/performer `MusicVideo` in stash if not already present and apply it to your video.
+
+Same workflow goes for setting studio and performers but with different prefixes according to below:
+
+|Metadata|Prefix| Alias |
+|--------|------|-------|
+|Tags|`#:`|`Tag:`|
+|Studio|`$:`|`Studio:`|
+|Performers|`@:`|`Performer`|
+
+#### Markers
+(Both stash and HereSphere use the word _tag_ but they use it differently. Tags in heresphere are akin to Markers in stash)
+
+Markers in stash need a primary tag. Marker title is optional.
+To create a marker using HereSphere open your video and create a "tag" on any track using `Video Tags`.
+The naming format is:
+* `<tag>:<title>` - will create a Marker in stash titled `<title>` with the primary tag `<tag>`
+* `<tag>` - will create a Marker in stash with primary tag `<tag>` and no title.
+  
+Set the start time using HereSphere controls. 
+Tags (markers) in HereSphere has support for both a start and end time. 
+Stash currently defines Markers as having a start time only. This means the end time set in HereSphere will be ignored.
 
 ## 3D
 Both DeoVR and HereSphere has algorithms to automatically detect and handle 3D videos.
