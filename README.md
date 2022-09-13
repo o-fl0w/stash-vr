@@ -28,16 +28,14 @@ stash-vr listens on port `9666`, use docker port binding to change.
 * Provide transcoding endpoints to your videos served by stash
 
 ### HereSphere:
-* Video tags from markers.
-* Generate tags based on stash tags, studios, performers and markers.
+* Display and update ratings, tags and performers within HereSphere UI
   - Legend:
     - #:\<Tag>
-    - Studio:\<Studio>
-    - Performer:\<Performer>
-    - @:\<Marker>
+    - Studio:\<Studio> (Shorthand '$')
+    - Performer:\<Performer> (Shorthand '@')
+    - !:\<Marker>
     - ?:\<Saved Filter>
 * Funscript support
-* Ratings
 
 ### DeoVR
 * Cue points from markers.
