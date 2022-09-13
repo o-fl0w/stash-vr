@@ -110,7 +110,7 @@ func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
 			Rating: float32(s.Studio.Rating),
 			Start:  0,
 			End:    durationPerItem,
-			Track:  util.Ptr(1),
+			Track:  util.Ptr(0),
 		}
 		videoData.Tags = append(videoData.Tags, t)
 	}
@@ -120,7 +120,7 @@ func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
 			Name:  fmt.Sprintf("%s:%s", legendTag.Short, tag.Name),
 			Start: durationPerItem + i*durationPerItem,
 			End:   durationPerItem + (i+1)*durationPerItem,
-			Track: util.Ptr(1),
+			Track: util.Ptr(0),
 		}
 		videoData.Tags = append(videoData.Tags, t)
 	}
@@ -134,7 +134,7 @@ func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
 			Name:   fmt.Sprintf("%s:%s", legendPerformer.Full, p.Name),
 			Start:  i * durationPerItem,
 			End:    (i + 1) * durationPerItem,
-			Track:  util.Ptr(2),
+			Track:  util.Ptr(1),
 			Rating: float32(p.Rating),
 		}
 		videoData.Tags = append(videoData.Tags, t)
@@ -153,7 +153,7 @@ func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 			Name:  sb.String(),
 			Start: int(sm.Seconds * 1000),
 			End:   0,
-			Track: util.Ptr(0),
+			//Track: util.Ptr(0),
 		}
 		videoData.Tags = append(videoData.Tags, t)
 	}
