@@ -1,11 +1,12 @@
 package heresphere
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
+	"io"
 	"net/http"
 	"stash-vr/internal/api/common"
 )
@@ -31,14 +32,26 @@ func (h *HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
 }
 
 func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
+	defer req.Body.Close()
+
 	ctx := req.Context()
 	videoId := chi.URLParam(req, "videoId")
 
-	readVideoData(ctx, w, h.Client, videoId)
-}
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("videodata: body: read")
+		return
+	}
 
-func readVideoData(ctx context.Context, w http.ResponseWriter, client graphql.Client, videoId string) {
-	videoData, err := buildVideoData(ctx, client, videoId)
+	var updateVideoData UpdateVideoData
+	err = json.Unmarshal(body, &updateVideoData)
+	if err != nil {
+		log.Error().Err(err).Str("id", videoId).Bytes("body", body).Msg("videodata: update: unmarshal")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	videoData, err := buildVideoData(ctx, h.Client, videoId, updateVideoData)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Str("id", videoId).Msg("buildVideoData")
 		w.WriteHeader(http.StatusInternalServerError)

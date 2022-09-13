@@ -41,6 +41,24 @@ query FindTags(
         }}
 }
 
+query FindTagByName($name: String!){
+    findTags(tag_filter: {name: {value: $name, modifier: EQUALS}}){tags {
+        id
+    }}
+}
+
+query FindStudioByName($name: String!){
+    findStudios(studio_filter: {name: {value: $name, modifier: EQUALS}}){studios {
+        id
+    }}
+}
+
+query FindPerformerByName($name: String!){
+    findPerformers(performer_filter: {name: {value: $name, modifier: EQUALS}}){performers {
+        id
+    }}
+}
+
 # @genqlient(for: "SceneFilterType.has_markers", omitempty: true)
 query FindScenesByFilter(
     $scene_filter: SceneFilterType, $filterOpts: FindFilterType){
@@ -96,7 +114,7 @@ fragment FullSceneParts on Scene{
         id, name, rating
     },
     scene_markers {
-        seconds, title
+        id, seconds, title
     },
     performers {
         id, name, rating

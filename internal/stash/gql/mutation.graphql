@@ -1,0 +1,39 @@
+mutation SceneUpdateRating($id: ID!, $rating: Int) {
+    sceneUpdate(input: {
+        id: $id,
+        rating: $rating
+    }){id}
+}
+
+mutation SceneUpdateTags($id: ID!, $tag_ids: [ID!]) {
+    sceneUpdate(input: {
+        id: $id,
+        tag_ids: $tag_ids,
+    }){id}
+}
+
+mutation SceneUpdateStudio($id: ID!, $studio_id: ID) {
+    sceneUpdate(input: {
+        id: $id,
+        studio_id: $studio_id,
+    }){id}
+}
+
+mutation SceneUpdatePerformers($id: ID!, $performer_ids: [ID!]) {
+    sceneUpdate(input: {
+        id: $id,
+        performer_ids: $performer_ids
+    }){id}
+}
+
+mutation TagCreate($name: String!){
+    tagCreate(input: {name: $name}){id}
+}
+
+mutation StudioCreate($name: String!){
+    studioCreate(input: {name: $name, details: "# created by stash-vr"}){id}
+}
+
+mutation PerformerCreate($name: String!){
+    performerCreate(input: {name: $name, details: "# created by stash-vr"}){id}
+}

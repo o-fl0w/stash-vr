@@ -9,22 +9,42 @@ import (
 	"stash-vr/internal/util"
 )
 
+const (
+	legendTag         = "#"
+	legendStudio      = "$"
+	legendPerformer   = "@"
+	legendSceneMarker = "!"
+)
+
+var legendFull = map[string]string{
+	legendTag:         legendTag,
+	legendStudio:      "Studio",
+	legendPerformer:   "Performer",
+	legendSceneMarker: legendSceneMarker,
+}
+
 type VideoData struct {
-	Access         int      `json:"access"`
+	Access int `json:"access"`
+
 	Title          string   `json:"title"`
 	Description    string   `json:"description"`
-	DateAdded      string   `json:"dateAdded"`
 	ThumbnailImage string   `json:"thumbnailImage"`
 	ThumbnailVideo string   `json:"thumbnailVideo"`
+	DateAdded      string   `json:"dateAdded"`
 	Duration       int      `json:"duration"`
 	Rating         float32  `json:"rating"`
-	Media          []Media  `json:"media"`
-	Tags           []Tag    `json:"tags"`
 	Projection     string   `json:"projection"`
 	Stereo         string   `json:"stereo"`
-	Lens           string   `json:"lens"`
 	Fov            float32  `json:"fov"`
+	Lens           string   `json:"lens"`
 	Scripts        []Script `json:"scripts"`
+	Tags           []Tag    `json:"tags"`
+	Media          []Media  `json:"media"`
+
+	WriteRating bool `json:"writeRating"`
+	WriteTags   bool `json:"writeTags"`
+
+	_track int
 }
 
 type Tag struct {
@@ -53,7 +73,14 @@ type Script struct {
 	Url  string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, client graphql.Client, videoId string) (VideoData, error) {
+type UpdateVideoData struct {
+	Rating *float32 `json:"rating,omitempty"`
+	Tags   *[]Tag   `json:"tags,omitempty"`
+}
+
+func buildVideoData(ctx context.Context, client graphql.Client, videoId string, updateReq UpdateVideoData) (VideoData, error) {
+	update(ctx, client, videoId, updateReq)
+
 	findSceneResponse, err := gql.FindScene(ctx, client, videoId)
 	if err != nil {
 		return VideoData{}, fmt.Errorf("FindScene: %w", err)
@@ -64,22 +91,77 @@ func buildVideoData(ctx context.Context, client graphql.Client, videoId string) 
 		Access:         1,
 		Title:          s.Title,
 		Description:    s.Details,
-		DateAdded:      s.Created_at.Format("2006-01-02"),
 		ThumbnailImage: stash.ApiKeyed(s.Paths.Screenshot),
 		ThumbnailVideo: stash.ApiKeyed(s.Paths.Preview),
+		DateAdded:      s.Created_at.Format("2006-01-02"),
 		Duration:       int(s.File.Duration) * 1000,
 		Rating:         float32(s.Rating),
+		WriteRating:    true,
+		WriteTags:      true,
 	}
 
 	setStreamSources(s, &videoData)
 	set3DFormat(s, &videoData)
-	setTags(s, &videoData)
-	setStudios(s, &videoData)
-	setMarkers(s, &videoData)
+
+	setStudioAndTags(s, &videoData)
 	setPerformers(s, &videoData)
+	setMarkers(s, &videoData)
 	setScripts(s, &videoData)
 
 	return videoData, nil
+}
+
+func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
+	itemCount := 1 + len(s.Tags)
+	durationPerItem := int(s.File.Duration * 1000 / float64(itemCount))
+
+	if s.Studio != nil {
+		t := Tag{
+			Name:   fmt.Sprintf("%s:%s", legendFull[legendStudio], s.Studio.Name),
+			Rating: float32(s.Studio.Rating),
+			Start:  0,
+			End:    durationPerItem,
+			Track:  util.Ptr(1),
+		}
+		videoData.Tags = append(videoData.Tags, t)
+	}
+
+	for i, tag := range s.Tags {
+		t := Tag{
+			Name:  fmt.Sprintf("%s:%s", legendFull[legendTag], tag.Name),
+			Start: durationPerItem + i*durationPerItem,
+			End:   durationPerItem + (i+1)*durationPerItem,
+			Track: util.Ptr(1),
+		}
+		videoData.Tags = append(videoData.Tags, t)
+	}
+}
+
+func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
+	itemCount := len(s.Performers)
+	durationPerItem := int(s.File.Duration * 1000 / float64(itemCount))
+	for i, p := range s.Performers {
+		t := Tag{
+			Name:   fmt.Sprintf("%s:%s", legendFull[legendPerformer], p.Name),
+			Start:  i * durationPerItem,
+			End:    (i + 1) * durationPerItem,
+			Track:  util.Ptr(2),
+			Rating: float32(p.Rating),
+		}
+		videoData.Tags = append(videoData.Tags, t)
+	}
+}
+
+func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
+	for _, sm := range s.Scene_markers {
+		t := Tag{
+			Name:  fmt.Sprintf("%s:%s", legendFull[legendSceneMarker], sm.Title),
+			Start: int(sm.Seconds * 1000),
+			End:   0,
+			Track: util.Ptr(0),
+		}
+		videoData.Tags = append(videoData.Tags, t)
+	}
 }
 
 func setScripts(s gql.FullSceneParts, videoData *VideoData) {
@@ -88,52 +170,6 @@ func setScripts(s gql.FullSceneParts, videoData *VideoData) {
 			Name: fmt.Sprintf("Script-%s", s.Title),
 			Url:  s.ScriptParts.Paths.Funscript,
 		})
-	}
-}
-
-func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
-	for _, p := range s.Performers {
-		t := Tag{
-			Name:   fmt.Sprintf("Performer:%s", p.Name),
-			Start:  0,
-			End:    0,
-			Track:  util.Ptr(0),
-			Rating: float32(p.Rating),
-		}
-		videoData.Tags = append(videoData.Tags, t)
-	}
-}
-
-func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
-	for i, sm := range s.Scene_markers {
-		t := Tag{
-			Name:  fmt.Sprintf("@:%s", sm.Title),
-			Start: int(sm.Seconds * 1000),
-			End:   0,
-			Track: util.Ptr(1 + i),
-		}
-		videoData.Tags = append(videoData.Tags, t)
-	}
-}
-
-func setStudios(s gql.FullSceneParts, videoData *VideoData) {
-	if s.Studio != nil {
-		t := Tag{
-			Name:   fmt.Sprintf("Studio:%s", s.Studio.Name),
-			Rating: float32(s.Studio.Rating),
-			Track:  util.Ptr(0),
-		}
-		videoData.Tags = append(videoData.Tags, t)
-	}
-}
-
-func setTags(s gql.FullSceneParts, videoData *VideoData) {
-	for _, tag := range s.Tags {
-		t := Tag{
-			Name:  fmt.Sprintf("#:%s", tag.Name),
-			Track: util.Ptr(0),
-		}
-		videoData.Tags = append(videoData.Tags, t)
 	}
 }
 
