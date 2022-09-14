@@ -20,35 +20,26 @@ type Section struct {
 }
 
 func BuildIndex(ctx context.Context, client graphql.Client) []Section {
-	var sss [3][]Section
+	var sss [2][]Section
 
 	wg := sync.WaitGroup{}
-	wg.Add(3)
 
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		var err error
-		sss[0], err = sectionsDefault(ctx, client, "")
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build default sections")
-			return
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		var err error
-		sss[1], err = sectionsByFrontPage(ctx, client, "")
+		sss[0], err = sectionsByFrontPage(ctx, client, "")
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
 			return
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		var err error
-		sss[2], err = sectionsBySavedFilters(ctx, client, "?:")
+		sss[1], err = sectionsBySavedFilters(ctx, client, "?:")
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
 			return
@@ -77,22 +68,6 @@ func BuildIndex(ctx context.Context, client graphql.Client) []Section {
 	log.Ctx(ctx).Info().Int("sectionCount", len(sections)).Int("videoDataCount", videoCount).Msg("Index built")
 
 	return sections
-}
-
-func sectionsDefault(ctx context.Context, client graphql.Client, prefix string) ([]Section, error) {
-	scenesResponse, err := gql.FindAllScenes(ctx, client)
-	if err != nil {
-		return nil, fmt.Errorf("FindAllScenes: %w", err)
-	}
-	section := Section{
-		Name:             fmt.Sprintf("%s%s", prefix, "All"),
-		PreviewPartsList: make([]gql.ScenePreviewParts, len(scenesResponse.FindScenes.Scenes)),
-	}
-	for i, s := range scenesResponse.FindScenes.Scenes {
-		section.PreviewPartsList[i] = s.ScenePreviewParts
-	}
-	log.Ctx(ctx).Debug().Str("section", section.Name).Int("videoCount", len(section.PreviewPartsList)).Msg("Section built from defaults")
-	return []Section{section}, nil
 }
 
 func sectionsByFrontPage(ctx context.Context, client graphql.Client, prefix string) ([]Section, error) {

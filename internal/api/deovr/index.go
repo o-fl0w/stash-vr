@@ -30,7 +30,9 @@ type PreviewData struct {
 func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Index, error) {
 	sections := common.BuildIndex(ctx, client)
 
-	index := Index{Authorized: "1", Scenes: fromSections(baseUrl, sections)}
+	scenes := fromSections(baseUrl, sections)
+
+	index := Index{Authorized: "1", Scenes: scenes}
 
 	return index, nil
 }
