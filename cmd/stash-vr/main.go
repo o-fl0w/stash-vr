@@ -16,6 +16,8 @@ import (
 
 const listenAddress = ":9666"
 
+var BuildVersion = "DEV"
+
 func main() {
 	if err := run(); err != nil {
 		log.Warn().Err(err).Msg("EXIT with ERROR")
@@ -29,6 +31,7 @@ func run() error {
 
 	stashClient := stash.NewClient(config.Get().StashGraphQLUrl, config.Get().StashApiKey)
 
+	log.Info().Str("stash-vr version", BuildVersion).Send()
 	if version, err := gql.Version(context.Background(), stashClient); err != nil {
 		log.Warn().Err(err).Msg("Failed to retrieve stash version")
 	} else {
