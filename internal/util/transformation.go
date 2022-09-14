@@ -11,55 +11,39 @@ type Transformation[Input any, Output any] struct {
 	Failure   *func(Input, error)
 }
 
+func (t Transformation[Input, Output]) Do(inputs []Input) []Output {
+	return doer(inputs, t, func(i int, output Output) Output {
+		return output
+	}, func(outputs []Output) []Output {
+		return outputs
+	})
+}
+
 type sortable[T any] struct {
 	o T
 	i int
 }
 
-func (t Transformation[Input, Output]) Do(inputs []Input) []Output {
-	c := make(chan Output)
-	done := make(chan any)
-	outputs := make([]Output, 0, len(inputs))
-
-	go func() {
-		for {
-			o, ok := <-c
-			if !ok {
-				close(done)
-				return
-			}
-			outputs = append(outputs, o)
+func (t Transformation[Input, Output]) Ordered(inputs []Input) []Output {
+	return doer(inputs, t, func(i int, output Output) sortable[Output] {
+		return sortable[Output]{
+			o: output,
+			i: i,
 		}
-	}()
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(inputs))
-	for _, input := range inputs {
-		go func(input Input) {
-			defer wg.Done()
-			output, err := t.Transform(input)
-			if err != nil {
-				if t.Failure != nil {
-					(*t.Failure)(input, err)
-				}
-				return
-			}
-			c <- output
-			if t.Success != nil {
-				(*t.Success)(input, output)
-			}
-		}(input)
-	}
-	wg.Wait()
-	close(c)
-	<-done
-	return outputs
+	}, func(outputs []sortable[Output]) []Output {
+		sort.Slice(outputs, func(i, j int) bool { return outputs[i].i < outputs[j].i })
+		sorted := make([]Output, len(outputs))
+		for i, o := range outputs {
+			sorted[i] = o.o
+		}
+		return sorted
+	})
 }
 
-func (t Transformation[Input, Output]) Ordered(inputs []Input) []Output {
-	c := make(chan sortable[Output])
+func doer[Input any, Output any, T any](inputs []Input, t Transformation[Input, Output], produce func(int, Output) T, process func([]T) []Output) []Output {
+	c := make(chan T)
 	done := make(chan any)
-	outputs := make([]sortable[Output], 0, len(inputs))
+	outputs := make([]T, 0, len(inputs))
 
 	go func() {
 		for {
@@ -84,10 +68,7 @@ func (t Transformation[Input, Output]) Ordered(inputs []Input) []Output {
 				}
 				return
 			}
-			c <- sortable[Output]{
-				o: output,
-				i: i,
-			}
+			c <- produce(i, output)
 			if t.Success != nil {
 				(*t.Success)(input, output)
 			}
@@ -96,10 +77,6 @@ func (t Transformation[Input, Output]) Ordered(inputs []Input) []Output {
 	wg.Wait()
 	close(c)
 	<-done
-	sort.Slice(outputs, func(i, j int) bool { return outputs[i].i < outputs[j].i })
-	sorted := make([]Output, len(outputs))
-	for i, o := range outputs {
-		sorted[i] = o.o
-	}
-	return sorted
+	processed := process(outputs)
+	return processed
 }
