@@ -10,6 +10,7 @@ import (
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strings"
+	"sync"
 )
 
 type Section struct {
@@ -19,87 +20,126 @@ type Section struct {
 }
 
 func BuildIndex(ctx context.Context, client graphql.Client) []Section {
+	var sss [3][]Section
+
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		var err error
+		sss[0], err = sectionsDefault(ctx, client, "")
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build default sections")
+			return
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		sss[1], err = sectionsByFrontPage(ctx, client, "")
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
+			return
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		var err error
+		sss[2], err = sectionsBySavedFilters(ctx, client, "?:")
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
+			return
+		}
+	}()
+
+	wg.Wait()
+
 	var sections []Section
 
-	if err := sectionsDefault(ctx, client, "", &sections); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build default sections")
+	for _, ss := range sss {
+		for _, s := range ss {
+			if s.FilterId != "" && containsSavedFilterId(s.FilterId, sections) {
+				log.Ctx(ctx).Debug().Str("filterId", s.FilterId).Str("section", s.Name).Msg("Filter already added, skipping")
+				continue
+			}
+			sections = append(sections, s)
+		}
 	}
 
-	if err := sectionsByFrontPage(ctx, client, "", &sections); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
+	var videoCount int
+	for _, section := range sections {
+		videoCount += len(section.PreviewPartsList)
 	}
 
-	if err := sectionsBySavedFilters(ctx, client, "?:", &sections); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
-	}
-
-	//if err := sectionsByTags(ctx, client, baseUrl, "#:", &index.Scenes, &sections); err != nil {
-	//	return Index{}, fmt.Errorf("sectionsByTags: %w", err)
-	//}
-
-	log.Ctx(ctx).Info().Int("sectionCount", len(sections)).Msg("Index built")
+	log.Ctx(ctx).Info().Int("sectionCount", len(sections)).Int("videoDataCount", videoCount).Msg("Index built")
 
 	return sections
 }
 
-func sectionsDefault(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {
-	section := Section{Name: fmt.Sprintf("%s%s", prefix, "All")}
-
+func sectionsDefault(ctx context.Context, client graphql.Client, prefix string) ([]Section, error) {
 	scenesResponse, err := gql.FindAllScenes(ctx, client)
 	if err != nil {
-		return fmt.Errorf("FindAllScenes: %w", err)
+		return nil, fmt.Errorf("FindAllScenes: %w", err)
 	}
-	for _, s := range scenesResponse.FindScenes.Scenes {
-		section.PreviewPartsList = append(section.PreviewPartsList, s.ScenePreviewParts)
+	section := Section{
+		Name:             fmt.Sprintf("%s%s", prefix, "All"),
+		PreviewPartsList: make([]gql.ScenePreviewParts, len(scenesResponse.FindScenes.Scenes)),
 	}
-	*destination = append(*destination, section)
-
-	return nil
+	for i, s := range scenesResponse.FindScenes.Scenes {
+		section.PreviewPartsList[i] = s.ScenePreviewParts
+	}
+	log.Ctx(ctx).Debug().Str("section", section.Name).Int("videoCount", len(section.PreviewPartsList)).Msg("Section built from defaults")
+	return []Section{section}, nil
 }
 
-func sectionsByFrontPage(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {
-	savedSceneFilters, err := stash.FindSavedSceneFiltersByFrontPage(ctx, client)
+func sectionsByFrontPage(ctx context.Context, client graphql.Client, prefix string) ([]Section, error) {
+	savedFilters, err := stash.FindSavedSceneFiltersByFrontPage(ctx, client)
 	if err != nil {
-		return fmt.Errorf("FindSavedSceneFiltersByFrontPage: %w", err)
+		return nil, fmt.Errorf("FindSavedSceneFiltersByFrontPage: %w", err)
 	}
 
-	for _, savedFilter := range savedSceneFilters {
-		section, err := sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter)
-		if err != nil {
+	sections := util.Transformation[gql.SavedFilterParts, Section]{
+		Transform: func(savedFilter gql.SavedFilterParts) (Section, error) {
+			return sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter)
+		},
+		Success: util.Ptr(func(savedFilter gql.SavedFilterParts, section Section) {
+			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Str("section", section.Name).Int("videoCount", len(section.PreviewPartsList)).Msg("Section built from Front Page")
+		}),
+		Failure: util.Ptr(func(savedFilter gql.SavedFilterParts, e error) {
 			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsByFrontPage: sectionFromSavedSceneFilter")
-			continue
-		}
-		*destination = append(*destination, section)
+		}),
+	}.Ordered(savedFilters)
 
-		log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Int("videoCount", len(section.PreviewPartsList)).Msg("Section added from Front Page")
-	}
-
-	return nil
+	return sections, nil
 }
 
-func sectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {
+func sectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix string) ([]Section, error) {
 	savedFiltersResponse, err := gql.FindSavedSceneFilters(ctx, client)
 	if err != nil {
-		return fmt.Errorf("FindSavedSceneFilters: %w", err)
+		return nil, fmt.Errorf("FindSavedSceneFilters: %w", err)
 	}
 
-	for _, savedFilter := range savedFiltersResponse.FindSavedFilters {
-		if containsSavedFilterId(savedFilter.Id, *destination) {
-			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Filter already added, skipping")
-			continue
-		}
+	savedFilters := make([]gql.SavedFilterParts, len(savedFiltersResponse.FindSavedFilters))
+	for i, s := range savedFiltersResponse.FindSavedFilters {
+		savedFilters[i] = s.SavedFilterParts
+	}
 
-		section, err := sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter.SavedFilterParts)
-		if err != nil {
+	sections := util.Transformation[gql.SavedFilterParts, Section]{
+		Transform: func(savedFilter gql.SavedFilterParts) (Section, error) {
+			return sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter)
+		},
+		Success: util.Ptr(func(savedFilter gql.SavedFilterParts, section Section) {
+			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Str("section", savedFilter.Name).Int("videoCount", len(section.PreviewPartsList)).Msg("Section built from Saved Filter")
+		}),
+		Failure: util.Ptr(func(savedFilter gql.SavedFilterParts, e error) {
 			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsBySavedFilters: sectionFromSavedSceneFilter")
-			continue
-		}
-		*destination = append(*destination, section)
+		}),
+	}.Ordered(savedFilters)
 
-		log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Int("videoCount", len(section.PreviewPartsList)).Msg("Section added from Saved Filter")
-	}
-
-	return nil
+	return sections, nil
 }
 
 func sectionFromSavedSceneFilter(ctx context.Context, client graphql.Client, prefix string, savedFilter gql.SavedFilterParts) (Section, error) {
@@ -122,52 +162,15 @@ func sectionFromSavedSceneFilter(ctx context.Context, client graphql.Client, pre
 	}
 
 	section := Section{
-		Name:     getFilterName(prefix, savedFilter),
-		FilterId: savedFilter.Id,
+		Name:             getFilterName(prefix, savedFilter),
+		FilterId:         savedFilter.Id,
+		PreviewPartsList: make([]gql.ScenePreviewParts, 0, len(scenesResponse.FindScenes.Scenes)),
 	}
+
 	for _, s := range scenesResponse.FindScenes.Scenes {
 		section.PreviewPartsList = append(section.PreviewPartsList, s.ScenePreviewParts)
 	}
 	return section, nil
-}
-
-func sectionsByTags(ctx context.Context, client graphql.Client, prefix string, destination *[]Section) error {
-	findTagsResponse, err := gql.FindAllNonEmptyTags(ctx, client)
-	if err != nil {
-		return fmt.Errorf("FindAllNonEmptyTags: %w", err)
-	}
-
-	var tagIds []string
-	for _, tag := range findTagsResponse.FindTags.Tags {
-		tagIds = append(tagIds, tag.Id)
-	}
-
-	scenesResponse, err := gql.FindScenesByTags(ctx, client, tagIds)
-	if err != nil {
-		return fmt.Errorf("FindScenesByTags: %w", err)
-	}
-
-	tagMap := make(map[string]Section)
-	for _, s := range scenesResponse.FindScenes.Scenes {
-		for _, tag := range s.Tags {
-			name := fmt.Sprintf("%s%s", prefix, tag.Name)
-			if v, ok := tagMap[name]; !ok {
-				tagMap[name] = Section{
-					Name:             name,
-					FilterId:         "",
-					PreviewPartsList: []gql.ScenePreviewParts{s.ScenePreviewParts},
-				}
-			} else {
-				v.PreviewPartsList = append(v.PreviewPartsList, s.ScenePreviewParts)
-			}
-		}
-	}
-
-	for _, v := range tagMap {
-		*destination = append(*destination, v)
-	}
-
-	return nil
 }
 
 func containsSavedFilterId(id string, list []Section) bool {

@@ -19,6 +19,9 @@ func Build(client graphql.Client) *chi.Mux {
 
 	router.Use(requestLogger)
 	router.Use(middleware.Recoverer)
+	router.Use(middleware.Compress(5, "application/json"))
+
+	//router.Mount("/debug", middleware.Profiler())
 
 	router.Mount("/heresphere", heresphere.Router(client))
 	router.Mount("/deovr", deovr.Router(client))

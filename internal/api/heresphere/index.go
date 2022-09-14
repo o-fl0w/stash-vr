@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/api/common"
+	"stash-vr/internal/util"
 )
 
 type Index struct {
@@ -28,11 +29,11 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Ind
 }
 
 func fromSections(baseUrl string, sections []common.Section) []Library {
-	var l []Library
-	for _, section := range sections {
-		l = append(l, fromSection(baseUrl, section))
-	}
-	return l
+	return util.Transformation[common.Section, Library]{
+		Transform: func(section common.Section) (Library, error) {
+			return fromSection(baseUrl, section), nil
+		},
+	}.Ordered(sections)
 }
 
 func fromSection(baseUrl string, section common.Section) Library {
