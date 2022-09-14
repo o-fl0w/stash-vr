@@ -19,6 +19,9 @@ func Build(client graphql.Client) *chi.Mux {
 
 	router.Use(requestLogger)
 	router.Use(middleware.Recoverer)
+	router.Use(middleware.Compress(5, "application/json"))
+
+	//router.Mount("/debug", middleware.Profiler())
 
 	router.Mount("/heresphere", heresphere.Router(client))
 	router.Mount("/deovr", deovr.Router(client))
@@ -33,9 +36,10 @@ func redirector(w http.ResponseWriter, req *http.Request) {
 
 	if strings.Contains(userAgent, "HereSphere") {
 		http.Redirect(w, req, "/heresphere", 307)
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
+
+	w.WriteHeader(http.StatusBadRequest)
 }
 
 func requestLogger(next http.Handler) http.Handler {

@@ -6,7 +6,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/api/common"
 	"stash-vr/internal/stash"
-	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/util"
 )
 
 type Index struct {
@@ -36,29 +36,28 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Ind
 }
 
 func fromSections(baseUrl string, sections []common.Section) []Scene {
-	var l []Scene
-	for _, section := range sections {
-		l = append(l, fromSection(baseUrl, section))
-	}
-	return l
+	return util.Transformation[common.Section, Scene]{
+		Transform: func(section common.Section) (Scene, error) {
+			return fromSection(baseUrl, section), nil
+		},
+	}.Ordered(sections)
 }
 
 func fromSection(baseUrl string, section common.Section) Scene {
-	o := Scene{Name: section.Name}
-	for _, p := range section.PreviewPartsList {
-		o.List = append(o.List, fromPreviewParts(baseUrl, p))
+	s := Scene{
+		Name: section.Name,
+		List: make([]PreviewData, len(section.PreviewPartsList)),
 	}
-	return o
-}
-
-func fromPreviewParts(baseUrl string, s gql.ScenePreviewParts) PreviewData {
-	return PreviewData{
-		Id:           s.Id,
-		ThumbnailUrl: stash.ApiKeyed(s.Paths.Screenshot),
-		Title:        s.Title,
-		VideoLength:  int(s.File.Duration),
-		VideoUrl:     videoDataUrl(baseUrl, s.Id),
+	for i, p := range section.PreviewPartsList {
+		s.List[i] = PreviewData{
+			Id:           p.Id,
+			ThumbnailUrl: stash.ApiKeyed(p.Paths.Screenshot),
+			Title:        p.Title,
+			VideoLength:  int(p.File.Duration),
+			VideoUrl:     videoDataUrl(baseUrl, p.Id),
+		}
 	}
+	return s
 }
 
 func videoDataUrl(baseUrl string, id string) string {
