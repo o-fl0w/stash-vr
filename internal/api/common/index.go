@@ -197,14 +197,16 @@ func sectionFromSavedSceneFilter(ctx context.Context, client graphql.Client, pre
 		return types.Section{}, fmt.Errorf("0 videos found")
 	}
 
+	log.Ctx(ctx).Debug().Str("filterName", savedFilter.Name).Int("links", len(scenesResponse.FindScenes.Scenes)).Msg("Scenes found, adding")
+
 	section := types.Section{
 		Name:             getFilterName(prefix, savedFilter),
 		FilterId:         savedFilter.Id,
-		PreviewPartsList: make([]gql.ScenePreviewParts, 0, len(scenesResponse.FindScenes.Scenes)),
+		PreviewPartsList: make([]gql.ScenePreviewParts, len(scenesResponse.FindScenes.Scenes)),
 	}
 
-	for _, s := range scenesResponse.FindScenes.Scenes {
-		section.PreviewPartsList = append(section.PreviewPartsList, s.ScenePreviewParts)
+	for i, s := range scenesResponse.FindScenes.Scenes {
+		section.PreviewPartsList[i] = s.ScenePreviewParts
 	}
 	return section, nil
 }
