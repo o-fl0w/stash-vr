@@ -40,21 +40,8 @@ func (t Transformation[Input, Output]) Ordered(inputs []Input) []Output {
 	})
 }
 
-func doer[Input any, Output any, T any](inputs []Input, t Transformation[Input, Output], produce func(int, Output) T, process func([]T) []Output) []Output {
-	c := make(chan T)
-	done := make(chan any)
-	outputs := make([]T, 0, len(inputs))
-
-	go func() {
-		for {
-			o, ok := <-c
-			if !ok {
-				close(done)
-				return
-			}
-			outputs = append(outputs, o)
-		}
-	}()
+func doer[Input any, Output any, X any](inputs []Input, t Transformation[Input, Output], produce func(int, Output) X, process func([]X) []Output) []Output {
+	chXs := make(chan X, len(inputs))
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(inputs))
@@ -68,15 +55,21 @@ func doer[Input any, Output any, T any](inputs []Input, t Transformation[Input, 
 				}
 				return
 			}
-			c <- produce(i, output)
+			chXs <- produce(i, output)
 			if t.Success != nil {
 				(*t.Success)(input, output)
 			}
 		}(i, input)
 	}
 	wg.Wait()
-	close(c)
-	<-done
-	processed := process(outputs)
+	close(chXs)
+
+	xs := make([]X, 0, len(chXs))
+	for x := range chXs {
+		xs = append(xs, x)
+	}
+
+	processed := process(xs)
+
 	return processed
 }
