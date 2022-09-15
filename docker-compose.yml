@@ -10,6 +10,10 @@ services:
       STASH_GRAPHQL_URL: "http://localhost:9999/graphql"
       #STASH_API_KEY: "xxx"
       FAVORITE_TAG: "FAVORITE"
-      #FRONT_PAGE_FILTERS_ONLY: "true"
+
+      ## FILTERS can be either 'frontpage' or a comma separated list of filter ids.
+      ## If left empty all saved filters will be shown.
+      #FILTERS: "2,3,7" # comma separated list of filter ids, if enabled only these will show
+
       #HERESPHERE_SYNC_MARKERS: "true"
       #LOG_LEVEL: "debug"

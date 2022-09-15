@@ -37,39 +37,58 @@ func GetIndex(ctx context.Context, client graphql.Client) []types.Section {
 }
 
 func buildIndex(ctx context.Context, client graphql.Client) []types.Section {
-	var sss [2][]types.Section
+	sss := make(chan []types.Section, 3)
+
+	filters := config.Get().Filters
 
 	wg := sync.WaitGroup{}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		var err error
-		sss[0], err = sectionsByFrontPage(ctx, client, "")
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
-			return
-		}
-	}()
-
-	if !config.Get().FrontPageFiltersOnly {
+	if filters == "frontpage" || filters == "" {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			var err error
-			sss[1], err = sectionsBySavedFilters(ctx, client, "?:")
+			ss, err := sectionsByFrontPage(ctx, client, "")
+			if err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
+				return
+			}
+			sss <- ss
+		}()
+	}
+
+	if filters == "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ss, err := sectionsBySavedFilters(ctx, client, "?:")
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
 				return
 			}
+			sss <- ss
+		}()
+	}
+
+	if filters != "frontpage" && filters != "" {
+		filterIds := strings.Split(filters, ",")
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ss, err := sectionsByFilterIds(ctx, client, "?:", filterIds)
+			if err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
+				return
+			}
+			sss <- ss
 		}()
 	}
 
 	wg.Wait()
+	close(sss)
 
 	var sections []types.Section
 
-	for _, ss := range sss {
+	for ss := range sss {
 		for _, s := range ss {
 			if s.FilterId != "" && containsSavedFilterId(s.FilterId, sections) {
 				log.Ctx(ctx).Debug().Str("filterId", s.FilterId).Str("section", s.Name).Msg("Filter already added, skipping")
@@ -134,6 +153,24 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix s
 		},
 		Failure: func(savedFilter gql.SavedFilterParts, e error) {
 			log.Ctx(ctx).Warn().Err(e).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsBySavedFilters: sectionFromSavedSceneFilter")
+		},
+	}.Ordered(savedFilters)
+
+	return sections, nil
+}
+
+func sectionsByFilterIds(ctx context.Context, client graphql.Client, prefix string, filterIds []string) ([]types.Section, error) {
+	savedFilters := stash.FindSavedFiltersByFilterIds(ctx, client, filterIds)
+
+	sections := util.Transformation[gql.SavedFilterParts, types.Section]{
+		Transform: func(savedFilter gql.SavedFilterParts) (types.Section, error) {
+			return sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter)
+		},
+		Success: func(savedFilter gql.SavedFilterParts, section types.Section) {
+			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Str("section", section.Name).Int("links", len(section.PreviewPartsList)).Msg("Section built from Filter Id")
+		},
+		Failure: func(savedFilter gql.SavedFilterParts, e error) {
+			log.Ctx(ctx).Warn().Err(e).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsByFilterIds: sectionFromSavedSceneFilter")
 		},
 	}.Ordered(savedFilters)
 

@@ -23,9 +23,15 @@ See [docker_compose.yml](docker-compose.yml) for details.
 * `FAVORITE_TAG` 
   * Name of tag in stash to hold scenes marked as [favorites](#favorites) (will be created if not existing)
   * Default: `FAVORITE`
-* `FRONT_PAGE_FILTERS_ONLY`
-  * Use only saved filters found on stash front page.
-  * Default: `false`
+* `FILTERS`
+  * Select the filters to show by setting one of below values
+    * `frontpage`
+      * Only filters found on stash front page
+    * Comma separated list of filter ids, i.e. `1,5,12`
+      * Only filters with provided filter ids
+    * Empty
+      * All saved filters
+  * Default: Empty 
 * `HERESPHERE_SYNC_MARKERS`
   * Enable sync of Marker from HereSphere [NOTE](#HereSphere sync of Markers)
   * Default: `false`
@@ -120,7 +126,7 @@ Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DO
 ## Known issues/Missing features
 * DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
   * For HereSphere the limit seems to be around 10k unique videos.
-  * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try setting env. var. `FRONT_PAGE_FILTERS_ONLY` to `true` and setup your front page filters in stash such that the total amount of videos are lowered to a "reasonable" amount.
+  * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try explicitly setting env. var. `FILTERS` with a list of filter ids such that the total amount of videos are lowered to a "reasonable" amount.
 * When using `Video Tags` in HereSphere to edit Markers, beware that your markers are deleted then recreated in stash. Mostly this
 
 #### Unsupported filter types

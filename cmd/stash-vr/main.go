@@ -41,10 +41,6 @@ func run() error {
 		log.Info().Str("stash version", version.Version.Version).Send()
 	}
 
-	if config.Get().FrontPageFiltersOnly {
-		log.Warn().Bool(config.EnvKeyFrontPageFiltersOnly, config.Get().FrontPageFiltersOnly).Msg("Using filters from stash front page only.")
-	}
-
 	log.Info().Msg("Populate initial cache...")
 	common.RefreshCache(ctx, stashClient)
 

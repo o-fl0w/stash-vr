@@ -10,7 +10,7 @@ const (
 	EnvKeyStashGraphQLUrl       = "STASH_GRAPHQL_URL"
 	EnvKeyStashApiKey           = "STASH_API_KEY"
 	EnvKeyFavoriteTag           = "FAVORITE_TAG"
-	EnvKeyFrontPageFiltersOnly  = "FRONT_PAGE_FILTERS_ONLY"
+	EnvKeyFilters               = "FILTERS"
 	EnvKeyHeresphereSyncMarkers = "HERESPHERE_SYNC_MARKERS"
 	EnvKeyLogLevel              = "LOG_LEVEL"
 	EnvKeyDisableRedact         = "DISABLE_REDACT"
@@ -20,7 +20,7 @@ type Application struct {
 	StashGraphQLUrl       string
 	StashApiKey           string
 	FavoriteTag           string
-	FrontPageFiltersOnly  bool
+	Filters               string
 	HeresphereSyncMarkers bool
 	LogLevel              string
 	IsRedactDisabled      bool
@@ -36,7 +36,7 @@ func Get() Application {
 			StashGraphQLUrl:       getEnvOrDefault(EnvKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
 			StashApiKey:           getEnvOrDefault(EnvKeyStashApiKey, ""),
 			FavoriteTag:           getEnvOrDefault(EnvKeyFavoriteTag, "FAVORITE"),
-			FrontPageFiltersOnly:  getEnvOrDefault(EnvKeyFrontPageFiltersOnly, "false") == "true",
+			Filters:               getEnvOrDefault(EnvKeyFilters, ""),
 			HeresphereSyncMarkers: getEnvOrDefault(EnvKeyHeresphereSyncMarkers, "false") == "true",
 			LogLevel:              strings.ToLower(getEnvOrDefault(EnvKeyLogLevel, "info")),
 			IsRedactDisabled:      getEnvOrDefault(EnvKeyDisableRedact, "false") == "true",
