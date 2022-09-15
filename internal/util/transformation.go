@@ -7,8 +7,8 @@ import (
 
 type Transformation[Input any, Output any] struct {
 	Transform func(Input) (Output, error)
-	Success   *func(Input, Output)
-	Failure   *func(Input, error)
+	Success   func(Input, Output)
+	Failure   func(Input, error)
 }
 
 func (t Transformation[Input, Output]) Do(inputs []Input) []Output {
@@ -51,13 +51,13 @@ func doer[Input any, Output any, X any](inputs []Input, t Transformation[Input, 
 			output, err := t.Transform(input)
 			if err != nil {
 				if t.Failure != nil {
-					(*t.Failure)(input, err)
+					t.Failure(input, err)
 				}
 				return
 			}
 			chXs <- produce(i, output)
 			if t.Success != nil {
-				(*t.Success)(input, output)
+				t.Success(input, output)
 			}
 		}(i, input)
 	}

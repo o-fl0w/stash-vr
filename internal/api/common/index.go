@@ -103,12 +103,12 @@ func sectionsByFrontPage(ctx context.Context, client graphql.Client, prefix stri
 		Transform: func(savedFilter gql.SavedFilterParts) (types.Section, error) {
 			return sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter)
 		},
-		Success: util.Ptr(func(savedFilter gql.SavedFilterParts, section types.Section) {
+		Success: func(savedFilter gql.SavedFilterParts, section types.Section) {
 			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Str("section", section.Name).Int("links", len(section.PreviewPartsList)).Msg("Section built from Front Page")
-		}),
-		Failure: util.Ptr(func(savedFilter gql.SavedFilterParts, e error) {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsByFrontPage: sectionFromSavedSceneFilter")
-		}),
+		},
+		Failure: func(savedFilter gql.SavedFilterParts, e error) {
+			log.Ctx(ctx).Warn().Err(e).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsByFrontPage: sectionFromSavedSceneFilter")
+		},
 	}.Ordered(savedFilters)
 
 	return sections, nil
@@ -129,12 +129,12 @@ func sectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix s
 		Transform: func(savedFilter gql.SavedFilterParts) (types.Section, error) {
 			return sectionFromSavedSceneFilter(ctx, client, prefix, savedFilter)
 		},
-		Success: util.Ptr(func(savedFilter gql.SavedFilterParts, section types.Section) {
+		Success: func(savedFilter gql.SavedFilterParts, section types.Section) {
 			log.Ctx(ctx).Debug().Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Str("section", savedFilter.Name).Int("links", len(section.PreviewPartsList)).Msg("Section built from Saved Filter")
-		}),
-		Failure: util.Ptr(func(savedFilter gql.SavedFilterParts, e error) {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsBySavedFilters: sectionFromSavedSceneFilter")
-		}),
+		},
+		Failure: func(savedFilter gql.SavedFilterParts, e error) {
+			log.Ctx(ctx).Warn().Err(e).Str("filterId", savedFilter.Id).Str("filterName", savedFilter.Name).Msg("Skipped filter: sectionsBySavedFilters: sectionFromSavedSceneFilter")
+		},
 	}.Ordered(savedFilters)
 
 	return sections, nil
