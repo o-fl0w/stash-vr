@@ -40,17 +40,17 @@ func FindSavedFiltersByFilterIds(ctx context.Context, client graphql.Client, fil
 	for _, filterId := range filterIds {
 		savedFilterResponse, err := gql.FindSavedFilter(ctx, client, filterId)
 		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", filterId).Msg("Skipped filter: FindSavedSceneFiltersByFrontPage: FindSavedFilter")
+			log.Ctx(ctx).Warn().Err(err).Str("filterId", filterId).Msg("Skipped filter: FindSavedFiltersByFilterIds: FindSavedFilter")
 			continue
 		}
 		if savedFilterResponse.FindSavedFilter == nil {
-			log.Ctx(ctx).Warn().Err(err).Str("filterId", filterId).Msg("Skipped filter: FindSavedSceneFiltersByFrontPage: FindSavedFilter: Filter not found")
+			log.Ctx(ctx).Warn().Err(err).Str("filterId", filterId).Msg("Skipped filter: FindSavedFiltersByFilterIds: FindSavedFilter: Filter not found")
 			continue
 		}
 		if savedFilterResponse.FindSavedFilter.Mode != gql.FilterModeScenes {
 			log.Ctx(ctx).Debug().Str("filterId", filterId).
 				Str("mode", string(savedFilterResponse.FindSavedFilter.Mode)).
-				Msg("FindSavedSceneFiltersByFrontPage: FindSavedFilter: Not a scene filter, skipped")
+				Msg("FindSavedFiltersByFilterIds: FindSavedFilter: Not a scene filter, skipped")
 			continue
 		}
 		filters = append(filters, savedFilterResponse.FindSavedFilter.SavedFilterParts)

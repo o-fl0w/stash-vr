@@ -29,7 +29,8 @@ func GetIndex(ctx context.Context, client graphql.Client) []types.Section {
 		return RefreshCache(ctx, client)
 	} else {
 		go func() {
-			c := buildIndex(ctx, client)
+			log.Trace().Msg("Refreshing cache")
+			c := buildIndex(log.With().Logger().WithContext(context.Background()), client)
 			cache.Store.Index.Set(c)
 		}()
 		return cached
