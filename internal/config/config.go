@@ -7,19 +7,21 @@ import (
 )
 
 const (
-	envKeyStashGraphQLUrl = "STASH_GRAPHQL_URL"
-	envKeyStashApiKey     = "STASH_API_KEY"
-	envKeyFavoriteTag     = "FAVORITE_TAG"
-	envKeyLogLevel        = "LOG_LEVEL"
-	envKeyDisableRedact   = "DISABLE_REDACT"
+	EnvKeyStashGraphQLUrl      = "STASH_GRAPHQL_URL"
+	EnvKeyStashApiKey          = "STASH_API_KEY"
+	EnvKeyFavoriteTag          = "FAVORITE_TAG"
+	EnvKeyFrontPageFiltersOnly = "FRONT_PAGE_FILTERS_ONLY"
+	EnvKeyLogLevel             = "LOG_LEVEL"
+	EnvKeyDisableRedact        = "DISABLE_REDACT"
 )
 
 type Application struct {
-	StashGraphQLUrl  string
-	StashApiKey      string
-	FavoriteTag      string
-	LogLevel         string
-	IsRedactDisabled bool
+	StashGraphQLUrl      string
+	StashApiKey          string
+	FavoriteTag          string
+	FrontPageFiltersOnly bool
+	LogLevel             string
+	IsRedactDisabled     bool
 }
 
 var cfg Application
@@ -29,11 +31,12 @@ var once sync.Once
 func Get() Application {
 	once.Do(func() {
 		cfg = Application{
-			StashGraphQLUrl:  getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
-			StashApiKey:      getEnvOrDefault(envKeyStashApiKey, ""),
-			FavoriteTag:      getEnvOrDefault(envKeyFavoriteTag, "FAVORITE"),
-			LogLevel:         strings.ToLower(getEnvOrDefault(envKeyLogLevel, "info")),
-			IsRedactDisabled: getEnvOrDefault(envKeyDisableRedact, "false") == "true",
+			StashGraphQLUrl:      getEnvOrDefault(EnvKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
+			StashApiKey:          getEnvOrDefault(EnvKeyStashApiKey, ""),
+			FavoriteTag:          getEnvOrDefault(EnvKeyFavoriteTag, "FAVORITE"),
+			FrontPageFiltersOnly: getEnvOrDefault(EnvKeyFrontPageFiltersOnly, "false") == "true",
+			LogLevel:             strings.ToLower(getEnvOrDefault(EnvKeyLogLevel, "info")),
+			IsRedactDisabled:     getEnvOrDefault(EnvKeyDisableRedact, "false") == "true",
 		}
 	})
 	return cfg

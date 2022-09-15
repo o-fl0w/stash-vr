@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/api/common"
+	"stash-vr/internal/api/common/types"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 )
@@ -28,7 +29,7 @@ type PreviewData struct {
 }
 
 func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Index, error) {
-	sections := common.BuildIndex(ctx, client)
+	sections := common.GetIndex(ctx, client)
 
 	scenes := fromSections(baseUrl, sections)
 
@@ -37,15 +38,15 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Ind
 	return index, nil
 }
 
-func fromSections(baseUrl string, sections []common.Section) []Scene {
-	return util.Transformation[common.Section, Scene]{
-		Transform: func(section common.Section) (Scene, error) {
+func fromSections(baseUrl string, sections []types.Section) []Scene {
+	return util.Transformation[types.Section, Scene]{
+		Transform: func(section types.Section) (Scene, error) {
 			return fromSection(baseUrl, section), nil
 		},
 	}.Ordered(sections)
 }
 
-func fromSection(baseUrl string, section common.Section) Scene {
+func fromSection(baseUrl string, section types.Section) Scene {
 	s := Scene{
 		Name: section.Name,
 		List: make([]PreviewData, len(section.PreviewPartsList)),

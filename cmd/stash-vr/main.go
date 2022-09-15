@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"stash-vr/internal/api/common"
 	"stash-vr/internal/config"
 	_ "stash-vr/internal/logger"
 	"stash-vr/internal/router"
@@ -27,6 +28,8 @@ func main() {
 }
 
 func run() error {
+	ctx := context.Background()
+
 	log.Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
 
 	stashClient := stash.NewClient(config.Get().StashGraphQLUrl, config.Get().StashApiKey)
@@ -38,8 +41,14 @@ func run() error {
 		log.Info().Str("stash version", version.Version.Version).Send()
 	}
 
-	r := router.Build(stashClient)
+	if config.Get().FrontPageFiltersOnly {
+		log.Warn().Bool(config.EnvKeyFrontPageFiltersOnly, config.Get().FrontPageFiltersOnly).Msg("Using filters from stash front page only.")
+	}
 
+	log.Info().Msg("Populate initial cache...")
+	common.RefreshCache(ctx, stashClient)
+
+	r := router.Build(stashClient)
 	log.Info().Msg(fmt.Sprintf("Server listening on %s", listenAddress))
 	err := http.ListenAndServe(listenAddress, r)
 	if err != nil {

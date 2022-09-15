@@ -15,9 +15,17 @@ Both will automatically load their respective configuration files and launch the
 ## Installation
 See [docker_compose.yml](docker-compose.yml) for details.
 
-* `STASH_GRAPHQL_URL` Url to your stash graphql - something like `http://<stash.host>:<9999>/graphql`
-* `STASH_API_KEY` Api key to your stash if it's using authentication. 
-* `FAVORITE_TAG` Name of tag in stash to hold scenes marked as [favorites](#favorites) (will be created if not existing)
+* `STASH_GRAPHQL_URL` 
+  * **Required**
+  * Url to your stash graphql - something like `http://<stash.host>:<9999>/graphql`
+* `STASH_API_KEY` 
+  * Api key to your stash if it's using authentication. 
+* `FAVORITE_TAG` 
+  * Name of tag in stash to hold scenes marked as [favorites](#favorites) (will be created if not existing)
+  * Default: `FAVORITE`
+* `FRONT_PAGE_FILTERS_ONLY`
+  * Use only saved filters found on stash front page.
+  * Default: `false`
 
 stash-vr listens on port `9666`, use docker port binding to change.
 
@@ -35,7 +43,7 @@ stash-vr listens on port `9666`, use docker port binding to change.
   * Performers
   * Markers
   * Favorites
-" Generate categorized tags
+* Generate categorized tags
 * Delete scenes
 * Funscript
 
@@ -108,3 +116,6 @@ Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DO
 
 ## Known issues/Missing features
 * Premade Filters (i.e. Recently Released Scenes etc.) from stash front page are not supported.
+* DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
+  * For HereSphere the limit seems to be around 10k unique videos.
+  * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try setting env. var. `FRONT_PAGE_FILTERS_ONLY` to `true` and setup your front page filters in stash such that the total amount of videos are lowered to a "reasonable" amount.

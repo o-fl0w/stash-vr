@@ -19,15 +19,14 @@ func Write(ctx context.Context, w http.ResponseWriter, data interface{}) error {
 	if err != nil {
 		return fmt.Errorf("json encode: %w", err)
 	}
-	log.Ctx(ctx).Debug().Str("json len", byteCountDecimal(buf.Len())).Send()
+	log.Ctx(ctx).Trace().Str("length", byteCountDecimal(buf.Len())).Msg("About to write response")
+
 	w.Header().Add("Content-Length", strconv.Itoa(buf.Len()))
 
-	written, err := w.Write(buf.Bytes())
+	_, err = w.Write(buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("write: %w", err)
 	}
-	log.Ctx(ctx).Debug().Str("written", byteCountDecimal(written)).Send()
-
 	return nil
 }
 
