@@ -23,7 +23,6 @@ stash-vr listens on port `9666`, use docker port binding to change.
 
 ## Features
 * Show following sections in video player:
-  - All (ALL your scenes)
   - Filters from your stash front page
   - Your other saved filters
 * Provide transcoding endpoints to your videos served by stash
@@ -36,6 +35,7 @@ stash-vr listens on port `9666`, use docker port binding to change.
   * Performers
   * Markers
   * Favorites
+" Generate categorized tags
 * Delete scenes
 * Funscript
 
