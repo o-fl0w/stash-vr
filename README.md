@@ -137,3 +137,8 @@ Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DO
 When using `Video Tags` in HereSphere to edit Markers stash-vr will delete and (re)create them on updates.
 There currently is no support for correlating the markers (tags) in HereSphere to a Marker in stash.
 This means that **all metadata, besides the primary tag and title, related to a marker will NOT be retained** (id, previews, secondary tags and created/updated time). If you're not using those fields anyway you probably won't notice the difference.
+
+#### Reflecting changes made in stash
+When the index page of stash-vr is loaded stash-vr will immediately respond with a cached version. At the same time stash-vr will request the latest data and store it in the cache for the next request.
+This means if changes are made in stash and the player refreshed, it will receive the cached version built during the last (previous) request.
+Just refresh again and the player should receive the latest changes. In other words, refresh twice.
