@@ -188,9 +188,13 @@ func metadataFromUpdateRequest(ctx context.Context, client graphql.Client, updat
 }
 
 func setSceneMarkers(ctx context.Context, client graphql.Client, sceneId string, markers []sceneMarker) {
+	if !config.Get().HeresphereSyncMarkers {
+		log.Ctx(ctx).Info().Bool(config.EnvKeyHeresphereSyncMarkers, config.Get().HeresphereSyncMarkers).Msg("Scene markers received from HereSphere but sync for markers is disabled, ignoring.")
+		return
+	}
 	response, err := gql.FindSceneMarkers(ctx, client, sceneId)
 	if err != nil {
-		log.Warn().Err(err).Str("sceneId", sceneId).Msg("FindSceneMarkers")
+		log.Ctx(ctx).Warn().Err(err).Str("sceneId", sceneId).Msg("FindSceneMarkers")
 		return
 	}
 	for _, smt := range response.SceneMarkerTags {

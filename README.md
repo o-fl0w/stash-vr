@@ -26,6 +26,9 @@ See [docker_compose.yml](docker-compose.yml) for details.
 * `FRONT_PAGE_FILTERS_ONLY`
   * Use only saved filters found on stash front page.
   * Default: `false`
+* `HERESPHERE_SYNC_MARKERS`
+  * Enable sync of Marker from HereSphere [NOTE](#HereSphere sync of Markers)
+  * Default: `false`
 
 stash-vr listens on port `9666`, use docker port binding to change.
 
@@ -119,3 +122,9 @@ Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DO
 * DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
   * For HereSphere the limit seems to be around 10k unique videos.
   * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try setting env. var. `FRONT_PAGE_FILTERS_ONLY` to `true` and setup your front page filters in stash such that the total amount of videos are lowered to a "reasonable" amount.
+* When using `Video Tags` in HereSphere to edit Markers, beware that your markers are deleted then recreated in stash. Mostly this
+
+#### HereSphere sync of Markers
+When using `Video Tags` in HereSphere to edit Markers stash-vr will delete and (re)create them on updates.
+There currently is no support for correlating the markers (tags) in HereSphere to a Marker in stash.
+This means that **all metadata, besides the primary tag and title, related to a marker will NOT be retained** (id, previews, secondary tags and created/updated time). If you're not using those fields anyway you probably won't notice the difference.

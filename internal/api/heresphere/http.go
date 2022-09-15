@@ -46,7 +46,7 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 	var updateVideoData UpdateVideoData
 	err = json.Unmarshal(body, &updateVideoData)
 	if err != nil {
-		log.Debug().Err(err).Str("id", sceneId).Bytes("body", body).Msg("videodata: body: unmarshal")
+		log.Ctx(ctx).Debug().Err(err).Str("id", sceneId).Bytes("body", body).Msg("videodata: body: unmarshal")
 	} else {
 		if updateVideoData.IsUpdateRequest() {
 			update(ctx, h.Client, sceneId, updateVideoData)
