@@ -10,15 +10,23 @@ import (
 func Router(client graphql.Client) http.Handler {
 	httpHandler := HttpHandler{Client: client}
 	r := chi.NewRouter()
-	r.Use(logContext)
-	r.Get("/", httpHandler.Index)
-	r.Get("/{sceneId}", httpHandler.VideoData)
+
+	r.Get("/", indexHandler(httpHandler.Index))
+	r.Get("/{videoId}", videoDataHandler(httpHandler.VideoData))
 	return r
 }
 
-func logContext(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := log.With().Str("module", "deovr").Logger().WithContext(r.Context())
+func indexHandler(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := log.With().Str("route", "index").Logger().WithContext(r.Context())
 		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	}
+}
+
+func videoDataHandler(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		videoId := chi.URLParam(r, "videoId")
+		ctx := log.With().Str("route", "videoData").Str("videoId", videoId).Logger().WithContext(r.Context())
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
 }

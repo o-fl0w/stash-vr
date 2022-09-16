@@ -58,6 +58,9 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 	if err != nil {
 		return VideoData{}, fmt.Errorf("FindScene: %w", err)
 	}
+	if findSceneResponse.FindScene == nil {
+		return VideoData{}, fmt.Errorf("FindScene: not found")
+	}
 	s := findSceneResponse.FindScene.FullSceneParts
 
 	videoData := VideoData{
@@ -71,23 +74,48 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 		ThumbnailUrl: stash.ApiKeyed(s.Paths.Screenshot),
 	}
 
-	setStreamSources(s, &videoData)
-	set3DFormat(s, &videoData)
+	setStreamSources(ctx, s, &videoData)
 	setTags(s, &videoData)
 	setStudios(s, &videoData)
 	setMarkers(s, &videoData)
 	setPerformers(s, &videoData)
+	set3DFormat(s, &videoData)
 
 	return videoData, nil
 }
 
-func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
-	for _, p := range s.Performers {
-		t := Tag{
-			Id:   p.Id,
-			Name: p.Name,
+func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *VideoData) {
+	streams := stash.GetStreams(ctx, s, false)
+	videoData.Encodings = make([]Encoding, len(streams))
+	for i, stream := range streams {
+		videoData.Encodings[i] = Encoding{
+			Name:         stream.Name,
+			VideoSources: make([]VideoSource, len(stream.Sources)),
 		}
-		videoData.Actors = append(videoData.Actors, t)
+		for j, source := range stream.Sources {
+			videoData.Encodings[i].VideoSources[j] = VideoSource{
+				Resolution: source.Resolution,
+				Url:        source.Url,
+			}
+		}
+	}
+}
+
+func setTags(s gql.FullSceneParts, videoData *VideoData) {
+	for _, tag := range s.Tags {
+		videoData.Categories = append(videoData.Categories, Category{Tag{
+			Id:   tag.Id,
+			Name: fmt.Sprintf("#:%s", tag.Name),
+		}})
+	}
+}
+
+func setStudios(s gql.FullSceneParts, videoData *VideoData) {
+	if s.Studio != nil {
+		videoData.Categories = append(videoData.Categories, Category{Tag{
+			Id:   s.Studio.Id,
+			Name: fmt.Sprintf("Studio:%s", s.Studio.Name),
+		}})
 	}
 }
 
@@ -98,6 +126,16 @@ func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 			Name: sm.Title,
 		}
 		videoData.TimeStamps = append(videoData.TimeStamps, ts)
+	}
+}
+
+func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
+	for _, p := range s.Performers {
+		t := Tag{
+			Id:   p.Id,
+			Name: p.Name,
+		}
+		videoData.Actors = append(videoData.Actors, t)
 	}
 }
 
@@ -138,40 +176,5 @@ func set3DFormat(s gql.FullSceneParts, videoData *VideoData) {
 			videoData.StereoMode = "tb"
 			continue
 		}
-	}
-}
-
-func setStreamSources(s gql.FullSceneParts, videoData *VideoData) {
-	for _, stream := range stash.GetStreams(s, false) {
-		e := Encoding{
-			Name: stream.Name,
-		}
-		for _, source := range stream.Sources {
-			vs := VideoSource{
-				Resolution: source.Resolution,
-				Url:        source.Url,
-			}
-			e.VideoSources = append(e.VideoSources, vs)
-		}
-		videoData.Encodings = append(videoData.Encodings, e)
-	}
-}
-
-func setTags(s gql.FullSceneParts, videoData *VideoData) {
-	for _, tag := range s.Tags {
-		t := Tag{
-			Id:   tag.Id,
-			Name: fmt.Sprintf("#:%s", tag.Name),
-		}
-		videoData.Categories = append(videoData.Categories, Category{Tag: t})
-	}
-}
-
-func setStudios(s gql.FullSceneParts, videoData *VideoData) {
-	if s.Studio != nil {
-		videoData.Categories = append(videoData.Categories, Category{Tag: Tag{
-			Id:   s.Studio.Id,
-			Name: fmt.Sprintf("Studio:%s", s.Studio.Name),
-		}})
 	}
 }

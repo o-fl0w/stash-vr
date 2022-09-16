@@ -1,6 +1,7 @@
 package stash
 
 import (
+	"context"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"regexp"
@@ -23,7 +24,7 @@ type Source struct {
 
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
-func GetStreams(fsp gql.FullSceneParts, sortResolutionAsc bool) []Stream {
+func GetStreams(ctx context.Context, fsp gql.FullSceneParts, sortResolutionAsc bool) []Stream {
 	var streams []Stream
 
 	original := Stream{
@@ -34,7 +35,7 @@ func GetStreams(fsp gql.FullSceneParts, sortResolutionAsc bool) []Stream {
 		}},
 	}
 
-	mp4Sources := getMp4Sources(fsp.StreamsParts)
+	mp4Sources := getMp4Sources(ctx, fsp.StreamsParts)
 	sortSourcesByResolution(mp4Sources, sortResolutionAsc)
 
 	switch fsp.File.Video_codec {
@@ -51,6 +52,7 @@ func GetStreams(fsp gql.FullSceneParts, sortResolutionAsc bool) []Stream {
 			Sources: mp4Sources,
 		})
 	default:
+		log.Ctx(ctx).Debug().Str("codec", fsp.File.Video_codec).Msg("Codec not supported? Adding transcoded steams only")
 		streams = append(streams, Stream{
 			Name:    "transcoded",
 			Sources: mp4Sources,
@@ -81,7 +83,7 @@ func parseResolutionFromLabel(label string) (int, error) {
 	return res, nil
 }
 
-func getMp4Sources(sps gql.StreamsParts) []Source {
+func getMp4Sources(ctx context.Context, sps gql.StreamsParts) []Source {
 	sourceMap := make(map[int]Source)
 
 	for _, s := range sps.SceneStreams {
@@ -90,7 +92,7 @@ func getMp4Sources(sps gql.StreamsParts) []Source {
 		if strings.Contains(lowerCaseLabel, "mp4") {
 			resolution, err := parseResolutionFromLabel(lowerCaseLabel)
 			if err != nil {
-				log.Warn().Str("label", lowerCaseLabel).Msg("Unmatched stream label")
+				log.Ctx(ctx).Warn().Str("label", lowerCaseLabel).Msg("Unmatched stream label")
 				continue
 			}
 
@@ -109,7 +111,7 @@ func getMp4Sources(sps gql.StreamsParts) []Source {
 			}
 		}
 	}
-	var sources []Source
+	sources := make([]Source, 0, len(sourceMap))
 	for _, v := range sourceMap {
 		sources = append(sources, v)
 	}

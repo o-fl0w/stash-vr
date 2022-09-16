@@ -73,7 +73,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 		return VideoData{}, fmt.Errorf("FindScene: %w", err)
 	}
 	if findSceneResponse.FindScene == nil {
-		return VideoData{}, fmt.Errorf("find scene: video not found")
+		return VideoData{}, fmt.Errorf("FindScene: not found")
 	}
 	s := findSceneResponse.FindScene.FullSceneParts
 
@@ -93,7 +93,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 
 	setIsFavorite(s, &videoData)
 
-	setStreamSources(s, &videoData)
+	setStreamSources(ctx, s, &videoData)
 	set3DFormat(s, &videoData)
 
 	setStudioAndTags(s, &videoData)
@@ -214,8 +214,8 @@ func set3DFormat(s gql.FullSceneParts, videoData *VideoData) {
 	}
 }
 
-func setStreamSources(s gql.FullSceneParts, videoData *VideoData) {
-	for _, stream := range stash.GetStreams(s, true) {
+func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *VideoData) {
+	for _, stream := range stash.GetStreams(ctx, s, true) {
 		e := Media{
 			Name: stream.Name,
 		}

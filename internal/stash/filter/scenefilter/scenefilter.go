@@ -17,11 +17,11 @@ func ParseJsonEncodedFilter(raw string) (Filter, error) {
 
 	err := json.Unmarshal([]byte(raw), &filter)
 	if err != nil {
-		return Filter{}, fmt.Errorf("unmarshal jsonFilter=%s: %w", raw, err)
+		return Filter{}, fmt.Errorf("unmarshal json scene filter '%s': %w", raw, err)
 	}
-	f, err := getSceneFilter(filter.C)
+	f, err := parseSceneFilterCriteria(filter.C)
 	if err != nil {
-		return Filter{}, fmt.Errorf("getSceneFilter: %w", err)
+		return Filter{}, fmt.Errorf("parseSceneFilterCriteria: %w", err)
 	}
 
 	sortDir := gql.SortDirectionEnumAsc
@@ -35,7 +35,7 @@ func ParseJsonEncodedFilter(raw string) (Filter, error) {
 	}, SceneFilter: f}, nil
 }
 
-func getSceneFilter(jsonCriteria []string) (gql.SceneFilterType, error) {
+func parseSceneFilterCriteria(jsonCriteria []string) (gql.SceneFilterType, error) {
 	f := gql.SceneFilterType{}
 	for _, jsonCriterion := range jsonCriteria {
 		c, err := internal.ParseJsonCriterion(jsonCriterion)

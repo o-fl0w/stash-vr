@@ -113,10 +113,6 @@ fragment SavedFilterParts on SavedFilter{
     id, name, filter, mode
 }
 
-fragment TagParts on Tag{
-    id,name
-}
-
 fragment ScenePreviewParts on Scene{
     id, title, file{duration}, paths {screenshot}
 }
@@ -142,6 +138,11 @@ fragment FullSceneParts on Scene{
         id, name, rating
     }
 }
+
+fragment TagParts on Tag{
+    id,name
+}
+
 
 fragment StreamsParts on Scene{
     file{height}

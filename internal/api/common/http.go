@@ -10,8 +10,7 @@ import (
 	"strconv"
 )
 
-func Write(ctx context.Context, w http.ResponseWriter, data interface{}) error {
-	w.Header().Add("Content-Type", "application/json")
+func WriteJson(ctx context.Context, w http.ResponseWriter, data interface{}) error {
 	//log.Ctx(ctx).Trace().Msg(fmt.Sprintf("write:\n%s", util.AsJsonStr(data)))
 
 	buf := bytes.Buffer{}
@@ -19,8 +18,10 @@ func Write(ctx context.Context, w http.ResponseWriter, data interface{}) error {
 	if err != nil {
 		return fmt.Errorf("json encode: %w", err)
 	}
-	log.Ctx(ctx).Trace().Str("length", byteCountDecimal(buf.Len())).Msg("About to write response")
 
+	log.Ctx(ctx).Debug().Str("length", byteCountDecimal(buf.Len())).Msg("About to write response")
+
+	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Content-Length", strconv.Itoa(buf.Len()))
 
 	_, err = w.Write(buf.Bytes())

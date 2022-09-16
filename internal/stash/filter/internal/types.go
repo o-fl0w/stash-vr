@@ -24,7 +24,7 @@ func ParseJsonCriterion(raw string) (JsonCriterion, error) {
 
 	err := json.Unmarshal([]byte(raw), &c)
 	if err != nil {
-		return JsonCriterion{}, fmt.Errorf("unmarshal jsonCriterion=%s: %w", raw, err)
+		return JsonCriterion{}, fmt.Errorf("unmarshal json criterion '%s': %w", raw, err)
 	}
 	return c, nil
 }

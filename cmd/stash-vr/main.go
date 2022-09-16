@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"stash-vr/internal/api/common"
@@ -34,22 +35,30 @@ func run() error {
 
 	stashClient := stash.NewClient(config.Get().StashGraphQLUrl, config.Get().StashApiKey)
 
-	log.Info().Str("stash-vr version", BuildVersion).Send()
-	if version, err := gql.Version(context.Background(), stashClient); err != nil {
-		log.Warn().Err(err).Msg("Failed to retrieve stash version")
-	} else {
-		log.Info().Str("stash version", version.Version.Version).Send()
+	logVersions(ctx, stashClient)
+
+	common.GetIndex(ctx, stashClient)
+
+	server := http.Server{
+		Addr:    listenAddress,
+		Handler: router.Build(stashClient),
 	}
 
-	log.Info().Msg("Populate initial cache...")
-	common.RefreshCache(ctx, stashClient)
-
-	r := router.Build(stashClient)
 	log.Info().Msg(fmt.Sprintf("Server listening on %s", listenAddress))
-	err := http.ListenAndServe(listenAddress, r)
+	err := server.ListenAndServe()
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
 
 	return nil
+}
+
+func logVersions(ctx context.Context, client graphql.Client) {
+	log.Info().Str("stash-vr version", BuildVersion).Send()
+
+	if version, err := gql.Version(ctx, client); err != nil {
+		log.Warn().Err(err).Msg("Failed to retrieve stash version")
+	} else {
+		log.Info().Str("stash version", version.Version.Version).Send()
+	}
 }

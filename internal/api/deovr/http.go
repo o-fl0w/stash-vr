@@ -17,29 +17,28 @@ func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	baseUrl := fmt.Sprintf("http://%s", req.Host)
 
-	index, err := buildIndex(ctx, h.Client, baseUrl)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("buildIndex")
+	index := buildIndex(ctx, h.Client, baseUrl)
+
+	if err := common.WriteJson(ctx, w, index); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("write")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-
-	if err := common.Write(ctx, w, index); err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("handler", "index").Msg("write")
 	}
 }
 
 func (h HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	sceneId := chi.URLParam(req, "sceneId")
+	sceneId := chi.URLParam(req, "videoId")
 
 	videoData, err := buildVideoData(ctx, h.Client, sceneId)
 	if err != nil {
-		log.Ctx(ctx).Error().Str("sceneId", sceneId).Err(err).Msg("buildVideoData")
+		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := common.Write(ctx, w, videoData); err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("handler", "videodata").Msg("write")
+	if err := common.WriteJson(ctx, w, videoData); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("write")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }

@@ -13,6 +13,6 @@ func destroy(ctx context.Context, client graphql.Client, sceneId string) error {
 	if err != nil {
 		return fmt.Errorf("SceneDestroy: %w", err)
 	}
-	log.Ctx(ctx).Debug().Str("sceneId", sceneId).Msg("Requested stash to delete scene, file and generated content")
+	log.Ctx(ctx).Debug().Msg("Requested stash to delete scene, file and generated content")
 	return nil
 }

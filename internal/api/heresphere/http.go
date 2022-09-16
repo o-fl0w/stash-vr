@@ -19,15 +19,10 @@ func (h *HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	baseUrl := fmt.Sprintf("http://%s", req.Host)
 
-	index, err := buildIndex(ctx, h.Client, baseUrl)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("buildIndex")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	index := buildIndex(ctx, h.Client, baseUrl)
 
-	if err := common.Write(ctx, w, index); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("index: write")
+	if err := common.WriteJson(ctx, w, index); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("write")
 	}
 }
 
@@ -35,18 +30,18 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 
 	ctx := req.Context()
-	sceneId := chi.URLParam(req, "sceneId")
+	sceneId := chi.URLParam(req, "videoId")
 
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("videodata: body: read")
+		log.Ctx(ctx).Error().Err(err).Msg("body: read")
 		return
 	}
 
 	var updateVideoData UpdateVideoData
 	err = json.Unmarshal(body, &updateVideoData)
 	if err != nil {
-		log.Ctx(ctx).Debug().Err(err).Str("id", sceneId).Bytes("body", body).Msg("videodata: body: unmarshal")
+		log.Ctx(ctx).Debug().Err(err).Bytes("body", body).Msg("body: unmarshal")
 	} else {
 		if updateVideoData.IsUpdateRequest() {
 			update(ctx, h.Client, sceneId, updateVideoData)
@@ -56,7 +51,7 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 
 		if updateVideoData.IsDeleteRequest() {
 			if err := destroy(ctx, h.Client, sceneId); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Str("sceneId", sceneId).Msg("Failed to fulfill delete request")
+				log.Ctx(ctx).Warn().Err(err).Msg("Delete failed")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -67,12 +62,12 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 
 	videoData, err := buildVideoData(ctx, h.Client, sceneId)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("id", sceneId).Msg("buildVideoData")
+		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := common.Write(ctx, w, videoData); err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("id", sceneId).Msg("videodata: write response")
+	if err := common.WriteJson(ctx, w, videoData); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("write")
 	}
 
 }

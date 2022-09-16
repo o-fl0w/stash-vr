@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/api/common"
-	"stash-vr/internal/api/common/types"
+	"stash-vr/internal/api/common/section"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 )
@@ -28,25 +28,23 @@ type PreviewData struct {
 	VideoUrl     string `json:"video_url"`
 }
 
-func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) (Index, error) {
+func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) Index {
 	sections := common.GetIndex(ctx, client)
 
 	scenes := fromSections(baseUrl, sections)
 
 	index := Index{Authorized: "1", Scenes: scenes}
 
-	return index, nil
+	return index
 }
 
-func fromSections(baseUrl string, sections []types.Section) []Scene {
-	return util.Transformation[types.Section, Scene]{
-		Transform: func(section types.Section) (Scene, error) {
-			return fromSection(baseUrl, section), nil
-		},
-	}.Ordered(sections)
+func fromSections(baseUrl string, sections []section.Section) []Scene {
+	return util.Transform[section.Section, Scene](func(section section.Section) (Scene, error) {
+		return fromSection(baseUrl, section), nil
+	}).Ordered(sections)
 }
 
-func fromSection(baseUrl string, section types.Section) Scene {
+func fromSection(baseUrl string, section section.Section) Scene {
 	s := Scene{
 		Name: section.Name,
 		List: make([]PreviewData, len(section.PreviewPartsList)),

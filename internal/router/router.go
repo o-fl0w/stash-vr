@@ -23,8 +23,8 @@ func Build(client graphql.Client) *chi.Mux {
 
 	//router.Mount("/debug", middleware.Profiler())
 
-	router.Mount("/heresphere", heresphere.Router(client))
-	router.Mount("/deovr", deovr.Router(client))
+	router.Mount("/heresphere", logDecorator(heresphere.Router(client), "heresphere"))
+	router.Mount("/deovr", logDecorator(deovr.Router(client), "deovr"))
 
 	router.Get("/", redirector)
 
@@ -35,11 +35,19 @@ func redirector(w http.ResponseWriter, req *http.Request) {
 	userAgent := req.Header.Get("User-Agent")
 
 	if strings.Contains(userAgent, "HereSphere") {
+		log.Ctx(req.Context()).Trace().Msg("Redirecting to /heresphere")
 		http.Redirect(w, req, "/heresphere", 307)
 		return
 	}
 
 	w.WriteHeader(http.StatusBadRequest)
+}
+
+func logDecorator(next http.Handler, mod string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := log.With().Str("mod", mod).Logger().WithContext(r.Context())
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func requestLogger(next http.Handler) http.Handler {
@@ -50,7 +58,7 @@ func requestLogger(next http.Handler) http.Handler {
 		}
 		url := fmt.Sprintf("%s://%s%s", scheme, config.Redacted(r.Host), r.RequestURI)
 
-		baseLogger := log.With().
+		baseLogger := log.Ctx(r.Context()).With().
 			Str("method", r.Method).
 			Str("url", url).Logger()
 
