@@ -209,23 +209,23 @@ func setSceneMarkers(ctx context.Context, client graphql.Client, sceneId string,
 		for _, sm := range smt.Scene_markers {
 			if _, err := gql.SceneMarkerDestroy(ctx, client, sm.Id); err != nil {
 				log.Ctx(ctx).Warn().Err(fmt.Errorf("setSceneMarkers: SceneMarkerDestroy: %w", err)).
-					Str("sceneMarkerId", sm.Id).Str("sceneMarkerTitle", sm.Title).Msg("Failed to delete marker")
+					Str("id", sm.Id).Str("title", sm.Title).Str("tag", sm.Primary_tag.Name).Msg("Failed to delete marker")
 				continue
 			}
-			log.Ctx(ctx).Trace().Str("sceneMarkerId", sm.Id).Str("sceneMarkerTitle", sm.Title).Msg("Marker deleted, will recreate...")
+			log.Ctx(ctx).Trace().Str("id", sm.Id).Str("title", sm.Title).Str("tag", sm.Primary_tag.Name).Msg("Marker deleted, will recreate...")
 		}
 	}
 	for _, m := range markers {
 		tagId, err := stash.FindOrCreateTag(ctx, client, m.tag)
 		if err != nil {
-			log.Ctx(ctx).Warn().Err(fmt.Errorf("setSceneMarkers: FindOrCreateTag: %w", err)).Msg("Failed to create tag for marker")
+			log.Ctx(ctx).Warn().Err(fmt.Errorf("setSceneMarkers: FindOrCreateTag: %w", err)).Str("title", m.title).Str("tag", m.tag).Msg("Failed to create tag for marker")
 			continue
 		}
-		_, err = gql.SceneMarkerCreate(ctx, client, sceneId, tagId, m.start, m.title)
+		createResponse, err := gql.SceneMarkerCreate(ctx, client, sceneId, tagId, m.start, m.title)
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(fmt.Errorf("setSceneMarkers: SceneMarkerCreate: %w", err)).Interface("marker", m).Msg("Failed to create marker")
 			continue
 		}
-		log.Ctx(ctx).Trace().Str("title", m.title).Msg("Marker created")
+		log.Ctx(ctx).Trace().Str("id", createResponse.SceneMarkerCreate.Id).Str("title", m.title).Str("tag", m.tag).Msg("Marker created")
 	}
 }
