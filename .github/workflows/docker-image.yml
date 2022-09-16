@@ -3,7 +3,7 @@ name: Publish Docker image
 on:
   push:
     branches: 
-      - develop
+      - 'develop'
     tags:
       - 'v*'
 
