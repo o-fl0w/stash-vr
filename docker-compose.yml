@@ -14,6 +14,7 @@ services:
       ## FILTERS can be either 'frontpage' or a comma separated list of filter ids.
       ## If left empty all saved filters will be shown.
       #FILTERS: "2,3,7" # comma separated list of filter ids, if enabled only these will show
+      #FILTERS: "frontpage" # show only scene filters from front page
 
       #HERESPHERE_SYNC_MARKERS: "true"
       #LOG_LEVEL: "debug"
