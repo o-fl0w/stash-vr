@@ -2,8 +2,11 @@ name: Publish Docker image
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
 
 jobs:
   push_to_registry:
@@ -24,11 +27,14 @@ jobs:
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ofl0w/stash-vr
+          tags: |
+            type=semver,pattern={{version}}
       
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
+          build-args: |
+            BUILD_VERSION=${{ steps.meta.outputs.tags }}
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }},ofl0w/stash-vr:latest
