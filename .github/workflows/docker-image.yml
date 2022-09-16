@@ -1,10 +1,7 @@
 name: Publish Docker image
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
@@ -37,4 +34,4 @@ jobs:
             BUILD_VERSION=${{ steps.meta.outputs.tags }}
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }},ofl0w/stash-vr:latest
+          tags: ${{ steps.meta.outputs.tags }}
