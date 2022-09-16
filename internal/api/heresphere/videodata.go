@@ -120,6 +120,9 @@ func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
 	}
 
 	for i, tag := range s.Tags {
+		if tag.Name == config.Get().FavoriteTag {
+			continue
+		}
 		t := Tag{
 			Name:  fmt.Sprintf("%s:%s", legendTag.Short, tag.Name),
 			Start: durationPerItem + i*durationPerItem,
