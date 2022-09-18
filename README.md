@@ -55,6 +55,7 @@ stash-vr listens on port `9666`, use docker port binding to change.
 * Generate categorized tags
 * Delete scenes
 * Funscript
+* O-counter incrementing
 
 ### DeoVR
 * Markers
@@ -102,6 +103,9 @@ If you set a half star in HereSphere stash-vr will round up the rating. That is 
 In other words, click anywhere on a star to set the rating to that amount of stars.
 
 **Exception:** To remove a rating, rate the video 0.5 (half a star). 
+
+#### O-counter
+Add a tag with the name `!O` (case-insensitive) in `Video Tags` to increment the o-counter.
 
 ## VR
 Both DeoVR and HereSphere has algorithms to automatically detect and handle VR videos.
