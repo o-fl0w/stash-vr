@@ -105,8 +105,16 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 }
 
 func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
-	itemCount := 1 + len(s.Tags)
+	itemCount := len(s.Tags)
+	if containsFavoriteTag(s.TagPartsArray) {
+		itemCount--
+	}
+	if s.Studio != nil {
+		itemCount++
+	}
 	durationPerItem := int(s.File.Duration * 1000 / float64(itemCount))
+
+	var tagCount = 0
 
 	if s.Studio != nil {
 		t := Tag{
@@ -117,19 +125,21 @@ func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
 			Track:  util.Ptr(0),
 		}
 		videoData.Tags = append(videoData.Tags, t)
+		tagCount++
 	}
 
-	for i, tag := range s.Tags {
+	for _, tag := range s.Tags {
 		if tag.Name == config.Get().FavoriteTag {
 			continue
 		}
 		t := Tag{
 			Name:  fmt.Sprintf("%s:%s", legendTag.Short, tag.Name),
-			Start: durationPerItem + i*durationPerItem,
-			End:   durationPerItem + (i+1)*durationPerItem,
+			Start: tagCount * durationPerItem,
+			End:   (tagCount + 1) * durationPerItem,
 			Track: util.Ptr(0),
 		}
 		videoData.Tags = append(videoData.Tags, t)
+		tagCount++
 	}
 }
 
@@ -234,10 +244,14 @@ func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *Vide
 }
 
 func setIsFavorite(s gql.FullSceneParts, videoData *VideoData) {
-	for _, t := range s.Tags {
+	videoData.IsFavorite = containsFavoriteTag(s.TagPartsArray)
+}
+
+func containsFavoriteTag(ts gql.TagPartsArray) bool {
+	for _, t := range ts.Tags {
 		if t.Name == config.Get().FavoriteTag {
-			videoData.IsFavorite = true
-			return
+			return true
 		}
 	}
+	return false
 }

@@ -103,9 +103,7 @@ query FindSceneMarkers($scene_id: ID!){
 
 query FindSceneTags($scene_id: ID!){
     findScene(id:$scene_id){
-        tags {
-            id, name
-        }
+        ...TagPartsArray
     }
 }
 
@@ -123,9 +121,7 @@ fragment FullSceneParts on Scene{
     paths{screenshot, preview, stream},
     ...ScriptParts
     ...StreamsParts
-    tags {
-        ...TagParts
-    },
+    ...TagPartsArray
     studio{
         id, name, rating
     },
@@ -136,6 +132,12 @@ fragment FullSceneParts on Scene{
     },
     performers {
         id, name, rating
+    }
+}
+
+fragment TagPartsArray on Scene{
+    tags {
+        ...TagParts
     }
 }
 

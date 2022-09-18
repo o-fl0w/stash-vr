@@ -19,6 +19,13 @@ mutation SceneUpdateStudio($id: ID!, $studio_id: ID) {
     }){id}
 }
 
+mutation SceneClearStudio($id: ID!) {
+    sceneUpdate(input: {
+        id: $id,
+        studio_id: null,
+    }){id}
+}
+
 mutation SceneUpdatePerformers($id: ID!, $performer_ids: [ID!]) {
     sceneUpdate(input: {
         id: $id,
@@ -48,4 +55,8 @@ mutation SceneMarkerDestroy($id: ID!){
 
 mutation SceneMarkerCreate($scene_id: ID!, $tag_id: ID!, $seconds: Float!, $title: String!){
     sceneMarkerCreate(input: {scene_id: $scene_id, primary_tag_id: $tag_id, seconds: $seconds, title: $title}){id}
+}
+
+mutation SceneIncrementO($id: ID!){
+    sceneIncrementO(id: $id)
 }
