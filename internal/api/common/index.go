@@ -31,7 +31,7 @@ func GetIndex(ctx context.Context, client graphql.Client) []section.Section {
 }
 
 func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
-	sss := make(chan []section.Section, 3)
+	sss := make([][]section.Section, 3)
 
 	filters := config.Get().Filters
 
@@ -46,7 +46,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
 				return
 			}
-			sss <- ss
+			sss[0] = ss
 		}()
 	}
 
@@ -59,7 +59,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
 				return
 			}
-			sss <- ss
+			sss[1] = ss
 		}()
 	}
 
@@ -73,16 +73,15 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
 				return
 			}
-			sss <- ss
+			sss[2] = ss
 		}()
 	}
 
 	wg.Wait()
-	close(sss)
 
 	var sections []section.Section
 
-	for ss := range sss {
+	for _, ss := range sss {
 		for _, s := range ss {
 			if s.FilterId != "" && section.ContainsFilterId(s.FilterId, sections) {
 				log.Ctx(ctx).Trace().Str("filterId", s.FilterId).Str("section", s.Name).Msg("Filter already added, skipping")
