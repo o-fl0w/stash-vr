@@ -172,6 +172,9 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 				continue
 			}
 		}
+		if strings.Contains(tagReq.Name, "=") {
+			continue
+		}
 
 		tagType, tagName, isCategorized := strings.Cut(tagReq.Name, ":")
 

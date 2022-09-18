@@ -67,6 +67,12 @@ type Script struct {
 	Url  string `json:"url"`
 }
 
+const (
+	trackStudioAndTags = 0
+	trackPerformers    = 1
+	trackFields        = 2
+)
+
 func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) (VideoData, error) {
 	findSceneResponse, err := gql.FindScene(ctx, client, sceneId)
 	if err != nil {
@@ -101,31 +107,20 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 	setMarkers(s, &videoData)
 	setScripts(s, &videoData)
 
+	setFields(s, &videoData)
+
 	return videoData, nil
 }
 
 func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
-	itemCount := len(s.Tags)
-	if containsFavoriteTag(s.TagPartsArray) {
-		itemCount--
-	}
-	if s.Studio != nil {
-		itemCount++
-	}
-	durationPerItem := int(s.File.Duration * 1000 / float64(itemCount))
-
-	var tagCount = 0
-
+	var tags []Tag
 	if s.Studio != nil {
 		t := Tag{
 			Name:   fmt.Sprintf("%s:%s", legendStudio.Full, s.Studio.Name),
 			Rating: float32(s.Studio.Rating),
-			Start:  0,
-			End:    durationPerItem,
-			Track:  util.Ptr(0),
+			Track:  util.Ptr(trackStudioAndTags),
 		}
-		videoData.Tags = append(videoData.Tags, t)
-		tagCount++
+		tags = append(tags, t)
 	}
 
 	for _, tag := range s.Tags {
@@ -134,12 +129,19 @@ func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
 		}
 		t := Tag{
 			Name:  fmt.Sprintf("%s:%s", legendTag.Short, tag.Name),
-			Start: tagCount * durationPerItem,
-			End:   (tagCount + 1) * durationPerItem,
-			Track: util.Ptr(0),
+			Track: util.Ptr(trackStudioAndTags),
 		}
-		videoData.Tags = append(videoData.Tags, t)
-		tagCount++
+		tags = append(tags, t)
+	}
+	equallyDivideTagDurations(s.File.Duration*1000, tags)
+	videoData.Tags = append(videoData.Tags, tags...)
+}
+
+func equallyDivideTagDurations(totalDuration float64, tags []Tag) {
+	durationPerItem := int(totalDuration / float64(len(tags)))
+	for i := range tags {
+		tags[i].Start = i * durationPerItem
+		tags[i].End = (i + 1) * durationPerItem
 	}
 }
 
@@ -151,7 +153,7 @@ func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
 			Name:   fmt.Sprintf("%s:%s", legendPerformer.Full, p.Name),
 			Start:  i * durationPerItem,
 			End:    (i + 1) * durationPerItem,
-			Track:  util.Ptr(1),
+			Track:  util.Ptr(trackPerformers),
 			Rating: float32(p.Rating),
 		}
 		videoData.Tags = append(videoData.Tags, t)
@@ -174,6 +176,24 @@ func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 		}
 		videoData.Tags = append(videoData.Tags, t)
 	}
+}
+
+func setFields(s gql.FullSceneParts, videoData *VideoData) {
+	var tags []Tag
+	if s.O_counter > 0 {
+		tags = append(tags, Tag{
+			Name:  fmt.Sprintf("O=%d", s.O_counter),
+			Track: util.Ptr(trackFields),
+		})
+	}
+	if s.Organized {
+		tags = append(tags, Tag{
+			Name:  "=Organized",
+			Track: util.Ptr(trackFields),
+		})
+	}
+	equallyDivideTagDurations(s.File.Duration*1000, tags)
+	videoData.Tags = append(videoData.Tags, tags...)
 }
 
 func setScripts(s gql.FullSceneParts, videoData *VideoData) {

@@ -132,7 +132,9 @@ fragment FullSceneParts on Scene{
     },
     performers {
         id, name, rating
-    }
+    },
+    o_counter,
+    organized
 }
 
 fragment TagPartsArray on Scene{
