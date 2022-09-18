@@ -1,3 +1,5 @@
+//go:generate go run github.com/Khan/genqlient ../../internal/stash/gql/genqlient.yaml
+
 package main
 
 import (
@@ -13,8 +15,6 @@ import (
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 )
-
-//go:generate go run github.com/Khan/genqlient ../../internal/stash/gql/genqlient.yaml
 
 const listenAddress = ":9666"
 
