@@ -42,8 +42,6 @@ func sectionFromSavedFilter(ctx context.Context, client graphql.Client, prefix s
 		return Section{}, fmt.Errorf("FindScenesByFilter savedFilter=%+v parsedFilter=%+v: %w", savedFilter.Filter, util.AsJsonStr(filterQuery), err)
 	}
 
-	log.Ctx(ctx).Trace().RawJSON("filterQuery", []byte(util.AsJsonStr(filterQuery))).RawJSON("savedFilter.Filter", []byte(util.AsJsonStr(savedFilter.Filter))).RawJSON("scenesResponse", []byte(util.AsJsonStr(scenesResponse))).Msg("Response from FindScenesByFilter")
-
 	if len(scenesResponse.FindScenes.Scenes) == 0 {
 		return Section{}, fmt.Errorf("0 videos found")
 	}

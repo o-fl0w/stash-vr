@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 )
@@ -14,7 +13,6 @@ const sourceSavedFilters = "Saved Filters"
 func SectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix string) ([]Section, error) {
 
 	savedFiltersResponse, err := gql.FindSavedSceneFilters(ctx, client)
-	log.Ctx(ctx).Trace().Int("len", len(savedFiltersResponse.FindSavedFilters)).RawJSON("savedFiltersResponse", []byte(util.AsJsonStr(savedFiltersResponse))).Msg("Response from FindSavedSceneFilters")
 	if err != nil {
 		return nil, fmt.Errorf("FindSavedSceneFilters: %w", err)
 	}
@@ -23,7 +21,6 @@ func SectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix s
 	for i, s := range savedFiltersResponse.FindSavedFilters {
 		savedFilters[i] = s.SavedFilterParts
 	}
-	log.Ctx(ctx).Trace().Int("len", len(savedFilters)).RawJSON("savedFilters", []byte(util.AsJsonStr(savedFilters))).Msg("Filters to build from")
 
 	sections := util.Transform[gql.SavedFilterParts, Section](func(savedFilter gql.SavedFilterParts) (Section, error) {
 		section, err := sectionFromSavedFilter(ctx, client, prefix, savedFilter)
