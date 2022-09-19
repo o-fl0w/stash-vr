@@ -134,7 +134,6 @@ Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DO
 * DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
   * For HereSphere the limit seems to be around 10k unique videos.
   * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try explicitly setting env. var. `FILTERS` with a list of filter ids such that the total amount of videos are lowered to a "reasonable" amount.
-* When using `Video Tags` in HereSphere to edit Markers, beware that your markers are deleted then recreated in stash. Mostly this
 
 #### Unsupported filter types
 * Premade Filters (i.e. Recently Released Scenes etc.) from stash front page are not supported.
