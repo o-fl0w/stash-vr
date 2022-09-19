@@ -33,7 +33,7 @@ See [docker_compose.yml](docker-compose.yml) for details.
       * All saved filters
   * Default: Empty 
 * `HERESPHERE_SYNC_MARKERS`
-  * Enable sync of Marker from HereSphere [NOTE](#HereSphere sync of Markers)
+  * Enable sync of Marker from HereSphere [NOTE](#heresphere-sync-of-markers)
   * Default: `false`
 * `HERESPHERE_QUICK_MARKERS`
   * HereSphere displays all tags on track 0 above the seekbar. By default, stash-vr puts studio and tags on track 0 for context at a quick glance. If this is set to `true` stash-vr will for quick access instead put Markers on track 0 if they exist. 
@@ -134,12 +134,10 @@ Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DO
 * DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
   * For HereSphere the limit seems to be around 10k unique videos.
   * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try explicitly setting env. var. `FILTERS` with a list of filter ids such that the total amount of videos are lowered to a "reasonable" amount.
-* When using `Video Tags` in HereSphere to edit Markers, beware that your markers are deleted then recreated in stash. Mostly this
 
 #### Unsupported filter types
 * Premade Filters (i.e. Recently Released Scenes etc.) from stash front page are not supported.
 * Any other filter type besides scene filters
-
 #### HereSphere sync of Markers
 When using `Video Tags` in HereSphere to edit Markers stash-vr will delete and (re)create them on updates.
 There currently is no support for correlating the markers (tags) in HereSphere to a Marker in stash.
