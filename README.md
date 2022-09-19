@@ -35,6 +35,9 @@ See [docker_compose.yml](docker-compose.yml) for details.
 * `HERESPHERE_SYNC_MARKERS`
   * Enable sync of Marker from HereSphere [NOTE](#HereSphere sync of Markers)
   * Default: `false`
+* `HERESPHERE_QUICK_MARKERS`
+  * HereSphere displays all tags on track 0 above the seekbar. By default, stash-vr puts studio and tags on track 0 for context at a quick glance. If this is set to `true` stash-vr will for quick access instead put Markers on track 0 if they exist. 
+  * Default: `false`
 
 stash-vr listens on port `9666`, use docker port binding to change.
 

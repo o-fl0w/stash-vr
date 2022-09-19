@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
+	"sort"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
-	"stash-vr/internal/util"
 	"strings"
 )
 
@@ -67,12 +68,6 @@ type Script struct {
 	Url  string `json:"url"`
 }
 
-const (
-	trackStudioAndTags = 0
-	trackPerformers    = 1
-	trackFields        = 2
-)
-
 func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) (VideoData, error) {
 	findSceneResponse, err := gql.FindScene(ctx, client, sceneId)
 	if err != nil {
@@ -102,23 +97,41 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 	setStreamSources(ctx, s, &videoData)
 	set3DFormat(s, &videoData)
 
-	setStudioAndTags(s, &videoData)
-	setPerformers(s, &videoData)
-	setMarkers(s, &videoData)
-	setScripts(s, &videoData)
+	setTags(s, &videoData)
 
-	setFields(s, &videoData)
+	setScripts(s, &videoData)
 
 	return videoData, nil
 }
 
-func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
+func setTags(s gql.FullSceneParts, videoData *VideoData) {
+	setPerformers(s, videoData, 1)
+	setFields(s, videoData, 2)
+
+	if config.Get().HeresphereQuickMarkers {
+		n := setMarkers(s, videoData, 0)
+		if n == 0 {
+			setStudioAndTags(s, videoData, 0)
+		} else {
+			setStudioAndTags(s, videoData, 3)
+		}
+	} else {
+		n := setStudioAndTags(s, videoData, 0)
+		if n == 0 {
+			setMarkers(s, videoData, 0)
+		} else {
+			setMarkers(s, videoData, 3)
+		}
+	}
+}
+
+func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData, track int) int {
 	var tags []Tag
 	if s.Studio != nil {
 		t := Tag{
 			Name:   fmt.Sprintf("%s:%s", legendStudio.Full, s.Studio.Name),
 			Rating: float32(s.Studio.Rating),
-			Track:  util.Ptr(trackStudioAndTags),
+			Track:  &track,
 		}
 		tags = append(tags, t)
 	}
@@ -129,12 +142,16 @@ func setStudioAndTags(s gql.FullSceneParts, videoData *VideoData) {
 		}
 		t := Tag{
 			Name:  fmt.Sprintf("%s:%s", legendTag.Short, tag.Name),
-			Track: util.Ptr(trackStudioAndTags),
+			Track: &track,
 		}
 		tags = append(tags, t)
 	}
 	equallyDivideTagDurations(s.File.Duration*1000, tags)
 	videoData.Tags = append(videoData.Tags, tags...)
+	if len(tags) > 0 {
+		return 1
+	}
+	return 0
 }
 
 func equallyDivideTagDurations(totalDuration float64, tags []Tag) {
@@ -145,7 +162,7 @@ func equallyDivideTagDurations(totalDuration float64, tags []Tag) {
 	}
 }
 
-func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
+func setPerformers(s gql.FullSceneParts, videoData *VideoData, track int) int {
 	itemCount := len(s.Performers)
 	durationPerItem := int(s.File.Duration * 1000 / float64(itemCount))
 	for i, p := range s.Performers {
@@ -153,14 +170,33 @@ func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
 			Name:   fmt.Sprintf("%s:%s", legendPerformer.Full, p.Name),
 			Start:  i * durationPerItem,
 			End:    (i + 1) * durationPerItem,
-			Track:  util.Ptr(trackPerformers),
+			Track:  &track,
 			Rating: float32(p.Rating),
 		}
 		videoData.Tags = append(videoData.Tags, t)
 	}
+	if itemCount > 0 {
+		return 1
+	}
+	return 0
 }
 
-func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
+func fillTagDurations(tags []Tag) {
+	sort.Slice(tags, func(i, j int) bool { return tags[i].Start < tags[j].Start })
+	for i := range tags {
+		if i == len(tags)-1 {
+			tags[i].End = 0
+		} else if tags[i+1].Start == 0 {
+			tags[i].End = tags[i].Start + 20000
+		} else {
+			tags[i].End = tags[i+1].Start
+		}
+	}
+	log.Debug().Interface("tags duration", tags).Send()
+}
+
+func setMarkers(s gql.FullSceneParts, videoData *VideoData, track int) int {
+	var tags []Tag
 	for _, sm := range s.Scene_markers {
 		sb := strings.Builder{}
 		sb.WriteString(sm.Primary_tag.Name)
@@ -172,28 +208,40 @@ func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 			Name:  sb.String(),
 			Start: int(sm.Seconds * 1000),
 			End:   0,
-			//Track: util.Ptr(0),
+			Track: &track,
 		}
-		videoData.Tags = append(videoData.Tags, t)
+		tags = append(tags, t)
 	}
+
+	fillTagDurations(tags)
+
+	videoData.Tags = append(videoData.Tags, tags...)
+	if len(tags) > 0 {
+		return 1
+	}
+	return 0
 }
 
-func setFields(s gql.FullSceneParts, videoData *VideoData) {
+func setFields(s gql.FullSceneParts, videoData *VideoData, track int) int {
 	var tags []Tag
 	if s.O_counter > 0 {
 		tags = append(tags, Tag{
 			Name:  fmt.Sprintf("O=%d", s.O_counter),
-			Track: util.Ptr(trackFields),
+			Track: &track,
 		})
 	}
 	if s.Organized {
 		tags = append(tags, Tag{
 			Name:  "=Organized",
-			Track: util.Ptr(trackFields),
+			Track: &track,
 		})
 	}
 	equallyDivideTagDurations(s.File.Duration*1000, tags)
 	videoData.Tags = append(videoData.Tags, tags...)
+	if len(tags) > 0 {
+		return 1
+	}
+	return 0
 }
 
 func setScripts(s gql.FullSceneParts, videoData *VideoData) {
