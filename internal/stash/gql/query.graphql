@@ -66,6 +66,10 @@ query FindPerformerByName($name: String!){
 }
 
 # @genqlient(for: "SceneFilterType.has_markers", omitempty: true)
+# @genqlient(for: "SceneFilterType.interactive", omitempty: true)
+# @genqlient(for: "SceneFilterType.is_missing", omitempty: true)
+# @genqlient(for: "SceneFilterType.organized", omitempty: true)
+# @genqlient(for: "SceneFilterType.performer_favorite", omitempty: true)
 query FindScenesByFilter(
     $scene_filter: SceneFilterType, $filterOpts: FindFilterType){
     findScenes(scene_filter: $scene_filter, filter: $filterOpts){
