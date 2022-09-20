@@ -40,6 +40,11 @@ func findSavedFilterIdsByFrontPage(ctx context.Context, client graphql.Client) (
 	}
 
 	var filterIds []string
+	frontPageContent := configurationResponse.Configuration.Ui["frontPageContent"]
+	if frontPageContent == nil {
+		log.Ctx(ctx).Info().Msg("No frontpage content found")
+		return nil, nil
+	}
 	frontPageFilters := configurationResponse.Configuration.Ui["frontPageContent"].([]interface{})
 	for _, _filter := range frontPageFilters {
 		filter := _filter.(map[string]interface{})
