@@ -28,11 +28,12 @@ func (v UpdateVideoData) IsDeleteRequest() bool {
 }
 
 type metadata struct {
-	tagIds       []string
-	studioId     string
-	performerIds []string
-	markers      []sceneMarker
-	incrementO   bool
+	tagIds          []string
+	studioId        string
+	performerIds    []string
+	markers         []sceneMarker
+	incrementO      bool
+	toggleOrganized bool
 }
 
 type sceneMarker struct {
@@ -155,9 +156,17 @@ func updateMetadata(ctx context.Context, client graphql.Client, sceneId string, 
 	if input.incrementO {
 		newCount, err := gql.SceneIncrementO(ctx, client, sceneId)
 		if err != nil {
-			log.Ctx(ctx).Warn().Err(fmt.Errorf("updateMetadata: SceneIncrementO: %w", err)).Interface("input", input.incrementO).Send()
+			log.Ctx(ctx).Warn().Err(fmt.Errorf("updateMetadata: SceneIncrementO: %w", err)).Interface("increment", input.incrementO).Send()
 		} else {
 			log.Ctx(ctx).Debug().Interface("O-counter", newCount).Msg("Scene: O-counter updated")
+		}
+	}
+	if input.toggleOrganized {
+		newOrganized, err := stash.SceneToggleOrganized(ctx, client, sceneId)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(fmt.Errorf("updateMetadata: SceneToggleOrganized: %w", err)).Interface("toggle", input.toggleOrganized).Send()
+		} else {
+			log.Ctx(ctx).Debug().Interface("Organized", newOrganized).Msg("Scene: Organized updated")
 		}
 	}
 }
@@ -167,8 +176,13 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 
 	for _, tagReq := range tags {
 		if strings.HasPrefix(tagReq.Name, "!") {
-			if strings.ToLower(tagReq.Name[1:]) == "o" {
+			cmd := strings.ToLower(tagReq.Name[1:])
+			switch cmd {
+			case "o":
 				input.incrementO = true
+				continue
+			case "org":
+				input.toggleOrganized = true
 				continue
 			}
 		}

@@ -111,6 +111,12 @@ query FindSceneTags($scene_id: ID!){
     }
 }
 
+query IsSceneOrganized($id: ID){
+    findScene(id:$id){
+        organized
+    }
+}
+
 fragment SavedFilterParts on SavedFilter{
     id, name, filter, mode
 }

@@ -60,3 +60,7 @@ mutation SceneMarkerCreate($scene_id: ID!, $tag_id: ID!, $seconds: Float!, $titl
 mutation SceneIncrementO($id: ID!){
     sceneIncrementO(id: $id)
 }
+
+mutation SceneUpdateOrganized($id: ID!, $isOrganized: Boolean){
+    sceneUpdate(input: {id: $id, organized: $isOrganized}){id, organized}
+}
