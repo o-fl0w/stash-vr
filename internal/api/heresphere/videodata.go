@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
 	"sort"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
@@ -192,7 +191,6 @@ func fillTagDurations(tags []Tag) {
 			tags[i].End = tags[i+1].Start
 		}
 	}
-	log.Debug().Interface("tags duration", tags).Send()
 }
 
 func setMarkers(s gql.FullSceneParts, videoData *VideoData, track int) int {

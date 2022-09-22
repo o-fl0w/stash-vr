@@ -19,7 +19,7 @@ func WriteJson(ctx context.Context, w http.ResponseWriter, data interface{}) err
 		return fmt.Errorf("json encode: %w", err)
 	}
 
-	log.Ctx(ctx).Debug().Str("length", byteCountDecimal(buf.Len())).Msg("About to write response")
+	log.Ctx(ctx).Trace().Str("length", byteCountDecimal(buf.Len())).Msg("About to write response")
 
 	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Content-Length", strconv.Itoa(buf.Len()))
