@@ -1,5 +1,5 @@
 # stash-vr
-Watch and edit your [stash](https://github.com/stashapp/stash) library in VR.
+Watch and [edit](#heresphere) your [stash](https://github.com/stashapp/stash) library in VR.
 
 [Install](#Installation) stash-vr, point it to your stash instance and point your VR video player to stash-vr.\
 stash-vr will relay your library information and display/play them in your video player ui.
