@@ -19,6 +19,22 @@ type JsonCriterion struct {
 	Value    interface{} `json:"value"`
 }
 
+type unexpectedTypeErr struct {
+	sourceType      string
+	destinationType string
+}
+
+func (e unexpectedTypeErr) Error() string {
+	return fmt.Sprintf("unexpected type %s is not assertable to %s", e.sourceType, e.destinationType)
+}
+
+func newUnexpectedTypeErr(source any, destinationType string) *unexpectedTypeErr {
+	return &unexpectedTypeErr{
+		sourceType:      fmt.Sprintf("%T", source),
+		destinationType: destinationType,
+	}
+}
+
 func ParseJsonCriterion(raw string) (JsonCriterion, error) {
 	var c JsonCriterion
 
@@ -29,56 +45,102 @@ func ParseJsonCriterion(raw string) (JsonCriterion, error) {
 	return c, nil
 }
 
-func (c JsonCriterion) AsHierarchicalMultiCriterionInput() *gql.HierarchicalMultiCriterionInput {
-	items := c.Value.(map[string]interface{})["items"].([]interface{})
+func (c JsonCriterion) AsHierarchicalMultiCriterionInput() (*gql.HierarchicalMultiCriterionInput, error) {
+	m, ok := c.Value.(map[string]interface{})
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value, "map[string]interface{}")
+	}
+	items, ok := m["items"].([]interface{})
+	if !ok {
+		return nil, newUnexpectedTypeErr(m["items"], "[]interface{}")
+	}
 	var ids []string
 	for _, item := range items {
-		id := item.(map[string]interface{})["id"].(string)
+		mid, ok := item.(map[string]interface{})
+		if !ok {
+			return nil, newUnexpectedTypeErr(item, "map[string]interface{}")
+		}
+		id, ok := mid["id"].(string)
+		if !ok {
+			return nil, newUnexpectedTypeErr(mid["id"], "string")
+		}
 		ids = append(ids, id)
 	}
 
 	return &gql.HierarchicalMultiCriterionInput{
 		Value:    ids,
 		Modifier: gql.CriterionModifier(c.Modifier),
-	}
+	}, nil
 }
 
-func (c JsonCriterion) AsStringCriterionInput() *gql.StringCriterionInput {
-	s := c.Value.(string)
+func (c JsonCriterion) AsStringCriterionInput() (*gql.StringCriterionInput, error) {
+	s, ok := c.Value.(string)
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value, "string")
+	}
 	return &gql.StringCriterionInput{
 		Value:    s,
 		Modifier: gql.CriterionModifier(c.Modifier),
-	}
+	}, nil
 }
 
-func (c JsonCriterion) AsIntCriterionInput() *gql.IntCriterionInput {
-	v := c.Value.(map[string]interface{})["value"].(float64)
-	_v2 := c.Value.(map[string]interface{})["value2"]
+func (c JsonCriterion) AsIntCriterionInput() (*gql.IntCriterionInput, error) {
+	m, ok := c.Value.(map[string]interface{})
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value, "map[string]interface{}")
+	}
+
+	v, ok := m["value"].(float64)
+	if !ok {
+		return nil, newUnexpectedTypeErr(m["value"], "float64")
+	}
+
 	var v2 float64
-	if _v2 != nil {
-		v2 = _v2.(float64)
+	if m["value2"] != nil {
+		v2, ok = m["value2"].(float64)
+		if !ok {
+			return nil, newUnexpectedTypeErr(m["value2"], "float64")
+		}
 	}
 	return &gql.IntCriterionInput{
 		Value:    int(v),
 		Value2:   int(v2),
 		Modifier: gql.CriterionModifier(c.Modifier),
+	}, nil
+}
+
+func (c JsonCriterion) AsBool() (bool, error) {
+	s, ok := c.Value.(string)
+	if !ok {
+		return false, newUnexpectedTypeErr(c.Value, "string")
 	}
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse bool from '%s': %w", s, err)
+	}
+	return b, nil
 }
 
-func (c JsonCriterion) AsBool() bool {
-	b, _ := strconv.ParseBool(c.Value.(string))
-	return b
-}
-
-func (c JsonCriterion) AsPHashDuplicationCriterionInput() *gql.PHashDuplicationCriterionInput {
-	b, _ := strconv.ParseBool(c.Value.(string))
+func (c JsonCriterion) AsPHashDuplicationCriterionInput() (*gql.PHashDuplicationCriterionInput, error) {
+	s, ok := c.Value.(string)
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value, "string")
+	}
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse bool from '%s': %w", s, err)
+	}
 	return &gql.PHashDuplicationCriterionInput{
 		Duplicated: b,
-	}
+	}, nil
 }
 
-func (c JsonCriterion) AsResolutionCriterionInput() *gql.ResolutionCriterionInput {
-	s := c.Value.(string)
+func (c JsonCriterion) AsResolutionCriterionInput() (*gql.ResolutionCriterionInput, error) {
+	s, ok := c.Value.(string)
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value, "string")
+	}
+
 	var rs gql.ResolutionEnum
 
 	switch s {
@@ -113,22 +175,32 @@ func (c JsonCriterion) AsResolutionCriterionInput() *gql.ResolutionCriterionInpu
 	return &gql.ResolutionCriterionInput{
 		Value:    rs,
 		Modifier: gql.CriterionModifier(c.Modifier),
+	}, nil
+}
+
+func (c JsonCriterion) AsString() (string, error) {
+	s, ok := c.Value.(string)
+	if !ok {
+		return "", newUnexpectedTypeErr(c.Value, "string")
 	}
+	return s, nil
 }
 
-func (c JsonCriterion) AsString() string {
-	s := c.Value.(string)
-	return s
-}
-
-func (c JsonCriterion) AsMultiCriterionInput() *gql.MultiCriterionInput {
-	cs := c.Value.([]interface{})
+func (c JsonCriterion) AsMultiCriterionInput() (*gql.MultiCriterionInput, error) {
+	cs, ok := c.Value.([]interface{})
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value, "[]interface{}")
+	}
 	var ss []string
-	for _, c := range cs {
-		ss = append(ss, c.(string))
+	for _, v := range cs {
+		s, ok := v.(string)
+		if !ok {
+			return nil, newUnexpectedTypeErr(v, "string")
+		}
+		ss = append(ss, s)
 	}
 	return &gql.MultiCriterionInput{
 		Value:    ss,
 		Modifier: gql.CriterionModifier(c.Modifier),
-	}
+	}, nil
 }
