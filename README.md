@@ -15,11 +15,14 @@ Both will automatically load their respective configuration files and launch the
 ## Installation
 See [docker_compose.yml](docker-compose.yml) for details.
 
+### Configuration
 * `STASH_GRAPHQL_URL` 
   * **Required**
   * Url to your stash graphql - something like `http://<stash.host>:<9999>/graphql`
 * `STASH_API_KEY` 
   * Api key to your stash if it's using authentication. 
+
+#### Optional
 * `FAVORITE_TAG` 
   * Name of tag in stash to hold scenes marked as [favorites](#favorites) (will be created if not existing)
   * Default: `FAVORITE`
