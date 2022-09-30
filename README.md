@@ -1,11 +1,15 @@
 # stash-vr
 Watch your [stash](https://github.com/stashapp/stash) library in VR.
 
-[Install](#Installation) stash-vr, point it to your stash instance and point your VR video player to stash-vr.\
-stash-vr will relay your library information and display/play them in your video player ui.
+stash-vr will relay your stash environment as close as possible building its library from your custom stash front page and saved filters by default.
+
+It's light on resources, optionally configurable and allows two-way sync in supported video players. 
+
+[Install](#Installation) stash-vr, point it to your stash instance and point your VR video player to stash-vr.
+
 
 ## Supported video players
-* HereSphere
+* HereSphere (two-way sync)
 * DeoVR
 
 ## Usage
@@ -14,6 +18,9 @@ Both will automatically load their respective configuration files and launch the
 
 ## Installation
 See [docker_compose.yml](docker-compose.yml) for details.
+Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-vr/tags).
+
+stash-vr listens on port `9666`, use docker port binding to change.
 
 ### Configuration
 * `STASH_GRAPHQL_URL` 
@@ -42,30 +49,33 @@ See [docker_compose.yml](docker-compose.yml) for details.
   * HereSphere displays all tags on track 0 above the seekbar. By default, stash-vr puts studio and tags on track 0 for context at a quick glance. If this is set to `true` stash-vr will for quick access instead put Markers on track 0 if they exist. 
   * Default: `false`
 
-stash-vr listens on port `9666`, use docker port binding to change.
-
 ## Features
 * Show following sections in video player:
   - Filters from your stash front page
   - Your other saved filters
 * Provide transcoding endpoints to your videos served by stash
-
-### HereSphere:
-* Two-way sync
-  * Rating
-  * Tags
-  * Studio
-  * Performers
+* HereSphere:
+  * Two-way sync
+    * Studio
+    * Tags
+    * Performers
+    * Markers
+    * Rating
+    * Favorites
+    * O-count (incrementing)
+    * Organized flag (toggle)
+  * Generate categorized tags from 
+    * Studio
+    * Tags
+    * Performers
+    * Markers
+    * Movies
+    * O-count
+    * Organized flag
+  * Delete scenes
+  * Funscript
+* DeoVR
   * Markers
-  * Favorites
-* Generate categorized tags
-* Delete scenes
-* Funscript
-* O-counter incrementing
-* Toggle organized
-
-### DeoVR
-* Markers
 
 ## Usage
 ### HereSphere
@@ -80,11 +90,11 @@ This will create the tag/studio/performer `MusicVideo` in stash if not already p
 
 Same workflow goes for setting studio and performers but with different prefixes according to below:
 
-|Metadata|Prefix| Alias |
-|--------|------|-------|
-|Tags|`#:`|`Tag:`|
-|Studio|`$:`|`Studio:`|
-|Performers|`@:`|`Performer`|
+|Metadata|Prefix| Alias        |
+|--------|------|--------------|
+|Tags|`#:`| `Tag:`       |
+|Studio|`$:`| `Studio:`    |
+|Performers|`@:`| `Performer:` |
 
 #### Markers
 (Both stash and HereSphere use the word _tag_ but they use it differently. Tags in heresphere are akin to Markers in stash)
@@ -112,10 +122,14 @@ In other words, click anywhere on a star to set the rating to that amount of sta
 **Exception:** To remove a rating, rate the video 0.5 (half a star). 
 
 #### O-counter
-Add a tag named `!O` (case-insensitive) in `Video Tags` to increment the scenes o-counter.
+Increment O-count by adding a tag named `!O` (case-insensitive) in `Video Tags`.
+
+Current O-count is shown as `O:<count>` 
 
 #### Organized
-Add a tag named `!Org` (case-insensitive) in `Video Tags` to toggle the scenes organized flag.
+Toggle organized flag by adding a tag named `!Org` (case-insensitive) in `Video Tags`.
+
+Current state is shown as `Org:<true/false>`
 
 ## VR
 Both DeoVR and HereSphere has algorithms to automatically detect and handle VR videos.
@@ -148,7 +162,7 @@ Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DO
 #### HereSphere sync of Markers
 When using `Video Tags` in HereSphere to edit Markers stash-vr will delete and (re)create them on updates.
 There currently is no support for correlating the markers (tags) in HereSphere to a Marker in stash.
-This means that **all metadata, besides the primary tag and title, related to a marker will NOT be retained** (id, previews, secondary tags and created/updated time). If you're not using those fields anyway you probably won't notice the difference.
+This means that **!! all metadata, besides the primary tag and title, related to a marker will NOT be retained !!** (id, previews, secondary tags and created/updated time). If you're not using those fields anyway you probably won't notice the difference.
 
 #### Reflecting changes made in stash
 When the index page of stash-vr is loaded stash-vr will immediately respond with a cached version. At the same time stash-vr will request the latest data and store it in the cache for the next request.

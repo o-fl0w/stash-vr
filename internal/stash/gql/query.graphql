@@ -126,7 +126,7 @@ fragment ScenePreviewParts on Scene{
 }
 
 fragment FullSceneParts on Scene{
-    id, title, rating, details, created_at,
+    id, title, rating, details, created_at, date
     file{video_codec,size,duration,width, height},
     paths{screenshot, preview, stream},
     ...ScriptParts
@@ -143,6 +143,12 @@ fragment FullSceneParts on Scene{
     performers {
         id, name, rating
     },
+    movies {
+        scene_index,
+        movie {
+            name
+        }
+    }
     o_counter,
     organized
 }

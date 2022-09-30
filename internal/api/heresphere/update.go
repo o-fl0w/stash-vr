@@ -176,23 +176,23 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 
 	for _, tagReq := range tags {
 		if strings.HasPrefix(tagReq.Name, "!") {
-			cmd := strings.ToLower(tagReq.Name[1:])
-			switch cmd {
-			case "o":
+			cmd := tagReq.Name[1:]
+			if legendOCount.IsMatch(cmd) {
 				input.incrementO = true
 				continue
-			case "org":
+			} else if legendOrganized.IsMatch(cmd) {
 				input.toggleOrganized = true
 				continue
 			}
-		}
-		if strings.Contains(tagReq.Name, "=") {
-			continue
 		}
 
 		tagType, tagName, isCategorized := strings.Cut(tagReq.Name, ":")
 
 		if isCategorized && legendTag.IsMatch(tagType) {
+			if tagName == "" {
+				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty tag name, skipping")
+				continue
+			}
 			id, err := stash.FindOrCreateTag(ctx, client, tagName)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(fmt.Errorf("metadataFromUpdateRequest: FindOrCreateTag: %w", err)).Str("request", tagReq.Name).Send()
@@ -200,6 +200,10 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 			}
 			input.tagIds = append(input.tagIds, id)
 		} else if isCategorized && legendStudio.IsMatch(tagType) {
+			if tagName == "" {
+				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty studio name, skipping")
+				continue
+			}
 			id, err := stash.FindOrCreateStudio(ctx, client, tagName)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(fmt.Errorf("metadataFromUpdateRequest: FindOrCreateStudio: %w", err)).Str("request", tagReq.Name).Send()
@@ -207,12 +211,19 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 			}
 			input.studioId = id
 		} else if isCategorized && legendPerformer.IsMatch(tagType) {
+			if tagName == "" {
+				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty performer name, skipping")
+				continue
+			}
 			id, err := stash.FindOrCreatePerformer(ctx, client, tagName)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(fmt.Errorf("metadataFromUpdateRequest: FindOrCreatePerformer: %w", err)).Str("request", tagReq.Name).Send()
 				continue
 			}
 			input.performerIds = append(input.performerIds, id)
+		} else if isCategorized && (legendMovie.IsMatch(tagType) || legendOCount.IsMatch(tagType) || legendOrganized.IsMatch(tagType)) {
+			log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Tag type is reserved, skipping")
+			continue
 		} else {
 			var markerTitle string
 			markerPrimaryTag := tagType
