@@ -4,7 +4,7 @@ FROM golang:1.19-alpine as build
 
 ARG BUILD_VERSION
 
-WORKDIR /app
+WORKDIR /build
 
 COPY go.mod ./
 COPY go.sum ./
@@ -15,13 +15,14 @@ COPY ./cmd ./cmd/
 COPY ./internal ./internal/
 #COPY ./pkg ./pkg/
 
-RUN go generate ./cmd/stash-vr/ && go build -ldflags "-X main.BuildVersion=$BUILD_VERSION" -o ./stash-vr ./cmd/stash-vr/
+RUN go generate ./cmd/stash-vr/ && go build -ldflags "-X stash-vr/internal/application.BuildVersion=$BUILD_VERSION" -o ./stash-vr ./cmd/stash-vr/
 
 FROM alpine:3.16
 
-WORKDIR /deploy
+WORKDIR /app
 
-COPY --from=build /app/stash-vr ./
+COPY ./web ./web/
+COPY --from=build /build/stash-vr ./
 
 ENV STASH_GRAPHQL_URL=http://localhost:9999/graphql
 

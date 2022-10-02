@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"stash-vr/internal/api/common"
+	"stash-vr/internal/application"
 	"stash-vr/internal/config"
 	_ "stash-vr/internal/logger"
 	"stash-vr/internal/router"
@@ -17,8 +18,6 @@ import (
 )
 
 const listenAddress = ":9666"
-
-var BuildVersion = "DEV"
 
 func main() {
 	if err := run(); err != nil {
@@ -54,7 +53,7 @@ func run() error {
 }
 
 func logVersions(ctx context.Context, client graphql.Client) {
-	log.Info().Str("stash-vr version", BuildVersion).Send()
+	log.Info().Str("stash-vr version", application.BuildVersion).Send()
 
 	if version, err := gql.Version(ctx, client); err != nil {
 		log.Warn().Err(err).Msg("Failed to retrieve stash version")

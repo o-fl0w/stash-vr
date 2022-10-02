@@ -10,6 +10,7 @@ import (
 	"stash-vr/internal/api/deovr"
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/config"
+	"stash-vr/internal/web"
 	"strings"
 	"time"
 )
@@ -26,21 +27,25 @@ func Build(client graphql.Client) *chi.Mux {
 	router.Mount("/heresphere", logDecorator(heresphere.Router(client), "heresphere"))
 	router.Mount("/deovr", logDecorator(deovr.Router(client), "deovr"))
 
-	router.Get("/", redirector)
+	router.Get("/", redirector(client))
+	router.Get("/*", web.ServeStatic())
 
 	return router
 }
 
-func redirector(w http.ResponseWriter, req *http.Request) {
-	userAgent := req.Header.Get("User-Agent")
+func redirector(client graphql.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userAgent := r.Header.Get("User-Agent")
 
-	if strings.Contains(userAgent, "HereSphere") {
-		log.Ctx(req.Context()).Trace().Msg("Redirecting to /heresphere")
-		http.Redirect(w, req, "/heresphere", 307)
+		if strings.Contains(userAgent, "HereSphere") {
+			log.Ctx(r.Context()).Trace().Msg("Redirecting to /heresphere")
+			http.Redirect(w, r, "/heresphere", 307)
+			return
+		}
+
+		web.ServeIndex(client).ServeHTTP(w, r)
 		return
 	}
-
-	w.WriteHeader(http.StatusBadRequest)
 }
 
 func logDecorator(next http.Handler, mod string) http.Handler {

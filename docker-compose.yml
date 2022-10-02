@@ -9,7 +9,7 @@ services:
     environment:
       STASH_GRAPHQL_URL: "http://localhost:9999/graphql"
       #STASH_API_KEY: "xxx"
-      FAVORITE_TAG: "FAVORITE"
+      #FAVORITE_TAG: "FAVORITE"
 
       ## FILTERS can be either 'frontpage' or a comma separated list of filter ids.
       ## If left empty all saved filters will be shown.
