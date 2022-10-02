@@ -1,12 +1,12 @@
 package deovr
 
 import (
-	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"stash-vr/internal/api/common"
+	"stash-vr/internal/util"
 )
 
 type HttpHandler struct {
@@ -15,7 +15,7 @@ type HttpHandler struct {
 
 func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	baseUrl := fmt.Sprintf("http://%s", req.Host)
+	baseUrl := util.GetBaseUrl(req)
 
 	index := buildIndex(ctx, h.Client, baseUrl)
 
