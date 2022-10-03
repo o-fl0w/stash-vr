@@ -58,7 +58,7 @@ func logDecorator(next http.Handler, mod string) http.Handler {
 
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		scheme := util.GetScheme()
+		scheme := util.GetScheme(r)
 		url := fmt.Sprintf("%s://%s%s", scheme, config.Redacted(r.Host), r.RequestURI)
 
 		baseLogger := log.Ctx(r.Context()).With().
