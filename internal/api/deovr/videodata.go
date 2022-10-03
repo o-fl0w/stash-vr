@@ -6,6 +6,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
+	"strings"
 )
 
 type VideoData struct {
@@ -121,9 +122,15 @@ func setStudios(s gql.FullSceneParts, videoData *VideoData) {
 
 func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 	for _, sm := range s.Scene_markers {
+		sb := strings.Builder{}
+		sb.WriteString(sm.Primary_tag.Name)
+		if sm.Title != "" {
+			sb.WriteString(":")
+			sb.WriteString(sm.Title)
+		}
 		ts := TimeStamp{
 			Ts:   int(sm.Seconds),
-			Name: sm.Title,
+			Name: sb.String(),
 		}
 		videoData.TimeStamps = append(videoData.TimeStamps, ts)
 	}
