@@ -25,7 +25,6 @@ After installation open your endpoint (e.g. `http://localhost:9666`) in a regula
 
 ### Docker
 ```
-docker pull ofl0w/stash-vr:latest
 docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
 ```
 
