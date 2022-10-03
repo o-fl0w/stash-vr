@@ -30,8 +30,8 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) Inde
 }
 
 func fromSections(baseUrl string, sections []section.Section) []Library {
-	return util.Transform[section.Section, Library](func(section section.Section) (Library, error) {
-		return fromSection(baseUrl, section), nil
+	return util.Transform[section.Section, Library](func(section section.Section) *Library {
+		return util.Ptr(fromSection(baseUrl, section))
 	}).Ordered(sections)
 }
 

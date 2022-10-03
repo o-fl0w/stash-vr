@@ -1,33 +1,39 @@
-package section
+package frontpage
 
 import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
+	"stash-vr/internal/api/common/section"
+	"stash-vr/internal/api/common/section/internal"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strconv"
 )
 
-const sourceFrontPage = "Front Page"
+const source = "Front Page"
 
-func SectionsByFrontPage(ctx context.Context, client graphql.Client, prefix string) ([]Section, error) {
+func SectionsByFrontPage(ctx context.Context, client graphql.Client, prefix string) ([]section.Section, error) {
 	filterIds, err := findSavedFilterIdsByFrontPage(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("FindSavedFilterIdsByFrontPage: %w", err)
 	}
 
-	savedFilters := findFiltersById(ctx, client, filterIds)
+	savedFilters := internal.FindFiltersById(ctx, client, filterIds)
 
-	sections := util.Transform[gql.SavedFilterParts, Section](func(savedFilter gql.SavedFilterParts) (Section, error) {
-		section, err := sectionFromSavedFilter(ctx, client, prefix, savedFilter)
+	sections := util.Transform[gql.SavedFilterParts, section.Section](func(savedFilter gql.SavedFilterParts) *section.Section {
+		s, err := internal.SectionFromSavedFilter(ctx, client, prefix, savedFilter)
 		if err != nil {
-			filterLogger(ctx, savedFilter, sourceFrontPage).Warn().Err(err).Msg("Skipped filter: sectionsByFrontPage: sectionFromSavedFilter")
-			return Section{}, err
+			internal.FilterLogger(ctx, savedFilter, source).Warn().Err(err).Msg("Filter skipped")
+			return nil
 		}
-		sectionLogger(ctx, savedFilter, sourceFrontPage, section).Debug().Msg("Section built")
-		return section, nil
+		if len(s.PreviewPartsList) == 0 {
+			internal.FilterLogger(ctx, savedFilter, source).Debug().Msg("Filter skipped: 0 scenes")
+			return nil
+		}
+		internal.SectionLogger(ctx, savedFilter, source, s).Debug().Msg("Section built")
+		return &s
 	}).Ordered(savedFilters)
 
 	return sections, nil
@@ -50,7 +56,7 @@ func findSavedFilterIdsByFrontPage(ctx context.Context, client graphql.Client) (
 		filter := _filter.(map[string]interface{})
 		typeName := filter["__typename"].(string)
 		if typeName != "SavedFilter" {
-			log.Ctx(ctx).Info().Str("type", typeName).Str("source", sourceFrontPage).Msg("Skipped filter of unsupported type. Only user created saved scene filters are supported")
+			log.Ctx(ctx).Info().Str("type", typeName).Str("source", source).Msg("Filter skipped: Unsupported type. Only user created saved scene filters are supported")
 			continue
 		}
 

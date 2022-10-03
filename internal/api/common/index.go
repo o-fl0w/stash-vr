@@ -6,6 +6,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/api/common/cache"
 	"stash-vr/internal/api/common/section"
+	"stash-vr/internal/api/common/section/filterlist"
+	"stash-vr/internal/api/common/section/frontpage"
+	"stash-vr/internal/api/common/section/savedfilters"
 	"stash-vr/internal/config"
 	"strings"
 	"sync"
@@ -41,7 +44,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := section.SectionsByFrontPage(ctx, client, "")
+			ss, err := frontpage.SectionsByFrontPage(ctx, client, "")
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
 				return
@@ -54,7 +57,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := section.SectionsBySavedFilters(ctx, client, "?:")
+			ss, err := savedfilters.SectionsBySavedFilters(ctx, client, "?:")
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
 				return
@@ -68,7 +71,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := section.SectionsByFilterIds(ctx, client, "?:", filterIds)
+			ss, err := filterlist.SectionsByFilterIds(ctx, client, "?:", filterIds)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
 				return
@@ -92,15 +95,19 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 	}
 
 	var links int
+	sceneIds := make(map[string]any)
 	for _, s := range sections {
 		links += len(s.PreviewPartsList)
+		for _, p := range s.PreviewPartsList {
+			sceneIds[p.Id] = struct{}{}
+		}
 	}
 
 	if links > 10000 {
 		log.Ctx(ctx).Warn().Int("links", links).Msg("More than 10.000 links generated. Known to cause issues with video players.")
 	}
 
-	log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", links).Msg("Index built")
+	log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", links).Int("scenes", len(sceneIds)).Msg("Index built")
 
 	return sections
 }

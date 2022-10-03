@@ -1,12 +1,13 @@
 # Stash-VR
 Watch your [Stash](https://github.com/stashapp/stash) library in VR for that full immersion effect.
 
-Stash-VR relays your library from your Stash front page and saved filters allowing you to browse, play and manage your videos using the native VR UI of a supported video player.
+Stash-VR relays your library from your Stash front page and saved filters allowing you to browse, play and manage your videos using the native VR UI of supported video players.
 
-It's light on resources, optionally configurable and has support for two-way sync. 
+It's light on resources, optionally configurable and has support for two-way sync.
 
-[Install](#Installation) Stash-VR, point it to your Stash instance and point your VR video player to Stash-VR.
+**[Install](#Installation) Stash-VR, point it to your Stash instance and point your VR video player to Stash-VR.**
 
+(Traditional flat/2d videos as well as VR videos are supported.)
 
 ## Supported video players
 * HereSphere (two-way sync)
@@ -18,9 +19,12 @@ Browse to `http://<host>:9666` using a supported video player. You'll be present
 ## Installation
 Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-vr/tags).
 
-For docker compose see [docker_compose.yml](docker-compose.yml).
+For details or docker compose see [docker_compose.yml](docker-compose.yml).
 
-Stash-VR listens on port `9666`, use docker port binding to change local port, e.g. `-p 9000:9666` to listen on port `9000` instead.
+After installation open your endpoint (e.g. `http://localhost:9666`) in a regular browser to verify your setup.
+
+<details>
+<summary>Docker container commands</summary>
 
 ```
 docker pull ofl0w/stash-vr:latest
@@ -28,17 +32,30 @@ docker rm stash-vr
 docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
 ```
 
-After installation open your endpoint (e.g. `http://localhost:9666`) in a regular browser to verify your setup.
+</details>
+
+<details>
+<summary>Docker container commands for serverless mode</summary>
+
+```
+docker pull ofl0w/stash-vr:latest
+docker rm stash-vr
+docker create -it --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
+```
+Start Stash-VR with `docker start -i stash-vr` and exit with Ctrl/Cmd+C.
+</details>
+
+Stash-VR listens on port `9666`, use docker port binding to change local port, e.g. `-p 9000:9666` to listen on port `9000` instead.
 
 ### Configuration
-* `STASH_GRAPHQL_URL` 
+* `STASH_GRAPHQL_URL`
   * **Required**
   * Url to your Stash graphql - something like `http://<stash.host>:<9999>/graphql`.
-* `STASH_API_KEY` 
+* `STASH_API_KEY`
   * Api key to your Stash if it's using authentication, otherwise not required.
 
 #### Optional
-* `FAVORITE_TAG` 
+* `FAVORITE_TAG`
   * Default: `FAVORITE`
   * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
 * `FILTERS`
@@ -55,7 +72,7 @@ After installation open your endpoint (e.g. `http://localhost:9666`) in a regula
   * Enable sync of Marker from HereSphere [NOTE](#heresphere-sync-of-markers)
 * `HERESPHERE_QUICK_MARKERS`
   * Default: `false`
-  * Put markers, instead of studio and tags, above the seekbar in HereSphere for quick access and context. 
+  * Put markers, instead of studio and tags, above the seekbar in HereSphere for quick access and context.
 * `FORCE_HTTPS`
   * Default: `false`
   * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.
@@ -74,7 +91,7 @@ After installation open your endpoint (e.g. `http://localhost:9666`) in a regula
     * Favorites
     * O-count (incrementing)
     * Organized flag (toggle)
-  * Generate categorized tags from 
+  * Generate categorized tags from
     * Studio
     * Tags
     * Performers
@@ -114,9 +131,9 @@ To create a marker using HereSphere open your video and create a "tag" on any tr
 The naming format is:
 * `<tag>:<title>` will create a Marker in Stash titled `<title>` with the primary tag `<tag>`
 * `<tag>` will create a Marker in Stash with primary tag `<tag>` and no title.
-  
-Set the start time using HereSphere controls. 
-Tags (markers) in HereSphere has support for both a start and end time. 
+
+Set the start time using HereSphere controls.
+Tags (markers) in HereSphere has support for both a start and end time.
 Stash currently defines Markers as having a start time only. This means the end time set in HereSphere will be ignored.
 
 #### Favorites
@@ -129,12 +146,12 @@ HereSphere uses fractions for ratings, i.e. 4.5 is a valid rating. Stash uses wh
 If you set a half star in HereSphere Stash-VR will round up the rating. That is if you set a rating of 3.5 the video will receive a rating of 4 in Stash.
 In other words, click anywhere on a star to set the rating to that amount of stars.
 
-**Exception:** To remove a rating, rate the video 0.5 (half a star). 
+**Exception:** To remove a rating, rate the video 0.5 (half a star).
 
 #### O-counter
 Increment O-count by adding a tag named `!O` (case-insensitive) in `Video Tags`.
 
-Current O-count is shown as `O:<count>` 
+Current O-count is shown as `O:<count>`
 
 #### Organized
 Toggle organized flag by adding a tag named `!Org` (case-insensitive) in `Video Tags`.

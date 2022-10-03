@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type Transform[Input any, Output any] func(Input) (Output, error)
+type Transform[Input any, Output any] func(Input) *Output
 
 func (f Transform[Input, Output]) Do(inputs []Input) []Output {
 	return do(inputs, f,
@@ -46,11 +46,11 @@ func do[Input any, Output any, X any](inputs []Input, transform Transform[Input,
 	for i, input := range inputs {
 		go func(i int, input Input) {
 			defer wg.Done()
-			output, err := transform(input)
-			if err != nil {
+			output := transform(input)
+			if output == nil {
 				return
 			}
-			chXs <- wrap(i, output)
+			chXs <- wrap(i, *output)
 		}(i, input)
 	}
 	wg.Wait()
