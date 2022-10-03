@@ -21,19 +21,15 @@ Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-
 
 For details or docker compose see [docker_compose.yml](docker-compose.yml).
 
-<details>
-<summary>Docker</summary>
+After installation open your endpoint (e.g. `http://localhost:9666`) in a regular browser to verify your setup.
 
+#### Docker
 ```
 docker pull ofl0w/stash-vr:latest
 docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
 ```
 
-</details>
-
 Stash-VR listens on port `9666`, use docker port binding to change local port, e.g. `-p 9000:9666` to listen on port `9000` instead.
-
-After installation open your endpoint (e.g. `http://localhost:9666`) in a regular browser to verify your setup.
 
 ### Configuration
 * `STASH_GRAPHQL_URL`
