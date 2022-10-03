@@ -10,6 +10,7 @@ import (
 	"stash-vr/internal/api/deovr"
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/config"
+	"stash-vr/internal/util"
 	"stash-vr/internal/web"
 	"strings"
 	"time"
@@ -57,10 +58,7 @@ func logDecorator(next http.Handler, mod string) http.Handler {
 
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
+		scheme := util.GetScheme()
 		url := fmt.Sprintf("%s://%s%s", scheme, config.Redacted(r.Host), r.RequestURI)
 
 		baseLogger := log.Ctx(r.Context()).With().
