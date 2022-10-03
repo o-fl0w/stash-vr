@@ -15,6 +15,7 @@ const (
 	EnvKeyHeresphereQuickMarkers = "HERESPHERE_QUICK_MARKERS"
 	EnvKeyLogLevel               = "LOG_LEVEL"
 	EnvKeyDisableRedact          = "DISABLE_REDACT"
+	EnvKeyHTTPS                  = "HTTPS"
 )
 
 type Application struct {
@@ -26,6 +27,7 @@ type Application struct {
 	HeresphereQuickMarkers bool
 	LogLevel               string
 	IsRedactDisabled       bool
+	IsHTTPS                bool
 }
 
 var cfg Application
@@ -43,6 +45,7 @@ func Get() Application {
 			HeresphereQuickMarkers: getEnvOrDefault(EnvKeyHeresphereQuickMarkers, "false") == "true",
 			LogLevel:               strings.ToLower(getEnvOrDefault(EnvKeyLogLevel, "info")),
 			IsRedactDisabled:       getEnvOrDefault(EnvKeyDisableRedact, "false") == "true",
+			IsHTTPS:                getEnvOrDefault(EnvKeyHTTPS, "false") == "true",
 		}
 	})
 	return cfg

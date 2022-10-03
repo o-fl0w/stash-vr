@@ -48,6 +48,9 @@ Stash-VR listens on port `9666`, use docker port binding to change.
 * `HERESPHERE_QUICK_MARKERS`
   * HereSphere displays all tags on track 0 above the seekbar. By default, Stash-VR puts studio and tags on track 0 for context at a quick glance. If this is set to `true` Stash-VR will for quick access instead put Markers on track 0 if they exist. 
   * Default: `false`
+* `HTTPS`
+  * Set this to `true` if Stash-VR is running behind a reverse proxy for HTTPS
+  * Default: `false`
 
 ## Features
 * Show following sections in video player:

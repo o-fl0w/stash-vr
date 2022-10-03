@@ -19,3 +19,5 @@ services:
       #HERESPHERE_SYNC_MARKERS: "true"
       #HERESPHERE_QUICK_MARKERS: "true"
       #LOG_LEVEL: "debug"
+
+      #HTTPS: "true"  # uncomment if running behind a reverse proxy for https
