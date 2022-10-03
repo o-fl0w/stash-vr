@@ -17,27 +17,34 @@ Browse to `http://<host>:9666` using either DeoVR or HereSphere.
 Both will automatically load their respective configuration files and launch their ui with your library.
 
 ## Installation
-See [docker_compose.yml](docker-compose.yml) for details.
 Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-vr/tags).
 
-Stash-VR listens on port `9666`, use docker port binding to change.
+For docker compose see [docker_compose.yml](docker-compose.yml).
+
+Stash-VR listens on port `9666`, use docker port binding to change local port, e.g. `-p 9000:9666` to listen on port `9000` instead.
+
+```
+docker pull ofl0w/stash-vr:latest
+docker rm stash-vr
+docker run --name=stash-vr --restart=unless-stopped -e STASH_GRAPHQL_URL=http://127.0.0.1:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
+```
 
 ### Configuration
 * `STASH_GRAPHQL_URL` 
   * **Required**
   * Url to your Stash graphql - something like `http://<stash.host>:<9999>/graphql`
 * `STASH_API_KEY` 
-  * Api key to your Stash if it's using authentication. 
+  * Api key to your Stash if it's using authentication, otherwise not required.
 
 #### Optional
 * `FAVORITE_TAG` 
-  * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not existing)
+  * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present)
   * Default: `FAVORITE`
 * `FILTERS`
   * Select the filters to show by setting one of below values
     * `frontpage`
       * Show only filters found on Stash front page
-    * Comma separated list of filter ids, i.e. `1,5,12`
+    * Comma separated list of filter ids, e.g. `1,5,12`
       * Show only filters with provided filter ids
     * Empty
       * Show all saved filters
@@ -83,7 +90,7 @@ Stash-VR listens on port `9666`, use docker port binding to change.
 ## Usage
 ### HereSphere
 ##### Two-way sync
-To enable two-way sync with Stash all toggles (`Overwrite tags` etc.) needs to be on, in the cogwheel at the bottom right of preview view in HereSphere.
+To enable two-way sync with Stash the relevant toggles in the cogwheel at the bottom right of preview view in HereSphere (e.g. `Overwrite tags` etc.) needs to be on.
 #### Manage metadata
 Video metadata is handled using `Video Tags`.
 
@@ -118,7 +125,7 @@ When the favorite-feature of HereSphere is first used Stash-VR will create a tag
 **Tip:** Create a filter using that tag, so it shows up in HereSphere for quick access to favorites.
 
 #### Rating
-HereSphere uses fractions for ratings, i.e. 4.5 is a valid rating. Stash uses whole number.
+HereSphere uses fractions for ratings, i.e. 4.5 is a valid rating. Stash uses whole numbers.
 If you set a half star in HereSphere Stash-VR will round up the rating. That is if you set a rating of 3.5 the video will receive a rating of 4 in Stash.
 In other words, click anywhere on a star to set the rating to that amount of stars.
 
