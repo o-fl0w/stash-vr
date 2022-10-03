@@ -7,7 +7,7 @@ It's light on resources, optionally configurable and has support for two-way syn
 
 **[Install](#Installation) Stash-VR, point it to your Stash instance and point your VR video player to Stash-VR.**
 
-Both flat and VR videos are supported.
+(Traditional flat/2d videos as well as VR videos are supported.)
 
 ## Supported video players
 * HereSphere (two-way sync)
