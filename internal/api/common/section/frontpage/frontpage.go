@@ -14,7 +14,7 @@ import (
 
 const source = "Front Page"
 
-func SectionsByFrontPage(ctx context.Context, client graphql.Client, prefix string) ([]section.Section, error) {
+func Sections(ctx context.Context, client graphql.Client, prefix string) ([]section.Section, error) {
 	filterIds, err := findSavedFilterIdsByFrontPage(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("FindSavedFilterIdsByFrontPage: %w", err)

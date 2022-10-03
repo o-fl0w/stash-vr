@@ -12,7 +12,7 @@ import (
 
 const sourceSavedFilters = "Saved Filters"
 
-func SectionsBySavedFilters(ctx context.Context, client graphql.Client, prefix string) ([]section.Section, error) {
+func Sections(ctx context.Context, client graphql.Client, prefix string) ([]section.Section, error) {
 
 	savedFiltersResponse, err := gql.FindSavedSceneFilters(ctx, client)
 	if err != nil {

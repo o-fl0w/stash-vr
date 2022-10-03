@@ -44,7 +44,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := frontpage.SectionsByFrontPage(ctx, client, "")
+			ss, err := frontpage.Sections(ctx, client, "")
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
 				return
@@ -57,7 +57,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := savedfilters.SectionsBySavedFilters(ctx, client, "?:")
+			ss, err := savedfilters.Sections(ctx, client, "?:")
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
 				return
@@ -71,7 +71,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := filterlist.SectionsByFilterIds(ctx, client, "?:", filterIds)
+			ss, err := filterlist.Sections(ctx, client, "?:", filterIds)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
 				return
@@ -94,20 +94,13 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 		}
 	}
 
-	var links int
-	sceneIds := make(map[string]any)
-	for _, s := range sections {
-		links += len(s.PreviewPartsList)
-		for _, p := range s.PreviewPartsList {
-			sceneIds[p.Id] = struct{}{}
-		}
+	count := section.Count(sections)
+
+	if count.Links > 10000 {
+		log.Ctx(ctx).Warn().Int("links", count.Links).Msg("More than 10.000 links generated. Known to cause issues with video players.")
 	}
 
-	if links > 10000 {
-		log.Ctx(ctx).Warn().Int("links", links).Msg("More than 10.000 links generated. Known to cause issues with video players.")
-	}
-
-	log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", links).Int("scenes", len(sceneIds)).Msg("Index built")
+	log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", count.Links).Int("scenes", count.Scenes).Msg("Index built")
 
 	return sections
 }

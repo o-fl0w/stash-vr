@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"stash-vr/internal/api/common"
+	"stash-vr/internal/api/common/section"
 	"stash-vr/internal/application"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash/gql"
@@ -30,6 +31,7 @@ type IndexData struct {
 	StashVersion            string
 	SectionCount            int
 	LinkCount               int
+	SceneCount              int
 }
 
 func ServeIndex(client graphql.Client) http.HandlerFunc {
@@ -48,9 +50,9 @@ func ServeIndex(client graphql.Client) http.HandlerFunc {
 			data.StashVersion = version.Version.Version
 			sections := common.GetIndex(r.Context(), client)
 			data.SectionCount = len(sections)
-			for _, section := range sections {
-				data.LinkCount += len(section.PreviewPartsList)
-			}
+			count := section.Count(sections)
+			data.LinkCount = count.Links
+			data.SceneCount = count.Scenes
 		} else {
 			if strings.HasSuffix(err.Error(), "unauthorized") {
 				data.StashConnectionResponse = UNAUTHORIZED

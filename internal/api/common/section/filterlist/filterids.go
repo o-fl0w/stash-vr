@@ -11,7 +11,7 @@ import (
 
 const source = "Filter List"
 
-func SectionsByFilterIds(ctx context.Context, client graphql.Client, prefix string, filterIds []string) ([]section.Section, error) {
+func Sections(ctx context.Context, client graphql.Client, prefix string, filterIds []string) ([]section.Section, error) {
 
 	savedFilters := internal.FindFiltersById(ctx, client, filterIds)
 
