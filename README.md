@@ -26,7 +26,7 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
 ```
 docker pull ofl0w/stash-vr:latest
 docker rm stash-vr
-docker run --name=stash-vr --restart=unless-stopped -e STASH_GRAPHQL_URL=http://127.0.0.1:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
+docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://127.0.0.1:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
 ```
 
 ### Configuration
