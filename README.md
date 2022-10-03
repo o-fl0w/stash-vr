@@ -1,9 +1,9 @@
 # Stash-VR
-Watch your [Stash](https://github.com/stashapp/stash) library in VR.
+Watch your [Stash](https://github.com/stashapp/stash) library in VR for that full immersion effect.
 
-Stash-VR will relay your Stash environment as close as possible building its library from your custom Stash front page and saved filters by default.
+Stash-VR relays your library from your Stash front page and saved filters allowing you to browse, play and manage your videos using the native VR UI of a supported video player.
 
-It's light on resources, optionally configurable and allows two-way sync in supported video players. 
+It's light on resources, optionally configurable and has support for two-way sync. 
 
 [Install](#Installation) Stash-VR, point it to your Stash instance and point your VR video player to Stash-VR.
 
@@ -13,8 +13,7 @@ It's light on resources, optionally configurable and allows two-way sync in supp
 * DeoVR
 
 ## Usage
-Browse to `http://<host>:9666` using either DeoVR or HereSphere.
-Both will automatically load their respective configuration files and launch their ui with your library.
+Browse to `http://<host>:9666` using a supported video player. You'll be presented with your library within their respective native UI.
 
 ## Installation
 Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-vr/tags).
@@ -29,40 +28,41 @@ docker rm stash-vr
 docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
 ```
 
+After installation open your endpoint (e.g. `http://localhost:9666`) in a regular browser to verify your setup.
+
 ### Configuration
 * `STASH_GRAPHQL_URL` 
   * **Required**
-  * Url to your Stash graphql - something like `http://<stash.host>:<9999>/graphql`
+  * Url to your Stash graphql - something like `http://<stash.host>:<9999>/graphql`.
 * `STASH_API_KEY` 
   * Api key to your Stash if it's using authentication, otherwise not required.
 
 #### Optional
 * `FAVORITE_TAG` 
-  * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present)
   * Default: `FAVORITE`
+  * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
 * `FILTERS`
-  * Select the filters to show by setting one of below values
+  * Default: Empty
+  * Narrow the selection of filters to show by setting one of below values:
     * `frontpage`
-      * Show only filters found on Stash front page
+      * Show only filters found on Stash front page.
     * Comma separated list of filter ids, e.g. `1,5,12`
-      * Show only filters with provided filter ids
+      * Show only filters from this list.
     * Empty
-      * Show all saved filters
-  * Default: Empty 
+      * Show all saved filters.
 * `HERESPHERE_SYNC_MARKERS`
+  * Default: `false`
   * Enable sync of Marker from HereSphere [NOTE](#heresphere-sync-of-markers)
-  * Default: `false`
 * `HERESPHERE_QUICK_MARKERS`
-  * HereSphere displays all tags on track 0 above the seekbar. By default, Stash-VR puts studio and tags on track 0 for context at a quick glance. If this is set to `true` Stash-VR will for quick access instead put Markers on track 0 if they exist. 
   * Default: `false`
+  * Put markers, instead of studio and tags, above the seekbar in HereSphere for quick access and context. 
 * `FORCE_HTTPS`
-  * Set this to `true` to force Stash-VR to use HTTPS if it's having issues running behind a reverse proxy.
   * Default: `false`
+  * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.
 
 ## Features
-* Show following sections in video player:
-  - Filters from your Stash front page
-  - Your other saved filters
+* Browse, play and manage videos from your Stash library using native VR UI of supported video players.
+* Display your Stash library as configured in Stash from your front page and saved filters.
 * Provide transcoding endpoints to your videos served by Stash
 * HereSphere:
   * Two-way sync
@@ -90,13 +90,13 @@ docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e
 ## Usage
 ### HereSphere
 ##### Two-way sync
-To enable two-way sync with Stash the relevant toggles in the cogwheel at the bottom right of preview view in HereSphere (e.g. `Overwrite tags` etc.) needs to be on.
+To enable two-way sync with Stash the relevant toggles (`Overwrite tags` etc.) in the cogwheel at the bottom right of preview view in HereSphere needs to be on.
 #### Manage metadata
 Video metadata is handled using `Video Tags`.
 
 To tag a video open it in HereSphere and click `Video Tags` above the seekbar.
 On any track insert a new tag and prefix it with `#:` i.e. `#:MusicVideo`.
-This will create the tag/studio/performer `MusicVideo` in Stash if not already present and apply it to your video.
+This will create the tag `MusicVideo` in Stash if not already present and apply it to your video.
 
 Same workflow goes for setting studio and performers but with different prefixes according to below:
 
