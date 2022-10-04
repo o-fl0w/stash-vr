@@ -7,24 +7,25 @@ import (
 )
 
 const (
-	EnvKeyStashGraphQLUrl        = "STASH_GRAPHQL_URL"
-	EnvKeyStashApiKey            = "STASH_API_KEY"
-	EnvKeyFavoriteTag            = "FAVORITE_TAG"
-	EnvKeyFilters                = "FILTERS"
-	EnvKeyHeresphereSyncMarkers  = "HERESPHERE_SYNC_MARKERS"
-	EnvKeyHeresphereQuickMarkers = "HERESPHERE_QUICK_MARKERS"
-	EnvKeyLogLevel               = "LOG_LEVEL"
-	EnvKeyDisableRedact          = "DISABLE_REDACT"
-	EnvKeyForceHTTPS             = "FORCE_HTTPS"
+	envKeyStashGraphQLUrl = "STASH_GRAPHQL_URL"
+	envKeyStashApiKey     = "STASH_API_KEY"
+	envKeyFavoriteTag     = "FAVORITE_TAG"
+	envKeyFilters         = "FILTERS"
+	envKeyLogLevel        = "LOG_LEVEL"
+	envKeyDisableRedact   = "DISABLE_REDACT"
+	envKeyForceHTTPS      = "FORCE_HTTPS"
 )
+
+var envKeyEnableGlanceMarkers = []string{"ENABLE_GLANCE_MARKERS", "HERESPHERE_QUICK_MARKERS"}
+var envKeyAllowSyncMarkers = []string{"ALLOW_SYNC_MARKERS", "HERESPHERE_SYNC_MARKERS"}
 
 type Application struct {
 	StashGraphQLUrl        string
 	StashApiKey            string
 	FavoriteTag            string
 	Filters                string
-	HeresphereSyncMarkers  bool
-	HeresphereQuickMarkers bool
+	IsGlanceMarkersEnabled bool
+	IsSyncMarkersAllowed   bool
 	LogLevel               string
 	IsRedactDisabled       bool
 	ForceHTTPS             bool
@@ -37,15 +38,15 @@ var once sync.Once
 func Get() Application {
 	once.Do(func() {
 		cfg = Application{
-			StashGraphQLUrl:        getEnvOrDefault(EnvKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
-			StashApiKey:            getEnvOrDefault(EnvKeyStashApiKey, ""),
-			FavoriteTag:            getEnvOrDefault(EnvKeyFavoriteTag, "FAVORITE"),
-			Filters:                getEnvOrDefault(EnvKeyFilters, ""),
-			HeresphereSyncMarkers:  getEnvOrDefault(EnvKeyHeresphereSyncMarkers, "false") == "true",
-			HeresphereQuickMarkers: getEnvOrDefault(EnvKeyHeresphereQuickMarkers, "false") == "true",
-			LogLevel:               strings.ToLower(getEnvOrDefault(EnvKeyLogLevel, "info")),
-			IsRedactDisabled:       getEnvOrDefault(EnvKeyDisableRedact, "false") == "true",
-			ForceHTTPS:             getEnvOrDefault(EnvKeyForceHTTPS, "false") == "true",
+			StashGraphQLUrl:        getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
+			StashApiKey:            getEnvOrDefault(envKeyStashApiKey, ""),
+			FavoriteTag:            getEnvOrDefault(envKeyFavoriteTag, "FAVORITE"),
+			Filters:                getEnvOrDefault(envKeyFilters, ""),
+			IsGlanceMarkersEnabled: findEnvOrDefault(envKeyEnableGlanceMarkers, "false") == "true",
+			IsSyncMarkersAllowed:   findEnvOrDefault(envKeyAllowSyncMarkers, "false") == "true",
+			LogLevel:               strings.ToLower(getEnvOrDefault(envKeyLogLevel, "info")),
+			IsRedactDisabled:       getEnvOrDefault(envKeyDisableRedact, "false") == "true",
+			ForceHTTPS:             getEnvOrDefault(envKeyForceHTTPS, "false") == "true",
 		}
 	})
 	return cfg
@@ -57,6 +58,16 @@ func getEnvOrDefault(key string, defaultValue string) string {
 	} else {
 		return val
 	}
+}
+
+func findEnvOrDefault(keys []string, defaultValue string) string {
+	for _, key := range keys {
+		v, ok := os.LookupEnv(key)
+		if ok {
+			return v
+		}
+	}
+	return defaultValue
 }
 
 func (a Application) Redacted() Application {

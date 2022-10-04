@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"stash-vr/internal/api/common"
+	"stash-vr/internal/api/heresphere/sync"
 	"stash-vr/internal/util"
 )
 
@@ -38,23 +39,19 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var updateVideoData UpdateVideoData
+	var updateVideoData sync.UpdateVideoData
 	err = json.Unmarshal(body, &updateVideoData)
 	if err != nil {
 		log.Ctx(ctx).Debug().Err(err).Bytes("body", body).Msg("body: unmarshal")
 	} else {
 		if updateVideoData.IsUpdateRequest() {
-			update(ctx, h.Client, sceneId, updateVideoData)
+			sync.Update(ctx, h.Client, sceneId, updateVideoData)
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
 		if updateVideoData.IsDeleteRequest() {
-			if err := destroy(ctx, h.Client, sceneId); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Delete failed")
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			sync.Destroy(ctx, h.Client, sceneId)
 			w.WriteHeader(http.StatusOK)
 			return
 		}

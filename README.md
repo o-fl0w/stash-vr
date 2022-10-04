@@ -63,12 +63,14 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
       * Show only filters from this list.
     * Empty
       * Show all saved filters.
-* `HERESPHERE_SYNC_MARKERS`
+* `ALLOW_SYNC_MARKERS`
   * Default: `false`
   * Enable sync of Marker from HereSphere [NOTE](#heresphere-sync-of-markers)
-* `HERESPHERE_QUICK_MARKERS`
+  * (Previously ~~`HERESPHERE_SYNC_MARKERS`~~, might be removed in the future.)
+* `ENABLE_GLANCE_MARKERS`
   * Default: `false`
-  * Put markers, instead of studio and tags, above the seekbar in HereSphere for quick access and context.
+  * Put markers, instead of studio and tags, above the seekbar in HereSphere for quick access.
+  * (Previously ~~`HERESPHERE_QUICK_MARKERS`~~, might be removed in the future.)
 * `FORCE_HTTPS`
   * Default: `false`
   * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.

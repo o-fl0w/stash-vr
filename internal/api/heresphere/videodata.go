@@ -6,6 +6,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"sort"
 	"stash-vr/internal/api/common"
+	"stash-vr/internal/api/heresphere/proto"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
@@ -13,68 +14,17 @@ import (
 	"strings"
 )
 
-type VideoData struct {
-	Access int `json:"access"`
-
-	Title          string   `json:"title"`
-	Description    string   `json:"description"`
-	ThumbnailImage string   `json:"thumbnailImage"`
-	ThumbnailVideo string   `json:"thumbnailVideo"`
-	DateReleased   string   `json:"dateReleased"`
-	DateAdded      string   `json:"dateAdded"`
-	Duration       int      `json:"duration"`
-	Rating         float32  `json:"rating"`
-	IsFavorite     bool     `json:"isFavorite"`
-	Projection     string   `json:"projection"`
-	Stereo         string   `json:"stereo"`
-	Fov            float32  `json:"fov"`
-	Lens           string   `json:"lens"`
-	Scripts        []Script `json:"scripts"`
-	Tags           []Tag    `json:"tags"`
-	Media          []Media  `json:"media"`
-
-	WriteFavorite bool `json:"writeFavorite"`
-	WriteRating   bool `json:"writeRating"`
-	WriteTags     bool `json:"writeTags"`
-}
-
-type Tag struct {
-	Name   string  `json:"name"`
-	Start  int     `json:"start"`
-	End    int     `json:"end"`
-	Track  *int    `json:"track,omitempty"`
-	Rating float32 `json:"rating"`
-}
-
-type Media struct {
-	Name    string   `json:"name"`
-	Sources []Source `json:"sources"`
-}
-
-type Source struct {
-	Resolution int    `json:"resolution"`
-	Height     int    `json:"height"`
-	Width      int    `json:"width"`
-	Size       int    `json:"size"`
-	Url        string `json:"url"`
-}
-
-type Script struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
-}
-
-func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) (VideoData, error) {
+func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) (proto.VideoData, error) {
 	findSceneResponse, err := gql.FindScene(ctx, client, sceneId)
 	if err != nil {
-		return VideoData{}, fmt.Errorf("FindScene: %w", err)
+		return proto.VideoData{}, fmt.Errorf("FindScene: %w", err)
 	}
 	if findSceneResponse.FindScene == nil {
-		return VideoData{}, fmt.Errorf("FindScene: not found")
+		return proto.VideoData{}, fmt.Errorf("FindScene: not found")
 	}
 	s := findSceneResponse.FindScene.FullSceneParts
 
-	videoData := VideoData{
+	videoData := proto.VideoData{
 		Access:         1,
 		Title:          s.Title,
 		Description:    s.Details,
@@ -101,19 +51,19 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 	return videoData, nil
 }
 
-func setTags(s gql.FullSceneParts, videoData *VideoData) {
+func setTags(s gql.FullSceneParts, videoData *proto.VideoData) {
 	tags := getTags(s)
 	videoData.Tags = tags
 }
 
-func getTags(s gql.FullSceneParts) []Tag {
-	var tagTracks [][]Tag
+func getTags(s gql.FullSceneParts) []proto.Tag {
+	var tagTracks [][]proto.Tag
 
 	markers := getMarkers(s)
 	performers := getPerformers(s)
 	fields := getFields(s)
 
-	var meta []Tag
+	var meta []proto.Tag
 	studio := getStudio(s)
 	stashTags := getStashTags(s)
 	movies := getMovies(s)
@@ -123,13 +73,13 @@ func getTags(s gql.FullSceneParts) []Tag {
 	meta = append(meta, movies...)
 
 	if len(studio) == 0 {
-		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", common.LegendStudio.Full)})
+		fields = append(fields, proto.Tag{Name: fmt.Sprintf("%s:", common.LegendStudio.Full)})
 	}
 	if len(stashTags) == 0 {
-		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", common.LegendTag.Short)})
+		fields = append(fields, proto.Tag{Name: fmt.Sprintf("%s:", common.LegendTag.Short)})
 	}
 	if len(movies) == 0 {
-		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", common.LegendMovie.Full)})
+		fields = append(fields, proto.Tag{Name: fmt.Sprintf("%s:", common.LegendMovie.Full)})
 	}
 
 	fillTagDurations(markers)
@@ -138,7 +88,7 @@ func getTags(s gql.FullSceneParts) []Tag {
 	equallyDivideTagDurations(duration, fields)
 	equallyDivideTagDurations(duration, meta)
 
-	if config.Get().HeresphereQuickMarkers {
+	if config.Get().IsGlanceMarkersEnabled {
 		tagTracks = append(tagTracks, markers)
 		tagTracks = append(tagTracks, meta)
 	} else {
@@ -148,7 +98,7 @@ func getTags(s gql.FullSceneParts) []Tag {
 	tagTracks = append(tagTracks, performers)
 	tagTracks = append(tagTracks, fields)
 
-	var tags []Tag
+	var tags []proto.Tag
 	track := 0
 	for i := range tagTracks {
 		if len(tagTracks[i]) == 0 {
@@ -163,10 +113,10 @@ func getTags(s gql.FullSceneParts) []Tag {
 	return tags
 }
 
-func getPerformers(s gql.FullSceneParts) []Tag {
-	tags := make([]Tag, len(s.Performers))
+func getPerformers(s gql.FullSceneParts) []proto.Tag {
+	tags := make([]proto.Tag, len(s.Performers))
 	for i, p := range s.Performers {
-		tags[i] = Tag{
+		tags[i] = proto.Tag{
 			Name:   fmt.Sprintf("%s:%s", common.LegendPerformer.Full, p.Name),
 			Rating: float32(p.Rating),
 		}
@@ -174,50 +124,50 @@ func getPerformers(s gql.FullSceneParts) []Tag {
 	return tags
 }
 
-func getMovies(s gql.FullSceneParts) []Tag {
+func getMovies(s gql.FullSceneParts) []proto.Tag {
 	if s.Movies == nil {
 		return nil
 	}
-	tags := make([]Tag, len(s.Movies))
+	tags := make([]proto.Tag, len(s.Movies))
 	for i, m := range s.Movies {
-		tags[i] = Tag{
+		tags[i] = proto.Tag{
 			Name: fmt.Sprintf("%s:%s", common.LegendMovie.Full, m.Movie.Name),
 		}
 	}
 	return tags
 }
 
-func getStudio(s gql.FullSceneParts) []Tag {
+func getStudio(s gql.FullSceneParts) []proto.Tag {
 	if s.Studio == nil {
 		return nil
 	}
-	return []Tag{{
+	return []proto.Tag{{
 		Name:   fmt.Sprintf("%s:%s", common.LegendStudio.Full, s.Studio.Name),
 		Rating: float32(s.Studio.Rating),
 	}}
 }
 
-func getFields(s gql.FullSceneParts) []Tag {
-	var tags []Tag
+func getFields(s gql.FullSceneParts) []proto.Tag {
+	var tags []proto.Tag
 
-	tags = append(tags, Tag{
+	tags = append(tags, proto.Tag{
 		Name: fmt.Sprintf("%s:%d", common.LegendOCount.Short, s.O_counter),
 	})
 
-	tags = append(tags, Tag{
+	tags = append(tags, proto.Tag{
 		Name: fmt.Sprintf("%s:%v", common.LegendOrganized.Short, s.Organized),
 	})
 
 	return tags
 }
 
-func getStashTags(s gql.FullSceneParts) []Tag {
-	var tags []Tag
+func getStashTags(s gql.FullSceneParts) []proto.Tag {
+	var tags []proto.Tag
 	for _, tag := range s.Tags {
 		if tag.Name == config.Get().FavoriteTag {
 			continue
 		}
-		t := Tag{
+		t := proto.Tag{
 			Name: fmt.Sprintf("%s:%s", common.LegendTag.Short, tag.Name),
 		}
 		tags = append(tags, t)
@@ -225,8 +175,8 @@ func getStashTags(s gql.FullSceneParts) []Tag {
 	return tags
 }
 
-func getMarkers(s gql.FullSceneParts) []Tag {
-	var tags []Tag
+func getMarkers(s gql.FullSceneParts) []proto.Tag {
+	var tags []proto.Tag
 	for _, sm := range s.Scene_markers {
 		sb := strings.Builder{}
 		sb.WriteString(sm.Primary_tag.Name)
@@ -234,7 +184,7 @@ func getMarkers(s gql.FullSceneParts) []Tag {
 			sb.WriteString(":")
 			sb.WriteString(sm.Title)
 		}
-		t := Tag{
+		t := proto.Tag{
 			Name:  sb.String(),
 			Start: int(sm.Seconds * 1000),
 		}
@@ -243,7 +193,7 @@ func getMarkers(s gql.FullSceneParts) []Tag {
 	return tags
 }
 
-func equallyDivideTagDurations(totalDuration float64, tags []Tag) {
+func equallyDivideTagDurations(totalDuration float64, tags []proto.Tag) {
 	durationPerItem := int(totalDuration / float64(len(tags)))
 	for i := range tags {
 		tags[i].Start = i * durationPerItem
@@ -251,7 +201,7 @@ func equallyDivideTagDurations(totalDuration float64, tags []Tag) {
 	}
 }
 
-func fillTagDurations(tags []Tag) {
+func fillTagDurations(tags []proto.Tag) {
 	sort.Slice(tags, func(i, j int) bool { return tags[i].Start < tags[j].Start })
 	for i := range tags {
 		if i == len(tags)-1 {
@@ -264,16 +214,16 @@ func fillTagDurations(tags []Tag) {
 	}
 }
 
-func setScripts(s gql.FullSceneParts, videoData *VideoData) {
+func setScripts(s gql.FullSceneParts, videoData *proto.VideoData) {
 	if s.ScriptParts.Interactive {
-		videoData.Scripts = append(videoData.Scripts, Script{
+		videoData.Scripts = append(videoData.Scripts, proto.Script{
 			Name: fmt.Sprintf("Script-%s", s.Title),
 			Url:  s.ScriptParts.Paths.Funscript,
 		})
 	}
 }
 
-func set3DFormat(s gql.FullSceneParts, videoData *VideoData) {
+func set3DFormat(s gql.FullSceneParts, videoData *proto.VideoData) {
 	for _, tag := range s.Tags {
 		switch tag.Name {
 		case "DOME":
@@ -315,13 +265,13 @@ func set3DFormat(s gql.FullSceneParts, videoData *VideoData) {
 	}
 }
 
-func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *VideoData) {
+func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *proto.VideoData) {
 	for _, stream := range stash.GetStreams(ctx, s, true) {
-		e := Media{
+		e := proto.Media{
 			Name: stream.Name,
 		}
 		for _, source := range stream.Sources {
-			vs := Source{
+			vs := proto.Source{
 				Resolution: source.Resolution,
 				Url:        source.Url,
 			}
@@ -331,7 +281,7 @@ func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *Vide
 	}
 }
 
-func setIsFavorite(s gql.FullSceneParts, videoData *VideoData) {
+func setIsFavorite(s gql.FullSceneParts, videoData *proto.VideoData) {
 	videoData.IsFavorite = containsFavoriteTag(s.TagPartsArray)
 }
 
