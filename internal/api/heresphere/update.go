@@ -6,6 +6,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
 	"math"
+	"stash-vr/internal/api/common"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
@@ -177,10 +178,10 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 	for _, tagReq := range tags {
 		if strings.HasPrefix(tagReq.Name, "!") {
 			cmd := tagReq.Name[1:]
-			if legendOCount.IsMatch(cmd) {
+			if common.LegendOCount.IsMatch(cmd) {
 				input.incrementO = true
 				continue
-			} else if legendOrganized.IsMatch(cmd) {
+			} else if common.LegendOrganized.IsMatch(cmd) {
 				input.toggleOrganized = true
 				continue
 			}
@@ -188,7 +189,7 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 
 		tagType, tagName, isCategorized := strings.Cut(tagReq.Name, ":")
 
-		if isCategorized && legendTag.IsMatch(tagType) {
+		if isCategorized && common.LegendTag.IsMatch(tagType) {
 			if tagName == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty tag name, skipping")
 				continue
@@ -199,7 +200,7 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 				continue
 			}
 			input.tagIds = append(input.tagIds, id)
-		} else if isCategorized && legendStudio.IsMatch(tagType) {
+		} else if isCategorized && common.LegendStudio.IsMatch(tagType) {
 			if tagName == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty studio name, skipping")
 				continue
@@ -210,7 +211,7 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 				continue
 			}
 			input.studioId = id
-		} else if isCategorized && legendPerformer.IsMatch(tagType) {
+		} else if isCategorized && common.LegendPerformer.IsMatch(tagType) {
 			if tagName == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty performer name, skipping")
 				continue
@@ -221,7 +222,7 @@ func metadataFromUpdateRequestTags(ctx context.Context, client graphql.Client, t
 				continue
 			}
 			input.performerIds = append(input.performerIds, id)
-		} else if isCategorized && (legendMovie.IsMatch(tagType) || legendOCount.IsMatch(tagType) || legendOrganized.IsMatch(tagType)) {
+		} else if isCategorized && (common.LegendMovie.IsMatch(tagType) || common.LegendOCount.IsMatch(tagType) || common.LegendOrganized.IsMatch(tagType)) {
 			log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Tag type is reserved, skipping")
 			continue
 		} else {

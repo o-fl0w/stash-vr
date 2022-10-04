@@ -28,7 +28,7 @@ func GetStreams(ctx context.Context, fsp gql.FullSceneParts, sortResolutionAsc b
 	var streams []Stream
 
 	original := Stream{
-		Name: "direct",
+		Name: fsp.File.Video_codec,
 		Sources: []Source{{
 			Resolution: fsp.File.Height,
 			Url:        fsp.Paths.Stream,
@@ -40,21 +40,21 @@ func GetStreams(ctx context.Context, fsp gql.FullSceneParts, sortResolutionAsc b
 
 	switch fsp.File.Video_codec {
 	case "h264":
-		streams = append(streams, original)
 		streams = append(streams, Stream{
-			Name:    "h264",
+			Name:    "tc/h264",
 			Sources: mp4Sources,
 		})
+		streams = append(streams, original)
 	case "hevc", "h265":
-		streams = append(streams, original)
 		streams = append(streams, Stream{
-			Name:    "h265",
+			Name:    "tc/h265",
 			Sources: mp4Sources,
 		})
+		streams = append(streams, original)
 	default:
-		log.Ctx(ctx).Debug().Str("codec", fsp.File.Video_codec).Msg("Codec not supported? Adding transcoded steams only")
+		log.Ctx(ctx).Debug().Str("codec", fsp.File.Video_codec).Msg("Codec not supported? Adding transcoded streams only")
 		streams = append(streams, Stream{
-			Name:    "transcoded",
+			Name:    "tc/other",
 			Sources: mp4Sources,
 		})
 	}
@@ -92,7 +92,7 @@ func getMp4Sources(ctx context.Context, sps gql.StreamsParts) []Source {
 		if strings.Contains(lowerCaseLabel, "mp4") {
 			resolution, err := parseResolutionFromLabel(lowerCaseLabel)
 			if err != nil {
-				log.Ctx(ctx).Warn().Str("label", lowerCaseLabel).Msg("Unmatched stream label")
+				log.Ctx(ctx).Warn().Err(err).Str("label", lowerCaseLabel).Msg("Failed to parse resolution from label")
 				continue
 			}
 

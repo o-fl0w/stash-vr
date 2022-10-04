@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"strings"
@@ -24,19 +25,8 @@ type VideoData struct {
 	ThumbnailUrl   string `json:"thumbnailUrl"`
 
 	TimeStamps []TimeStamp `json:"timeStamps,omitempty"`
-	Categories []Category  `json:"categories,omitempty"`
-	Actors     []Tag       `json:"actors"`
 
 	Encodings []Encoding `json:"encodings"`
-}
-
-type Category struct {
-	Tag Tag `json:"tag"`
-}
-
-type Tag struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
 }
 
 type TimeStamp struct {
@@ -76,16 +66,14 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 	}
 
 	setStreamSources(ctx, s, &videoData)
-	setTags(s, &videoData)
-	setStudios(s, &videoData)
 	setMarkers(s, &videoData)
-	setPerformers(s, &videoData)
 	set3DFormat(s, &videoData)
 
 	return videoData, nil
 }
 
 func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *VideoData) {
+	log.Ctx(ctx).Trace().Str("codec", s.File.Video_codec).Send()
 	streams := stash.GetStreams(ctx, s, false)
 	videoData.Encodings = make([]Encoding, len(streams))
 	for i, stream := range streams {
@@ -102,24 +90,6 @@ func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *Vide
 	}
 }
 
-func setTags(s gql.FullSceneParts, videoData *VideoData) {
-	for _, tag := range s.Tags {
-		videoData.Categories = append(videoData.Categories, Category{Tag{
-			Id:   tag.Id,
-			Name: fmt.Sprintf("#:%s", tag.Name),
-		}})
-	}
-}
-
-func setStudios(s gql.FullSceneParts, videoData *VideoData) {
-	if s.Studio != nil {
-		videoData.Categories = append(videoData.Categories, Category{Tag{
-			Id:   s.Studio.Id,
-			Name: fmt.Sprintf("Studio:%s", s.Studio.Name),
-		}})
-	}
-}
-
 func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 	for _, sm := range s.Scene_markers {
 		sb := strings.Builder{}
@@ -133,16 +103,6 @@ func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 			Name: sb.String(),
 		}
 		videoData.TimeStamps = append(videoData.TimeStamps, ts)
-	}
-}
-
-func setPerformers(s gql.FullSceneParts, videoData *VideoData) {
-	for _, p := range s.Performers {
-		t := Tag{
-			Id:   p.Id,
-			Name: p.Name,
-		}
-		videoData.Actors = append(videoData.Actors, t)
 	}
 }
 

@@ -13,8 +13,19 @@ It's light on resources, optionally configurable and has support for two-way syn
 * HereSphere (two-way sync)
 * DeoVR
 
-## Usage
-Browse to `http://<host>:9666` using a supported video player. You'll be presented with your library within their respective native UI.
+## Features
+* Browse, play and manage videos from your Stash library using native VR UI of supported video players.
+* Display your Stash library as configured in Stash from your front page and saved filters.
+* Provide transcoding endpoints to your videos served by Stash
+* HereSphere
+  * Two-way sync of studio, tags, performers, rating, favorites, markers
+  * Increment o-count
+  * Toggle organized flag
+  * Generate categorized tags
+  * Delete scenes
+  * Funscript
+* DeoVR
+  * Markers
 
 ## Installation
 Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-vr/tags).
@@ -37,7 +48,9 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
 * `STASH_API_KEY`
   * Api key to your Stash if it's using authentication, otherwise not required.
 
-#### Optional
+<details>
+<summary>Optional</summary>
+
 * `FAVORITE_TAG`
   * Default: `FAVORITE`
   * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
@@ -59,44 +72,19 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
 * `FORCE_HTTPS`
   * Default: `false`
   * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.
-
-## Features
-* Browse, play and manage videos from your Stash library using native VR UI of supported video players.
-* Display your Stash library as configured in Stash from your front page and saved filters.
-* Provide transcoding endpoints to your videos served by Stash
-* HereSphere:
-  * Two-way sync
-    * Studio
-    * Tags
-    * Performers
-    * Markers
-    * Rating
-    * Favorites
-    * O-count (incrementing)
-    * Organized flag (toggle)
-  * Generate categorized tags from
-    * Studio
-    * Tags
-    * Performers
-    * Markers
-    * Movies
-    * O-count
-    * Organized flag
-  * Delete scenes
-  * Funscript
-* DeoVR
-  * Markers
+</details>
 
 ## Usage
+Browse to `http://<host>:9666` using a supported video player. You'll be presented with your library within their respective native UI.
 ### HereSphere
 ##### Two-way sync
 To enable two-way sync with Stash the relevant toggles (`Overwrite tags` etc.) in the cogwheel at the bottom right of preview view in HereSphere needs to be on.
 #### Manage metadata
-Video metadata is handled using `Video Tags`.
+Scene metadata is handled using `Video Tags` in HereSphere.
 
-To tag a video open it in HereSphere and click `Video Tags` above the seekbar.
+To tag a scene open it in HereSphere and click `Video Tags` above the seekbar.
 On any track insert a new tag and prefix it with `#:` i.e. `#:MusicVideo`.
-This will create the tag `MusicVideo` in Stash if not already present and apply it to your video.
+This will create the tag `MusicVideo` in Stash if not already present and apply it to your scene. Removing a tag in HereSphere will untag the scene in Stash.
 
 Same workflow goes for setting studio and performers but with different prefixes according to below:
 
@@ -110,7 +98,7 @@ Same workflow goes for setting studio and performers but with different prefixes
 (Both Stash and HereSphere use the word _tag_ but they use it differently. Tags in heresphere are akin to Markers in Stash)
 
 Markers in Stash need a primary tag. Marker title is optional.
-To create a marker using HereSphere open your video and create a "tag" on any track using `Video Tags`.
+To create a marker using HereSphere play the target scene and create a "tag" on any track using `Video Tags`.
 The naming format is:
 * `<tag>:<title>` will create a Marker in Stash titled `<title>` with the primary tag `<tag>`
 * `<tag>` will create a Marker in Stash with primary tag `<tag>` and no title.
@@ -119,22 +107,24 @@ Set the start time using HereSphere controls.
 Tags (markers) in HereSphere has support for both a start and end time.
 Stash currently defines Markers as having a start time only. This means the end time set in HereSphere will be ignored.
 
+Enable sync of markers by setting `HERESPHERE_SYNC_MARKERS=true` but make sure you've also read the [caveat](#heresphere-sync-of-markers).
+
 #### Favorites
-When the favorite-feature of HereSphere is first used Stash-VR will create a tag in Stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your video.
+When the favorite-feature of HereSphere is first used Stash-VR will create a tag in Stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your scene.
 
 **Tip:** Create a filter using that tag, so it shows up in HereSphere for quick access to favorites.
 
 #### Rating
 HereSphere uses fractions for ratings, i.e. 4.5 is a valid rating. Stash uses whole numbers.
-If you set a half star in HereSphere Stash-VR will round up the rating. That is if you set a rating of 3.5 the video will receive a rating of 4 in Stash.
+If you set a half star in HereSphere Stash-VR will round up the rating. That is if you set a rating of 3.5 the scene will receive a rating of 4 in Stash.
 In other words, click anywhere on a star to set the rating to that amount of stars.
 
-**Exception:** To remove a rating, rate the video 0.5 (half a star).
+**Exception:** To remove a rating, rate the scene 0.5 (half a star).
 
 #### O-counter
-Increment O-count by adding a tag named `!O` (case-insensitive) in `Video Tags`.
+Increment o-count by adding a tag named `!O` (case-insensitive) in `Video Tags`.
 
-Current O-count is shown as `O:<count>`
+Current o-count is shown as `O:<count>`
 
 #### Organized
 Toggle organized flag by adding a tag named `!Org` (case-insensitive) in `Video Tags`.
@@ -162,17 +152,20 @@ If a mesh is provided but no layout then default layout `SBS` will be used.
 Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DOME` tag.
 
 ## Known issues/Missing features
+### Scene count limits
 * DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
-  * For HereSphere the limit seems to be around 10k unique videos.
+  * For HereSphere the limit seems to be around 10k unique scenes.
   * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try explicitly setting env. var. `FILTERS` with a list of filter ids such that the total amount of videos are lowered to a "reasonable" amount.
 
 ### Unsupported filter types
-* Premade Filters (i.e. Recently Released Scenes etc.) from Stash front page are not supported.
-* Any other filter type besides scene filters
+* Premade Filters (i.e. Recently Released Scenes etc.) from Stash front page are not supported. 
+  * Tip: If you really want such filters to show they can easily be recreated and saved using regular filters in Stash.
 ### HereSphere sync of Markers
 When using `Video Tags` in HereSphere to edit Markers Stash-VR will delete and (re)create them on updates.
 There currently is no support for correlating the markers (tags) in HereSphere to a Marker in Stash.
-This means that **!! all metadata, besides the primary tag and title, related to a marker will NOT be retained !!** (id, previews, secondary tags and created/updated time). If you're not using those fields anyway you probably won't notice the difference.
+
+**!! Any metadata, besides the primary tag and title, related to a marker will NOT be retained !!**\
+(id, preview, secondary tags and created/updated time). If you're not using these fields anyway you probably won't notice the difference.
 
 ### Reflecting changes made in Stash
 When the index page of Stash-VR is loaded Stash-VR will immediately respond with a cached version. At the same time Stash-VR will request the latest data and store it in the cache for the next request.

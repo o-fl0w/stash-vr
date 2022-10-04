@@ -5,20 +5,12 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"sort"
+	"stash-vr/internal/api/common"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strings"
-)
-
-var (
-	legendTag       = NewLegend("#", "Tag")
-	legendStudio    = NewLegend("$", "Studio")
-	legendPerformer = NewLegend("@", "Performer")
-	legendMovie     = NewLegend("*", "Movie")
-	legendOCount    = NewLegend("O", "O-Count")
-	legendOrganized = NewLegend("Org", "Organized")
 )
 
 type VideoData struct {
@@ -131,13 +123,13 @@ func getTags(s gql.FullSceneParts) []Tag {
 	meta = append(meta, movies...)
 
 	if len(studio) == 0 {
-		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", legendStudio.Full)})
+		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", common.LegendStudio.Full)})
 	}
 	if len(stashTags) == 0 {
-		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", legendTag.Short)})
+		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", common.LegendTag.Short)})
 	}
 	if len(movies) == 0 {
-		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", legendMovie.Full)})
+		fields = append(fields, Tag{Name: fmt.Sprintf("%s:", common.LegendMovie.Full)})
 	}
 
 	fillTagDurations(markers)
@@ -175,7 +167,7 @@ func getPerformers(s gql.FullSceneParts) []Tag {
 	tags := make([]Tag, len(s.Performers))
 	for i, p := range s.Performers {
 		tags[i] = Tag{
-			Name:   fmt.Sprintf("%s:%s", legendPerformer.Full, p.Name),
+			Name:   fmt.Sprintf("%s:%s", common.LegendPerformer.Full, p.Name),
 			Rating: float32(p.Rating),
 		}
 	}
@@ -189,7 +181,7 @@ func getMovies(s gql.FullSceneParts) []Tag {
 	tags := make([]Tag, len(s.Movies))
 	for i, m := range s.Movies {
 		tags[i] = Tag{
-			Name: fmt.Sprintf("%s:%s", legendMovie.Full, m.Movie.Name),
+			Name: fmt.Sprintf("%s:%s", common.LegendMovie.Full, m.Movie.Name),
 		}
 	}
 	return tags
@@ -200,7 +192,7 @@ func getStudio(s gql.FullSceneParts) []Tag {
 		return nil
 	}
 	return []Tag{{
-		Name:   fmt.Sprintf("%s:%s", legendStudio.Full, s.Studio.Name),
+		Name:   fmt.Sprintf("%s:%s", common.LegendStudio.Full, s.Studio.Name),
 		Rating: float32(s.Studio.Rating),
 	}}
 }
@@ -209,11 +201,11 @@ func getFields(s gql.FullSceneParts) []Tag {
 	var tags []Tag
 
 	tags = append(tags, Tag{
-		Name: fmt.Sprintf("%s:%d", legendOCount.Short, s.O_counter),
+		Name: fmt.Sprintf("%s:%d", common.LegendOCount.Short, s.O_counter),
 	})
 
 	tags = append(tags, Tag{
-		Name: fmt.Sprintf("%s:%v", legendOrganized.Short, s.Organized),
+		Name: fmt.Sprintf("%s:%v", common.LegendOrganized.Short, s.Organized),
 	})
 
 	return tags
@@ -226,7 +218,7 @@ func getStashTags(s gql.FullSceneParts) []Tag {
 			continue
 		}
 		t := Tag{
-			Name: fmt.Sprintf("%s:%s", legendTag.Short, tag.Name),
+			Name: fmt.Sprintf("%s:%s", common.LegendTag.Short, tag.Name),
 		}
 		tags = append(tags, t)
 	}
