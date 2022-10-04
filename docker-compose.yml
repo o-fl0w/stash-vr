@@ -16,8 +16,8 @@ services:
       #FILTERS: "2,3,7"     # comma separated list of filter ids to show
       #FILTERS: "frontpage" # show only scene filters from front page
 
-      #HERESPHERE_SYNC_MARKERS: "true"
-      #HERESPHERE_QUICK_MARKERS: "true"
+      #ALLOW_SYNC_MARKERS: "true"
+      #ENABLE_GLANCE_MARKERS: "true"
       #LOG_LEVEL: "debug"
 
       #FORCE_HTTPS: "true"
