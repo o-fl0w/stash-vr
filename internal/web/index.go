@@ -25,6 +25,7 @@ type IndexData struct {
 	Version                 string
 	LogLevel                string
 	ForceHTTPS              bool
+	IsSyncMarkersAllowed    bool
 	StashGraphQLUrl         string
 	IsApiKeyProvided        bool
 	StashConnectionResponse string
@@ -40,6 +41,7 @@ func ServeIndex(client graphql.Client) http.HandlerFunc {
 			Version:                 application.BuildVersion,
 			LogLevel:                config.Get().LogLevel,
 			ForceHTTPS:              config.Get().ForceHTTPS,
+			IsSyncMarkersAllowed:    config.Get().IsSyncMarkersAllowed,
 			StashGraphQLUrl:         config.Get().StashGraphQLUrl,
 			IsApiKeyProvided:        config.Get().StashApiKey != "",
 			StashConnectionResponse: FAIL,

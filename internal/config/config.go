@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/rs/zerolog/log"
 	"os"
 	"strings"
 	"sync"
@@ -61,9 +62,12 @@ func getEnvOrDefault(key string, defaultValue string) string {
 }
 
 func findEnvOrDefault(keys []string, defaultValue string) string {
-	for _, key := range keys {
+	for i, key := range keys {
 		v, ok := os.LookupEnv(key)
 		if ok {
+			if i > 0 {
+				log.Warn().Str("deprecated", key).Str("replace with", keys[0]).Msg("Deprecated env. var. found")
+			}
 			return v
 		}
 	}

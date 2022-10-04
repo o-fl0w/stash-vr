@@ -7,72 +7,81 @@
 </head>
 <body>
 <h1>Stash-VR</h1>
-<table>
-    <tr>
-        <td>Stash-VR version</td>
-        <td>{{.Version}}</td>
-    </tr>
-    <tr>
-        <td>Log level</td>
-        <td>{{.LogLevel}}</td>
-    </tr>
-    <tr>
-        <td>Force HTTPS</td>
-        <td>{{.ForceHTTPS}}</td>
-    </tr>
-    <tr>
-        <td>Stash GraphQL Url</td>
-        <td>{{.StashGraphQLUrl}}</td>
-    </tr>
-    <tr>
-        <td>API Key provided</td>
-        <td>{{.IsApiKeyProvided}}</td>
-    </tr>
-    <tr>
-        <td>Stash connection</td>
-        <td><b>{{.StashConnectionResponse}}</b></td>
-    </tr>
+<samp>
+    <table>
+        <tr>
+            <td>Stash-VR version</td>
+            <td>{{.Version}}</td>
+        </tr>
+        <tr>
+            <td>Log level</td>
+            <td>{{.LogLevel}}</td>
+        </tr>
+        <tr>
+            <td>Force HTTPS</td>
+            <td>{{.ForceHTTPS}}</td>
+        </tr>
+        <tr>
+            <td>Allow sync markers</td>
+            <td>{{.IsSyncMarkersAllowed}}</td>
+        </tr>
+        <tr>
+            <td>Stash GraphQL Url</td>
+            <td>{{.StashGraphQLUrl}}</td>
+        </tr>
+        <tr>
+            <td>API Key provided</td>
+            <td>{{.IsApiKeyProvided}}</td>
+        </tr>
+        <tr>
+            <td>Stash connection</td>
+            <td><b>{{.StashConnectionResponse}}</b></td>
+        </tr>
+        {{if eq .StashConnectionResponse "OK"}}
+        <tr>
+            <td>Stash version</td>
+            <td>{{.StashVersion}}</td>
+        </tr>
+        <tr>
+            <td>Generated sections</td>
+            <td>{{.SectionCount}}</td>
+        </tr>
+        <tr>
+            <td>Total links</td>
+            <td>{{.LinkCount}}</td>
+        </tr>
+        <tr>
+            <td>Distinct scenes</td>
+            <td>{{.SceneCount}}</td>
+        </tr>
+        {{end}}
+    </table>
+</samp>
+<main>
     {{if eq .StashConnectionResponse "OK"}}
-    <tr>
-        <td>Stash version</td>
-        <td>{{.StashVersion}}</td>
-    </tr>
-    <tr>
-        <td>Generated sections</td>
-        <td>{{.SectionCount}}</td>
-    </tr>
-    <tr>
-        <td>Total links</td>
-        <td>{{.LinkCount}}</td>
-    </tr>
-    <tr>
-        <td>Distinct scenes</td>
-        <td>{{.SceneCount}}</td>
-    </tr>
+    <p>
+        <mark>All OK!</mark>
+    </p>
+    <p>Open this endpoint in your favorite supported VR video player to browse your library.</p>
+    {{else}}
+    <p>Stash-VR could not connect to Stash.</p>
+
+    {{if eq .StashConnectionResponse "UNAUTHORIZED"}}
+    <p>Failed authorization. <b>Verify that correct API Key is provided</b></p>
+    {{else}}
+    <p>Verify that:</p>
+    <ul>
+        <li>Provided Stash GraphQL url is correct and can be reached from Stash-VR</li>
+        <li>API Key is correctly provided if your Stash instance requires authentication</li>
+        <li>Stash version is >= 0.16.1</li>
+    </ul>
+    <p>For further troubleshooting <b>review the log output</b></p>
+    {{if not (or (eq .LogLevel "debug") (eq .LogLevel "trace")) }}
+    <p>Log level is set to "{{.LogLevel}}". For even further details <b>rerun Stash-VR with log level "debug"</b></p>
     {{end}}
-</table>
-{{if eq .StashConnectionResponse "OK"}}
-<p>All OK!</p>
-<p>Open this endpoint in your favorite supported VR video player to browse your library.</p>
-{{else}}
-<p>Stash-VR could not connect to Stash.</p>
-
-{{if eq .StashConnectionResponse "UNAUTHORIZED"}}
-<p>Failed authorization. <b>Verify that correct API Key is provided</b></p>
-{{else}}
-<p>Verify that:</p>
-<ul>
-    <li>Provided Stash GraphQL url is correct and can be reached from Stash-VR</li>
-    <li>API Key is correctly provided if your Stash instance requires authentication</li>
-    <li>Stash version is >= 0.16.1</li>
-</ul>
-<p>For further troubleshooting <b>review the log output</b></p>
-{{if not (or (eq .LogLevel "debug") (eq .LogLevel "trace")) }}
-<p>Log level is set to "{{.LogLevel}}". For even further details <b>rerun Stash-VR with log level "debug"</b></p>
-{{end}}
-{{end}}
-{{end}}
-
+    {{end}}
+    {{end}}
+</main>
 <details>
     <summary>Supported players</summary>
     <ul>
@@ -81,7 +90,7 @@
     </ul>
 </details>
 
-<p><a href="https://github.com/o-fl0w/stash-vr" target="_blank">https://github.com/o-fl0w/stash-vr</a></p>
+<footer><p><a href="https://github.com/o-fl0w/stash-vr" target="_blank">https://github.com/o-fl0w/stash-vr</a></p></footer>
 
 </body>
 </html>
