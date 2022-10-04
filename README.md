@@ -109,7 +109,7 @@ Set the start time using HereSphere controls.
 Tags (markers) in HereSphere has support for both a start and end time.
 Stash currently defines Markers as having a start time only. This means the end time set in HereSphere will be ignored.
 
-Enable sync of markers by setting `HERESPHERE_SYNC_MARKERS=true` but make sure you've also read the [caveat](#heresphere-sync-of-markers).
+Enable sync of markers by setting `ALLOW_SYNC_MARKERS=true` but make sure you've also read the [caveat](#heresphere-sync-of-markers).
 
 #### Favorites
 When the favorite-feature of HereSphere is first used Stash-VR will create a tag in Stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your scene.
