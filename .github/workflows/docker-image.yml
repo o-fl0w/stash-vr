@@ -40,21 +40,10 @@ jobs:
 #          tags: |
 #            type=semver,pattern={{version}}
       
-      - name: Build and push amd64 Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
-          platforms: linux/amd64
-          build-args: |
-            BUILD_VERSION=${{ steps.meta.outputs.tags }}
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Build and push other Docker images
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          platforms: linux/arm64,linux/arm
+          platforms: linux/amd64,linux/arm64,linux/arm
           build-args: |
             BUILD_VERSION=${{ steps.meta.outputs.tags }}
           context: .
