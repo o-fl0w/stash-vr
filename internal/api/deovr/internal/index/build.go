@@ -1,4 +1,4 @@
-package deovr
+package index
 
 import (
 	"context"
@@ -10,25 +10,7 @@ import (
 	"stash-vr/internal/util"
 )
 
-type Index struct {
-	Authorized string  `json:"authorized"`
-	Scenes     []Scene `json:"scenes"`
-}
-
-type Scene struct {
-	Name string        `json:"name"`
-	List []PreviewData `json:"list"`
-}
-
-type PreviewData struct {
-	Id           string `json:"id"`
-	ThumbnailUrl string `json:"thumbnailUrl"`
-	Title        string `json:"title"`
-	VideoLength  int    `json:"videoLength"`
-	VideoUrl     string `json:"video_url"`
-}
-
-func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) Index {
+func Build(ctx context.Context, client graphql.Client, baseUrl string) Index {
 	sections := common.GetIndex(ctx, client)
 
 	scenes := fromSections(baseUrl, sections)

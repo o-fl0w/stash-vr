@@ -1,4 +1,4 @@
-package heresphere
+package internal
 
 import (
 	"encoding/json"
@@ -8,7 +8,9 @@ import (
 	"io"
 	"net/http"
 	"stash-vr/internal/api/common"
-	"stash-vr/internal/api/heresphere/sync"
+	"stash-vr/internal/api/heresphere/internal/index"
+	"stash-vr/internal/api/heresphere/internal/sync"
+	"stash-vr/internal/api/heresphere/internal/videodata"
 	"stash-vr/internal/util"
 )
 
@@ -20,9 +22,9 @@ func (h *HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	baseUrl := util.GetBaseUrl(req)
 
-	index := buildIndex(ctx, h.Client, baseUrl)
+	data := index.Build(ctx, h.Client, baseUrl)
 
-	if err := common.WriteJson(ctx, w, index); err != nil {
+	if err := common.WriteJson(ctx, w, data); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("write")
 	}
 }
@@ -57,13 +59,13 @@ func (h *HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	videoData, err := buildVideoData(ctx, h.Client, sceneId)
+	data, err := videodata.Build(ctx, h.Client, sceneId)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := common.WriteJson(ctx, w, videoData); err != nil {
+	if err := common.WriteJson(ctx, w, data); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("write")
 	}
 

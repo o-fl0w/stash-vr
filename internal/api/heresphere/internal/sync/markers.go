@@ -9,7 +9,7 @@ import (
 	"stash-vr/internal/stash/gql"
 )
 
-func setMarkers(ctx context.Context, client graphql.Client, sceneId string, markers []sceneMarker) {
+func setMarkers(ctx context.Context, client graphql.Client, sceneId string, markers []marker) {
 	if !config.Get().IsSyncMarkersAllowed {
 		log.Ctx(ctx).Info().Msg("Sync markers requested but is disabled in config, ignoring request")
 		return

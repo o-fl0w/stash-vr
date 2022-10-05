@@ -1,4 +1,4 @@
-package heresphere
+package index
 
 import (
 	"context"
@@ -9,19 +9,7 @@ import (
 	"stash-vr/internal/util"
 )
 
-type Index struct {
-	Access  int       `json:"access"`
-	Library []Library `json:"library"`
-}
-
-type VideoDataUrl string
-
-type Library struct {
-	Name string         `json:"name"`
-	List []VideoDataUrl `json:"list"`
-}
-
-func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) Index {
+func Build(ctx context.Context, client graphql.Client, baseUrl string) Index {
 	sections := common.GetIndex(ctx, client)
 
 	index := Index{Access: 1, Library: fromSections(baseUrl, sections)}

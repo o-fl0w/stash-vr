@@ -6,10 +6,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"stash-vr/internal/api/heresphere/internal"
 )
 
 func Router(client graphql.Client) http.Handler {
-	httpHandler := HttpHandler{Client: client}
+	httpHandler := internal.HttpHandler{Client: client}
 	r := chi.NewRouter()
 	r.Use(middleware.SetHeader("HereSphere-JSON-Version", "1"))
 	r.Post("/", indexHandler(httpHandler.Index))

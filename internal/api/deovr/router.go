@@ -5,10 +5,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"stash-vr/internal/api/deovr/internal"
 )
 
 func Router(client graphql.Client) http.Handler {
-	httpHandler := HttpHandler{Client: client}
+	httpHandler := internal.HttpHandler{Client: client}
 	r := chi.NewRouter()
 
 	r.Get("/", indexHandler(httpHandler.Index))

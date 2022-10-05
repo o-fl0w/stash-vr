@@ -1,4 +1,4 @@
-package proto
+package videodata
 
 type VideoData struct {
 	Access int `json:"access"`

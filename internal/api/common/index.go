@@ -50,6 +50,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 				return
 			}
 			sss[0] = ss
+			log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from front page")
 		}()
 	}
 
@@ -63,6 +64,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 				return
 			}
 			sss[1] = ss
+			log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from saved filters")
 		}()
 	}
 
@@ -77,6 +79,7 @@ func buildIndex(ctx context.Context, client graphql.Client) []section.Section {
 				return
 			}
 			sss[2] = ss
+			log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from filter list")
 		}()
 	}
 

@@ -10,7 +10,6 @@ import (
 )
 
 func init() {
-
 	log.Logger = log.Output(zerolog.ConsoleWriter{
 		Out:        os.Stderr,
 		TimeFormat: "Jan 02, 15:04:05",
