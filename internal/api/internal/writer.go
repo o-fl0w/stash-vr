@@ -11,8 +11,6 @@ import (
 )
 
 func WriteJson(ctx context.Context, w http.ResponseWriter, data any) error {
-	//log.Ctx(ctx).Trace().Msg(fmt.Sprintf("write:\n%s", util.AsJsonStr(data)))
-
 	buf := bytes.Buffer{}
 	err := util.NewJsonEncoder(&buf).Encode(data)
 	if err != nil {
@@ -20,6 +18,7 @@ func WriteJson(ctx context.Context, w http.ResponseWriter, data any) error {
 	}
 
 	log.Ctx(ctx).Trace().Str("length", byteCountDecimal(buf.Len())).Msg("About to write response")
+	//log.Ctx(ctx).Trace().Msg(fmt.Sprintf("write:\n%s", buf.Bytes()))
 
 	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Content-Length", strconv.Itoa(buf.Len()))
