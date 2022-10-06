@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 	"net/http"
-	"stash-vr/internal/server/router"
+	"stash-vr/internal/router"
 	"time"
 )
 

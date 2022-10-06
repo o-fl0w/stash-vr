@@ -6,8 +6,8 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/application"
+	"stash-vr/internal/cache"
 	"stash-vr/internal/config"
-	"stash-vr/internal/section"
 	"stash-vr/internal/server"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
@@ -24,7 +24,7 @@ func Run() error {
 
 	logVersions(ctx, stashClient)
 
-	section.Get(ctx, stashClient)
+	cache.GetSections(ctx, stashClient)
 
 	err := server.Listen(ctx, listenAddress, stashClient)
 	if err != nil {

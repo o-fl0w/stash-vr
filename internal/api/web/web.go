@@ -2,11 +2,11 @@ package web
 
 import (
 	"github.com/Khan/genqlient/graphql"
-	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"html/template"
 	"net/http"
 	"stash-vr/internal/application"
+	"stash-vr/internal/cache"
 	"stash-vr/internal/config"
 	"stash-vr/internal/section"
 	"stash-vr/internal/stash/gql"
@@ -16,12 +16,12 @@ import (
 var tmpl = template.Must(template.ParseFiles("web/template/index.html"))
 
 const (
-	OK           = "OK"
-	FAIL         = "FAIL"
-	UNAUTHORIZED = "UNAUTHORIZED"
+	ok           = "OK"
+	fail         = "FAIL"
+	unauthorized = "UNAUTHORIZED"
 )
 
-type IndexData struct {
+type indexData struct {
 	Version                 string
 	LogLevel                string
 	ForceHTTPS              bool
@@ -35,29 +35,29 @@ type IndexData struct {
 	SceneCount              int
 }
 
-func ServeIndex(client graphql.Client) http.HandlerFunc {
+func IndexHandler(client graphql.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data := IndexData{
+		data := indexData{
 			Version:                 application.BuildVersion,
 			LogLevel:                config.Get().LogLevel,
 			ForceHTTPS:              config.Get().ForceHTTPS,
 			IsSyncMarkersAllowed:    config.Get().IsSyncMarkersAllowed,
 			StashGraphQLUrl:         config.Get().StashGraphQLUrl,
 			IsApiKeyProvided:        config.Get().StashApiKey != "",
-			StashConnectionResponse: FAIL,
+			StashConnectionResponse: fail,
 		}
 
 		if version, err := gql.Version(r.Context(), client); err == nil {
-			data.StashConnectionResponse = OK
+			data.StashConnectionResponse = ok
 			data.StashVersion = version.Version.Version
-			sections := section.Get(r.Context(), client)
+			sections := cache.GetSections(r.Context(), client)
 			data.SectionCount = len(sections)
 			count := section.Count(sections)
 			data.LinkCount = count.Links
 			data.SceneCount = count.Scenes
 		} else {
 			if strings.HasSuffix(err.Error(), "unauthorized") {
-				data.StashConnectionResponse = UNAUTHORIZED
+				data.StashConnectionResponse = unauthorized
 			}
 			log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve stash version")
 		}
@@ -65,15 +65,5 @@ func ServeIndex(client graphql.Client) http.HandlerFunc {
 			log.Ctx(r.Context()).Err(err).Msg("index: execute template")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-	}
-}
-
-func ServeStatic() http.HandlerFunc {
-	filesDir := http.Dir("./web/static")
-	return func(w http.ResponseWriter, r *http.Request) {
-		rCtx := chi.RouteContext(r.Context())
-		pathPrefix := strings.TrimSuffix(rCtx.RoutePattern(), "/*")
-		fs := http.StripPrefix(pathPrefix, http.FileServer(filesDir))
-		fs.ServeHTTP(w, r)
 	}
 }
