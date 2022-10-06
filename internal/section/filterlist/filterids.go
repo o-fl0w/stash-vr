@@ -3,19 +3,19 @@ package filterlist
 import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/api/common/section"
-	"stash-vr/internal/api/common/section/internal"
+	"stash-vr/internal/section/internal"
+	"stash-vr/internal/section/model"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 )
 
 const source = "Filter List"
 
-func Sections(ctx context.Context, client graphql.Client, prefix string, filterIds []string) ([]section.Section, error) {
+func Sections(ctx context.Context, client graphql.Client, prefix string, filterIds []string) ([]model.Section, error) {
 
 	savedFilters := internal.FindFiltersById(ctx, client, filterIds)
 
-	sections := util.Transform[gql.SavedFilterParts, section.Section](func(savedFilter gql.SavedFilterParts) *section.Section {
+	sections := util.Transform[gql.SavedFilterParts, model.Section](func(savedFilter gql.SavedFilterParts) *model.Section {
 		s, err := internal.SectionFromSavedFilter(ctx, client, prefix, savedFilter)
 		if err != nil {
 			internal.FilterLogger(ctx, savedFilter, source).Warn().Err(err).Msg("Filter skipped")

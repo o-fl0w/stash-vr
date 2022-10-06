@@ -70,7 +70,7 @@ query FindPerformerByName($name: String!){
 # @genqlient(for: "SceneFilterType.is_missing", omitempty: true)
 # @genqlient(for: "SceneFilterType.organized", omitempty: true)
 # @genqlient(for: "SceneFilterType.performer_favorite", omitempty: true)
-query FindScenesByFilter(
+query FindScenePreviewsByFilter(
     $scene_filter: SceneFilterType, $filterOpts: FindFilterType){
     findScenes(scene_filter: $scene_filter, filter: $filterOpts){
         scenes {
@@ -78,13 +78,21 @@ query FindScenesByFilter(
         }}
 }
 
-query FindAllScenes{findScenes(filter: {per_page: -1}){
+query FindSceneScansByIds($scene_ids:[Int!]){
+    findScenes(scene_ids: $scene_ids){
+        scenes {
+            ...SceneDetailsParts
+        }
+    }
+}
+
+query FindAllScenePreviews{findScenes(filter: {per_page: -1}){
     scenes {
         ...ScenePreviewParts
     }}
 }
 
-query FindScenesByTags($tags: [ID!]){
+query FindScenePreviewsByTags($tags: [ID!]){
     findScenes(scene_filter: {tags: {modifier: INCLUDES, value: $tags}}, filter: {per_page: -1}){
         scenes {
             ...ScenePreviewParts, tags {
@@ -93,9 +101,9 @@ query FindScenesByTags($tags: [ID!]){
         }}
 }
 
-query FindScene($id: ID){
+query FindSceneFull($id: ID){
     findScene(id:$id){
-        ...FullSceneParts
+        ...SceneFullParts
     }
 }
 
@@ -125,12 +133,18 @@ fragment ScenePreviewParts on Scene{
     id, title, file{duration}, paths {screenshot}
 }
 
-fragment FullSceneParts on Scene{
-    id, title, rating, details, created_at, date
-    file{video_codec,size,duration,width, height},
+fragment SceneFullParts on Scene{
+    ...SceneDetailsParts
+    details,
+    file{video_codec,size,width, height},
     paths{screenshot, preview, stream},
     ...ScriptParts
     ...StreamsParts
+}
+
+fragment SceneDetailsParts on Scene{
+    id, title, rating, created_at, date
+    file{duration},
     ...TagPartsArray
     studio{
         id, name, rating

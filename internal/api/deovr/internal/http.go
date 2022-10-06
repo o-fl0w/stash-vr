@@ -5,9 +5,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"stash-vr/internal/api/common"
 	"stash-vr/internal/api/deovr/internal/index"
 	"stash-vr/internal/api/deovr/internal/videodata"
+	"stash-vr/internal/api/internal"
 	"stash-vr/internal/util"
 )
 
@@ -21,7 +21,7 @@ func (h HttpHandler) Index(w http.ResponseWriter, req *http.Request) {
 
 	data := index.Build(ctx, h.Client, baseUrl)
 
-	if err := common.WriteJson(ctx, w, data); err != nil {
+	if err := internal.WriteJson(ctx, w, data); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("write")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -38,7 +38,7 @@ func (h HttpHandler) VideoData(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := common.WriteJson(ctx, w, data); err != nil {
+	if err := internal.WriteJson(ctx, w, data); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("write")
 		w.WriteHeader(http.StatusInternalServerError)
 		return

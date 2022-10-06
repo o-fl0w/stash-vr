@@ -4,17 +4,17 @@ import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
-	"stash-vr/internal/api/common"
-	"stash-vr/internal/api/heresphere/internal/videodata"
+	"stash-vr/internal/api/heresphere/internal/tag"
+	"stash-vr/internal/api/internal"
 	"stash-vr/internal/stash"
 	"strings"
 )
 
 type UpdateVideoData struct {
-	Rating     *float32         `json:"rating,omitempty"`
-	IsFavorite *bool            `json:"isFavorite,omitempty"`
-	Tags       *[]videodata.Tag `json:"tags,omitempty"`
-	DeleteFile *bool            `json:"deleteFile,omitempty"`
+	Rating     *float32   `json:"rating,omitempty"`
+	IsFavorite *bool      `json:"isFavorite,omitempty"`
+	Tags       *[]tag.Tag `json:"tags,omitempty"`
+	DeleteFile *bool      `json:"deleteFile,omitempty"`
 }
 
 func (v UpdateVideoData) IsUpdateRequest() bool {
@@ -40,16 +40,16 @@ type marker struct {
 	start float64
 }
 
-func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []videodata.Tag) requestDetails {
+func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []tag.Tag) requestDetails {
 	request := requestDetails{}
 
 	for _, tagReq := range tags {
 		if strings.HasPrefix(tagReq.Name, "!") {
 			cmd := tagReq.Name[1:]
-			if common.LegendOCount.IsMatch(cmd) {
+			if internal.LegendOCount.IsMatch(cmd) {
 				request.incrementO = true
 				continue
-			} else if common.LegendOrganized.IsMatch(cmd) {
+			} else if internal.LegendOrganized.IsMatch(cmd) {
 				request.toggleOrganized = true
 				continue
 			}
@@ -57,7 +57,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []v
 
 		tagType, tagName, isCategorized := strings.Cut(tagReq.Name, ":")
 
-		if isCategorized && common.LegendTag.IsMatch(tagType) {
+		if isCategorized && internal.LegendTag.IsMatch(tagType) {
 			if tagName == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty tag name, skipping")
 				continue
@@ -68,7 +68,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []v
 				continue
 			}
 			request.tagIds = append(request.tagIds, id)
-		} else if isCategorized && common.LegendStudio.IsMatch(tagType) {
+		} else if isCategorized && internal.LegendStudio.IsMatch(tagType) {
 			if tagName == "" {
 				continue
 			}
@@ -78,7 +78,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []v
 				continue
 			}
 			request.studioId = id
-		} else if isCategorized && common.LegendPerformer.IsMatch(tagType) {
+		} else if isCategorized && internal.LegendPerformer.IsMatch(tagType) {
 			if tagName == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty performer name, skipping")
 				continue
@@ -89,7 +89,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []v
 				continue
 			}
 			request.performerIds = append(request.performerIds, id)
-		} else if isCategorized && (common.LegendMovie.IsMatch(tagType) || common.LegendOCount.IsMatch(tagType) || common.LegendOrganized.IsMatch(tagType)) {
+		} else if isCategorized && (internal.LegendMovie.IsMatch(tagType) || internal.LegendOCount.IsMatch(tagType) || internal.LegendOrganized.IsMatch(tagType)) {
 			log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Tag type is reserved, skipping")
 			continue
 		} else {

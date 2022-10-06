@@ -10,22 +10,56 @@ import (
 	"strings"
 )
 
+type VideoData struct {
+	Authorized     string `json:"authorized"`
+	FullAccess     bool   `json:"fullAccess"`
+	Title          string `json:"title"`
+	Id             string `json:"id"`
+	VideoLength    int    `json:"videoLength"`
+	Is3d           bool   `json:"is3d"`
+	ScreenType     string `json:"screenType"`
+	StereoMode     string `json:"stereoMode"`
+	SkipIntro      int    `json:"skipIntro"`
+	VideoThumbnail string `json:"videoThumbnail,omitempty"`
+	VideoPreview   string `json:"videoPreview,omitempty"`
+	ThumbnailUrl   string `json:"thumbnailUrl"`
+
+	TimeStamps []TimeStamp `json:"timeStamps,omitempty"`
+
+	Encodings []Encoding `json:"encodings"`
+}
+
+type TimeStamp struct {
+	Ts   int    `json:"ts"`
+	Name string `json:"name"`
+}
+
+type Encoding struct {
+	Name         string        `json:"name"`
+	VideoSources []VideoSource `json:"videoSources"`
+}
+
+type VideoSource struct {
+	Resolution int    `json:"resolution"`
+	Url        string `json:"url"`
+}
+
 func Build(ctx context.Context, client graphql.Client, sceneId string) (VideoData, error) {
-	findSceneResponse, err := gql.FindScene(ctx, client, sceneId)
+	findSceneResponse, err := gql.FindSceneFull(ctx, client, sceneId)
 	if err != nil {
 		return VideoData{}, fmt.Errorf("FindScene: %w", err)
 	}
 	if findSceneResponse.FindScene == nil {
 		return VideoData{}, fmt.Errorf("FindScene: not found")
 	}
-	s := findSceneResponse.FindScene.FullSceneParts
+	s := findSceneResponse.FindScene.SceneFullParts
 
 	videoData := VideoData{
 		Authorized:   "1",
 		FullAccess:   true,
 		Title:        s.Title,
 		Id:           s.Id,
-		VideoLength:  int(s.File.Duration),
+		VideoLength:  int(s.SceneDetailsParts.File.Duration),
 		SkipIntro:    0,
 		VideoPreview: stash.ApiKeyed(s.Paths.Preview),
 		ThumbnailUrl: stash.ApiKeyed(s.Paths.Screenshot),
@@ -38,7 +72,7 @@ func Build(ctx context.Context, client graphql.Client, sceneId string) (VideoDat
 	return videoData, nil
 }
 
-func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *VideoData) {
+func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *VideoData) {
 	log.Ctx(ctx).Trace().Str("codec", s.File.Video_codec).Send()
 	streams := stash.GetStreams(ctx, s, false)
 	videoData.Encodings = make([]Encoding, len(streams))
@@ -56,7 +90,7 @@ func setStreamSources(ctx context.Context, s gql.FullSceneParts, videoData *Vide
 	}
 }
 
-func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
+func setMarkers(s gql.SceneFullParts, videoData *VideoData) {
 	for _, sm := range s.Scene_markers {
 		sb := strings.Builder{}
 		sb.WriteString(sm.Primary_tag.Name)
@@ -72,7 +106,7 @@ func setMarkers(s gql.FullSceneParts, videoData *VideoData) {
 	}
 }
 
-func set3DFormat(s gql.FullSceneParts, videoData *VideoData) {
+func set3DFormat(s gql.SceneFullParts, videoData *VideoData) {
 	for _, tag := range s.Tags {
 		switch tag.Name {
 		case "DOME":

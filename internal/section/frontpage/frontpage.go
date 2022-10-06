@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
-	"stash-vr/internal/api/common/section"
-	"stash-vr/internal/api/common/section/internal"
+	internal2 "stash-vr/internal/section/internal"
+	"stash-vr/internal/section/model"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strconv"
@@ -14,25 +14,25 @@ import (
 
 const source = "Front Page"
 
-func Sections(ctx context.Context, client graphql.Client, prefix string) ([]section.Section, error) {
+func Sections(ctx context.Context, client graphql.Client, prefix string) ([]model.Section, error) {
 	filterIds, err := findSavedFilterIdsByFrontPage(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("FindSavedFilterIdsByFrontPage: %w", err)
 	}
 
-	savedFilters := internal.FindFiltersById(ctx, client, filterIds)
+	savedFilters := internal2.FindFiltersById(ctx, client, filterIds)
 
-	sections := util.Transform[gql.SavedFilterParts, section.Section](func(savedFilter gql.SavedFilterParts) *section.Section {
-		s, err := internal.SectionFromSavedFilter(ctx, client, prefix, savedFilter)
+	sections := util.Transform[gql.SavedFilterParts, model.Section](func(savedFilter gql.SavedFilterParts) *model.Section {
+		s, err := internal2.SectionFromSavedFilter(ctx, client, prefix, savedFilter)
 		if err != nil {
-			internal.FilterLogger(ctx, savedFilter, source).Warn().Err(err).Msg("Filter skipped")
+			internal2.FilterLogger(ctx, savedFilter, source).Warn().Err(err).Msg("Filter skipped")
 			return nil
 		}
 		if len(s.PreviewPartsList) == 0 {
-			internal.FilterLogger(ctx, savedFilter, source).Debug().Msg("Filter skipped: 0 scenes")
+			internal2.FilterLogger(ctx, savedFilter, source).Debug().Msg("Filter skipped: 0 scenes")
 			return nil
 		}
-		internal.SectionLogger(ctx, savedFilter, source, s).Debug().Msg("Section built")
+		internal2.SectionLogger(ctx, savedFilter, source, s).Debug().Msg("Section built")
 		return &s
 	}).Ordered(savedFilters)
 

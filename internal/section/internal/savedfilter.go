@@ -5,29 +5,37 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
-	"stash-vr/internal/api/common/section"
+	"stash-vr/internal/section/model"
 	"stash-vr/internal/stash/filter/scenefilter"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strings"
 )
 
-func SectionFromSavedFilter(ctx context.Context, client graphql.Client, prefix string, savedFilter gql.SavedFilterParts) (section.Section, error) {
+func savedFilterToSceneFilter(savedFilter gql.SavedFilterParts) (scenefilter.Filter, error) {
 	if savedFilter.Mode != gql.FilterModeScenes {
-		return section.Section{}, fmt.Errorf("unsupported filter mode")
+		return scenefilter.Filter{}, fmt.Errorf("unsupported filter mode")
 	}
 
 	filterQuery, err := scenefilter.ParseJsonEncodedFilter(savedFilter.Filter)
 	if err != nil {
-		return section.Section{}, fmt.Errorf("ParseJsonEncodedFilter: %w", err)
+		return scenefilter.Filter{}, fmt.Errorf("ParseJsonEncodedFilter: %w", err)
 	}
+	return filterQuery, nil
+}
 
-	scenesResponse, err := gql.FindScenesByFilter(ctx, client, &filterQuery.SceneFilter, &filterQuery.FilterOpts)
+func SectionFromSavedFilter(ctx context.Context, client graphql.Client, prefix string, savedFilter gql.SavedFilterParts) (model.Section, error) {
+	filterQuery, err := savedFilterToSceneFilter(savedFilter)
 	if err != nil {
-		return section.Section{}, fmt.Errorf("FindScenesByFilter savedFilter=%+v parsedFilter=%+v: %w", savedFilter.Filter, util.AsJsonStr(filterQuery), err)
+		return model.Section{}, fmt.Errorf("savedFilterToSceneFilter: %w", err)
 	}
 
-	s := section.Section{
+	scenesResponse, err := gql.FindScenePreviewsByFilter(ctx, client, &filterQuery.SceneFilter, &filterQuery.FilterOpts)
+	if err != nil {
+		return model.Section{}, fmt.Errorf("FindScenePreviewsByFilter savedFilter=%+v parsedFilter=%+v: %w", savedFilter.Filter, util.AsJsonStr(filterQuery), err)
+	}
+
+	s := model.Section{
 		Name:             getSectionName(prefix, savedFilter),
 		FilterId:         savedFilter.Id,
 		PreviewPartsList: make([]gql.ScenePreviewParts, len(scenesResponse.FindScenes.Scenes)),

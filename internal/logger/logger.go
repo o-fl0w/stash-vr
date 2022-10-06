@@ -22,5 +22,9 @@ func init() {
 
 	log.Logger = log.Logger.Level(level)
 
-	zerolog.DefaultContextLogger = util.Ptr(log.With().Str("mod", "default").Logger())
+	zerolog.DefaultContextLogger = util.Ptr(WithMod("default"))
+}
+
+func WithMod(mod string) zerolog.Logger {
+	return log.With().Str("mod", mod).Logger()
 }

@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"stash-vr/internal/api/deovr"
 	"stash-vr/internal/api/heresphere"
+	"stash-vr/internal/api/web"
 	"stash-vr/internal/config"
+	"stash-vr/internal/logger"
 	"stash-vr/internal/util"
-	"stash-vr/internal/web"
 	"strings"
 	"time"
 )
@@ -25,11 +26,11 @@ func Build(client graphql.Client) *chi.Mux {
 
 	//router.Mount("/debug", middleware.Profiler())
 
-	router.Mount("/heresphere", logDecorator(heresphere.Router(client), "heresphere"))
-	router.Mount("/deovr", logDecorator(deovr.Router(client), "deovr"))
+	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(client)))
+	router.Mount("/deovr", logMod("deovr", deovr.Router(client)))
 
 	router.Get("/", redirector(client))
-	router.Get("/*", web.ServeStatic())
+	router.Get("/*", logMod("static", web.ServeStatic()).ServeHTTP)
 
 	return router
 }
@@ -44,14 +45,14 @@ func redirector(client graphql.Client) http.HandlerFunc {
 			return
 		}
 
-		web.ServeIndex(client).ServeHTTP(w, r)
+		logMod("web", web.ServeIndex(client)).ServeHTTP(w, r)
 		return
 	}
 }
 
-func logDecorator(next http.Handler, mod string) http.Handler {
+func logMod(value string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := log.With().Str("mod", mod).Logger().WithContext(r.Context())
+		ctx := logger.WithMod(value).WithContext(r.Context())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

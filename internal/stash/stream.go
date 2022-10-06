@@ -24,7 +24,7 @@ type Source struct {
 
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
-func GetStreams(ctx context.Context, fsp gql.FullSceneParts, sortResolutionAsc bool) []Stream {
+func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc bool) []Stream {
 	var streams []Stream
 
 	original := Stream{

@@ -1,9 +1,10 @@
-package common
+package internal
 
 import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"stash-vr/internal/util"
@@ -42,4 +43,19 @@ func byteCountDecimal(b int) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
+}
+
+func LogRoute(route string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := log.With().Str("route", route).Logger().WithContext(r.Context())
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+}
+
+func LogVideoId(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		videoId := chi.URLParam(r, "videoId")
+		ctx := log.With().Str("videoId", videoId).Logger().WithContext(r.Context())
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
 }

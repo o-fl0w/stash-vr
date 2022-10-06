@@ -2,13 +2,13 @@ package web
 
 import (
 	"github.com/Khan/genqlient/graphql"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"html/template"
 	"net/http"
-	"stash-vr/internal/api/common"
-	"stash-vr/internal/api/common/section"
 	"stash-vr/internal/application"
 	"stash-vr/internal/config"
+	"stash-vr/internal/section"
 	"stash-vr/internal/stash/gql"
 	"strings"
 )
@@ -50,7 +50,7 @@ func ServeIndex(client graphql.Client) http.HandlerFunc {
 		if version, err := gql.Version(r.Context(), client); err == nil {
 			data.StashConnectionResponse = OK
 			data.StashVersion = version.Version.Version
-			sections := common.GetIndex(r.Context(), client)
+			sections := section.Get(r.Context(), client)
 			data.SectionCount = len(sections)
 			count := section.Count(sections)
 			data.LinkCount = count.Links
@@ -65,5 +65,15 @@ func ServeIndex(client graphql.Client) http.HandlerFunc {
 			log.Ctx(r.Context()).Err(err).Msg("index: execute template")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+	}
+}
+
+func ServeStatic() http.HandlerFunc {
+	filesDir := http.Dir("./web/static")
+	return func(w http.ResponseWriter, r *http.Request) {
+		rCtx := chi.RouteContext(r.Context())
+		pathPrefix := strings.TrimSuffix(rCtx.RoutePattern(), "/*")
+		fs := http.StripPrefix(pathPrefix, http.FileServer(filesDir))
+		fs.ServeHTTP(w, r)
 	}
 }
