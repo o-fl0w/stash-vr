@@ -11,7 +11,6 @@ import (
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/api/web"
 	"stash-vr/internal/config"
-	"stash-vr/internal/funscript"
 	"stash-vr/internal/logger"
 	"stash-vr/internal/util"
 	"strings"
@@ -32,8 +31,6 @@ func Build(client graphql.Client) *chi.Mux {
 
 	router.Get("/", rootHandler(client))
 	router.Get("/*", logMod("static", staticHandler()).ServeHTTP)
-
-	router.Get("/cover/{videoId}", logMod("funscript", funscript.CoverHandler(client)).ServeHTTP)
 
 	return router
 }

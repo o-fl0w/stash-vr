@@ -45,7 +45,6 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 	defer req.Body.Close()
 
 	ctx := req.Context()
-	baseUrl := util.GetBaseUrl(req)
 	sceneId := chi.URLParam(req, "videoId")
 
 	body, err := io.ReadAll(req.Body)
@@ -72,7 +71,7 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 		}
 	}
 
-	data, err := buildVideoData(ctx, h.Client, baseUrl, sceneId)
+	data, err := buildVideoData(ctx, h.Client, sceneId)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)

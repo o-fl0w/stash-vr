@@ -28,10 +28,9 @@ func (h httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 
 func (h httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	baseUrl := util.GetBaseUrl(req)
 	sceneId := chi.URLParam(req, "videoId")
 
-	data, err := buildVideoData(ctx, h.Client, baseUrl, sceneId)
+	data, err := buildVideoData(ctx, h.Client, sceneId)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)
