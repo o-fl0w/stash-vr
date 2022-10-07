@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.19-alpine as vipsbuild
+FROM golang:1.19-alpine as env-vips-dev
 
 RUN apk update && apk add build-base vips-dev
 
-FROM vipsbuild as build
+FROM env-vips-dev as build
+
 ARG BUILD_VERSION
 
 WORKDIR /build
@@ -18,10 +19,11 @@ COPY ./internal ./internal/
 
 RUN go generate ./cmd/stash-vr/ && go build -ldflags "-X stash-vr/internal/application.BuildVersion=$BUILD_VERSION" -o ./stash-vr ./cmd/stash-vr/
 
-FROM alpine:3.16 as vipsdeploy
+FROM alpine:3.16 as env-vips
+
 RUN apk update && apk add vips
 
-FROM vipsdeploy as deploy
+FROM env-vips as deploy
 
 WORKDIR /app
 
