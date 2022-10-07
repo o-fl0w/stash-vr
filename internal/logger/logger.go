@@ -13,7 +13,7 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{
 		Out:        os.Stderr,
 		TimeFormat: "Jan 02, 15:04:05",
-	}).Level(zerolog.TraceLevel)
+	}).Level(zerolog.TraceLevel) //.With().Caller().Logger()
 
 	level, err := zerolog.ParseLevel(config.Get().LogLevel)
 	if err != nil {

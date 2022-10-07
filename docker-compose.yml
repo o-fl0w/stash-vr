@@ -18,6 +18,7 @@ services:
 
       #ALLOW_SYNC_MARKERS: "true"
       #ENABLE_GLANCE_MARKERS: "true"
+      #ENABLE_HEATMAP_DISPLAY: "false"
       #LOG_LEVEL: "debug"
 
       #FORCE_HTTPS: "true"

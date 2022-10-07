@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/config"
+	"stash-vr/internal/funscript"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 )
@@ -53,7 +54,7 @@ type script struct {
 	Url  string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) (videoData, error) {
+func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, sceneId string) (videoData, error) {
 	findSceneResponse, err := gql.FindSceneFull(ctx, client, sceneId)
 	if err != nil {
 		return videoData{}, fmt.Errorf("FindSceneFull: %w", err)
@@ -63,15 +64,20 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 	}
 	s := findSceneResponse.FindScene.SceneFullParts
 
+	thumbnailUrl := stash.ApiKeyed(s.Paths.Screenshot)
+	if config.Get().IsHeatmapDisplayEnabled && s.ScriptParts.Interactive && s.ScriptParts.Paths.Interactive_heatmap != "" {
+		thumbnailUrl = funscript.GetCoverUrl(baseUrl, sceneId)
+	}
+
 	vd := videoData{
 		Access:         1,
 		Title:          s.Title,
 		Description:    s.Details,
-		ThumbnailImage: stash.ApiKeyed(s.Paths.Screenshot),
+		ThumbnailImage: thumbnailUrl,
 		ThumbnailVideo: stash.ApiKeyed(s.Paths.Preview),
 		DateReleased:   s.Date,
 		DateAdded:      s.Created_at.Format("2006-01-02"),
-		Duration:       s.SceneDetailsParts.File.Duration * 1000,
+		Duration:       s.SceneScanParts.File.Duration * 1000,
 		Rating:         float32(s.Rating),
 		Favorites:      s.O_counter,
 		WriteFavorite:  true,
@@ -92,7 +98,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 }
 
 func setTags(s gql.SceneFullParts, videoData *videoData) {
-	tags := getTags(s.SceneDetailsParts)
+	tags := getTags(s.SceneScanParts)
 	videoData.Tags = tags
 }
 

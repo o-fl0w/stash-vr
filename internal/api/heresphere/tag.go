@@ -18,7 +18,7 @@ type tag struct {
 	Rating float32 `json:"rating"`
 }
 
-func getTags(s gql.SceneDetailsParts) []tag {
+func getTags(s gql.SceneScanParts) []tag {
 	var tagTracks [][]tag
 
 	markers := getMarkers(s)
@@ -75,7 +75,7 @@ func getTags(s gql.SceneDetailsParts) []tag {
 	return tags
 }
 
-func getPerformers(s gql.SceneDetailsParts) []tag {
+func getPerformers(s gql.SceneScanParts) []tag {
 	tags := make([]tag, len(s.Performers))
 	for i, p := range s.Performers {
 		tags[i] = tag{
@@ -86,7 +86,7 @@ func getPerformers(s gql.SceneDetailsParts) []tag {
 	return tags
 }
 
-func getMovies(s gql.SceneDetailsParts) []tag {
+func getMovies(s gql.SceneScanParts) []tag {
 	if s.Movies == nil {
 		return nil
 	}
@@ -99,7 +99,7 @@ func getMovies(s gql.SceneDetailsParts) []tag {
 	return tags
 }
 
-func getStudio(s gql.SceneDetailsParts) []tag {
+func getStudio(s gql.SceneScanParts) []tag {
 	if s.Studio == nil {
 		return nil
 	}
@@ -109,7 +109,7 @@ func getStudio(s gql.SceneDetailsParts) []tag {
 	}}
 }
 
-func getFields(s gql.SceneDetailsParts) []tag {
+func getFields(s gql.SceneScanParts) []tag {
 	var tags []tag
 
 	tags = append(tags, tag{
@@ -123,7 +123,7 @@ func getFields(s gql.SceneDetailsParts) []tag {
 	return tags
 }
 
-func getStashTags(s gql.SceneDetailsParts) []tag {
+func getStashTags(s gql.SceneScanParts) []tag {
 	var tags []tag
 	for _, t := range s.Tags {
 		if t.Name == config.Get().FavoriteTag {
@@ -137,7 +137,7 @@ func getStashTags(s gql.SceneDetailsParts) []tag {
 	return tags
 }
 
-func getMarkers(s gql.SceneDetailsParts) []tag {
+func getMarkers(s gql.SceneScanParts) []tag {
 	var tags []tag
 	for _, sm := range s.Scene_markers {
 		sb := strings.Builder{}

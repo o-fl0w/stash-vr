@@ -55,7 +55,7 @@ func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scan
 				Rating:       float32(part.Rating),
 				Favorites:    part.O_counter,
 				IsFavorite:   ContainsFavoriteTag(part.TagPartsArray),
-				Tags:         getTags(part.SceneDetailsParts),
+				Tags:         getTags(part.SceneScanParts),
 			}
 		}).Ordered(response.FindScenes.Scenes)
 	return scanDoc{ScanData: sceneScans}, nil

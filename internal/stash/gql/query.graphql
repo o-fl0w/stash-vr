@@ -81,7 +81,7 @@ query FindScenePreviewsByFilter(
 query FindSceneScansByIds($scene_ids:[Int!]){
     findScenes(scene_ids: $scene_ids){
         scenes {
-            ...SceneDetailsParts
+            ...SceneScanParts
         }
     }
 }
@@ -125,6 +125,12 @@ query IsSceneOrganized($id: ID){
     }
 }
 
+query FindScriptDataBySceneId($id: ID!){
+    findScene(id:$id){
+        ...ScriptParts
+    }
+}
+
 fragment SavedFilterParts on SavedFilter{
     id, name, filter, mode
 }
@@ -134,7 +140,7 @@ fragment ScenePreviewParts on Scene{
 }
 
 fragment SceneFullParts on Scene{
-    ...SceneDetailsParts
+    ...SceneScanParts
     details,
     file{video_codec,size,width, height},
     paths{screenshot, preview, stream},
@@ -142,7 +148,7 @@ fragment SceneFullParts on Scene{
     ...StreamsParts
 }
 
-fragment SceneDetailsParts on Scene{
+fragment SceneScanParts on Scene{
     id, title, rating, created_at, date
     file{duration},
     ...TagPartsArray
@@ -185,7 +191,10 @@ fragment StreamsParts on Scene{
 
 fragment ScriptParts on Scene{
     interactive
+    interactive_speed
     paths {
         funscript
+        screenshot
+        interactive_heatmap
     }
 }

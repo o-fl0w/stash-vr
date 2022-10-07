@@ -6,6 +6,7 @@ require (
 	github.com/Khan/genqlient v0.5.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/rs/zerolog v1.28.0
+	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
