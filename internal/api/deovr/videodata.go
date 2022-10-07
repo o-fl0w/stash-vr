@@ -44,7 +44,7 @@ type videoSource struct {
 	Url        string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) (videoData, error) {
+func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, sceneId string) (videoData, error) {
 	findSceneResponse, err := gql.FindSceneFull(ctx, client, sceneId)
 	if err != nil {
 		return videoData{}, fmt.Errorf("FindScene: %w", err)
@@ -54,6 +54,11 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 	}
 	s := findSceneResponse.FindScene.SceneFullParts
 
+	thumbnailUrl := stash.ApiKeyed(s.Paths.Screenshot)
+	if s.Interactive {
+		thumbnailUrl = fmt.Sprintf("%s/cover/%s", baseUrl, sceneId)
+	}
+
 	vd := videoData{
 		Authorized:   "1",
 		FullAccess:   true,
@@ -62,7 +67,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, sceneId string) 
 		VideoLength:  int(s.SceneDetailsParts.File.Duration),
 		SkipIntro:    0,
 		VideoPreview: stash.ApiKeyed(s.Paths.Preview),
-		ThumbnailUrl: stash.ApiKeyed(s.Paths.Screenshot),
+		ThumbnailUrl: thumbnailUrl,
 	}
 
 	setStreamSources(ctx, s, &vd)

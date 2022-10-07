@@ -125,6 +125,12 @@ query IsSceneOrganized($id: ID){
     }
 }
 
+query FindHeatmapCoverBySceneId($id: ID!){
+    findScene(id:$id){
+        ...HeatmapCoverParts
+    }
+}
+
 fragment SavedFilterParts on SavedFilter{
     id, name, filter, mode
 }
@@ -187,5 +193,14 @@ fragment ScriptParts on Scene{
     interactive
     paths {
         funscript
+    }
+}
+
+fragment HeatmapCoverParts on Scene{
+    interactive
+    interactive_speed
+    paths{
+        screenshot
+        interactive_heatmap
     }
 }
