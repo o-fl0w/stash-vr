@@ -129,7 +129,7 @@ In other words, click anywhere on a star to set the rating to that amount of sta
 #### O-counter
 Increment o-count by adding a tag named `!O` (case-insensitive) in `Video Tags`.
 
-Current o-count is shown as `O:<count>`
+Current o-count is shown as `O:<count>`. It is also visible in the preview list on the thumbnail by the lower right heart.
 
 #### Organized
 Toggle organized flag by adding a tag named `!Org` (case-insensitive) in `Video Tags`.
