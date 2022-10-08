@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"stash-vr/internal/api/internal"
-	"stash-vr/internal/util"
 )
 
 type httpHandler struct {
@@ -17,7 +16,7 @@ type httpHandler struct {
 
 func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	baseUrl := util.GetBaseUrl(req)
+	baseUrl := internal.GetBaseUrl(req)
 
 	data := buildIndex(ctx, h.Client, baseUrl)
 
@@ -28,7 +27,7 @@ func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 
 func (h *httpHandler) scanHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	baseUrl := util.GetBaseUrl(req)
+	baseUrl := internal.GetBaseUrl(req)
 
 	data, err := buildScan(ctx, h.Client, baseUrl)
 	if err != nil {
@@ -45,7 +44,7 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 	defer req.Body.Close()
 
 	ctx := req.Context()
-	baseUrl := util.GetBaseUrl(req)
+	baseUrl := internal.GetBaseUrl(req)
 	sceneId := chi.URLParam(req, "videoId")
 
 	body, err := io.ReadAll(req.Body)

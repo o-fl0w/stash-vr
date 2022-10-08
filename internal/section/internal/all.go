@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"stash-vr/internal/logger"
 	"stash-vr/internal/section"
 	"stash-vr/internal/stash/filter"
 	"stash-vr/internal/stash/gql"
-	"stash-vr/internal/util"
 )
 
 func SectionWithAllScenes(ctx context.Context, client graphql.Client) (section.Section, error) {
@@ -21,7 +21,7 @@ func SectionWithAllScenes(ctx context.Context, client graphql.Client) (section.S
 
 	scenesResponse, err := gql.FindScenePreviewsByFilter(ctx, client, &fq.SceneFilter, &fq.FilterOpts)
 	if err != nil {
-		return section.Section{}, fmt.Errorf("FindScenePreviewsByFilter filter=%+v: %w", util.AsJsonStr(fq), err)
+		return section.Section{}, fmt.Errorf("FindScenePreviewsByFilter filter=%+v: %w", logger.AsJsonStr(fq), err)
 	}
 
 	s := section.Section{

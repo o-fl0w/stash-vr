@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"net/http"
 	"stash-vr/internal/config"
 )
@@ -11,9 +10,4 @@ func GetScheme(req *http.Request) string {
 		return "https"
 	}
 	return "http"
-}
-
-func GetBaseUrl(req *http.Request) string {
-	scheme := GetScheme(req)
-	return fmt.Sprintf("%s://%s", scheme, req.Host)
 }

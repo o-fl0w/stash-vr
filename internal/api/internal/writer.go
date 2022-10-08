@@ -3,16 +3,23 @@ package internal
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/rs/zerolog/log"
+	"io"
 	"net/http"
-	"stash-vr/internal/util"
 	"strconv"
 )
 
+func newJsonEncoder(w io.Writer) *json.Encoder {
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	return enc
+}
+
 func WriteJson(ctx context.Context, w http.ResponseWriter, data any) error {
 	buf := bytes.Buffer{}
-	err := util.NewJsonEncoder(&buf).Encode(data)
+	err := newJsonEncoder(&buf).Encode(data)
 	if err != nil {
 		return fmt.Errorf("json encode: %w", err)
 	}
