@@ -52,6 +52,10 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
 <details>
 <summary>Optional</summary>
 
+* `ALLOW_SYNC_MARKERS`
+  * Default: `false`
+  * Enable sync of Marker from HereSphere [NOTE](#heresphere-sync-of-markers)
+  * (Previously ~~`HERESPHERE_SYNC_MARKERS`~~, might be removed in the future.)
 * `FAVORITE_TAG`
   * Default: `FAVORITE`
   * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
@@ -64,10 +68,6 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
       * Show only filters from this list.
     * Empty
       * Show all saved filters.
-* `ALLOW_SYNC_MARKERS`
-  * Default: `false`
-  * Enable sync of Marker from HereSphere [NOTE](#heresphere-sync-of-markers)
-  * (Previously ~~`HERESPHERE_SYNC_MARKERS`~~, might be removed in the future.)
 * `ENABLE_GLANCE_MARKERS`
   * Default: `false`
   * Put markers, instead of studio and tags, above the seekbar in HereSphere for quick access.
