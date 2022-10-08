@@ -56,7 +56,7 @@ func GetHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) (i
 			return fmt.Errorf("fetch cover: %w", err)
 		}
 		dest := image.NewRGBA(cover.Bounds())
-		draw.Copy(dest, image.Pt(0, 0), cover, cover.Bounds(), draw.Over, nil)
+		draw.Copy(dest, image.Pt(0, 0), cover, cover.Bounds(), draw.Src, nil)
 		chCover <- dest
 		close(chCover)
 		return nil
@@ -90,6 +90,6 @@ func GetHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) (i
 
 func overlay(dest draw.Image, heatmap image.Image) (image.Image, error) {
 	destSize := dest.Bounds().Size()
-	draw.NearestNeighbor.Scale(dest, image.Rect(0, destSize.Y, destSize.X, destSize.Y-heatmap.Bounds().Size().Y), heatmap, heatmap.Bounds(), draw.Over, nil)
+	draw.NearestNeighbor.Scale(dest, image.Rect(0, destSize.Y, destSize.X, destSize.Y-heatmap.Bounds().Size().Y), heatmap, heatmap.Bounds(), draw.Src, nil)
 	return dest, nil
 }
