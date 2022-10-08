@@ -28,7 +28,7 @@ type indexData struct {
 	ForceHTTPS              bool
 	IsSyncMarkersAllowed    bool
 	StashGraphQLUrl         string
-	ApiKey                  string
+	IsApiKeyProvided        bool
 	StashConnectionResponse string
 	StashVersion            string
 	SectionCount            int
@@ -45,7 +45,7 @@ func IndexHandler(client graphql.Client) http.HandlerFunc {
 			ForceHTTPS:              config.Get().ForceHTTPS,
 			IsSyncMarkersAllowed:    config.Get().IsSyncMarkersAllowed,
 			StashGraphQLUrl:         config.Get().StashGraphQLUrl,
-			ApiKey:                  config.Get().StashApiKey,
+			IsApiKeyProvided:        config.Get().StashApiKey != "",
 			StashConnectionResponse: fail,
 		}
 

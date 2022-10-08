@@ -35,13 +35,8 @@
             </td>
         </tr>
         <tr>
-            <td>API Key</td>
-            <td>
-                <details>
-                    <summary>{{call .Redact .ApiKey}}</summary>
-                    {{.ApiKey}}
-                </details>
-            </td>
+            <td>API Key provided</td>
+            <td>{{.IsApiKeyProvided}}</td>
         </tr>
         <tr>
             <td>Stash connection</td>
