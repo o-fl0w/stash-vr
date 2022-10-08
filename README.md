@@ -3,7 +3,7 @@ Watch your [Stash](https://github.com/stashapp/stash) library in VR for that ful
 
 Stash-VR bridges your Stash instance and VR video player allowing you to browse, play and manage your scenes using the video players native VR UI.
 
-It's light on resources, optionally configurable and has support for two-way sync.
+It's lightweight, optionally configurable and has support for two-way sync.
 
 **[Install](#Installation) Stash-VR, point it to your Stash instance and point your VR video player to Stash-VR.**
 
