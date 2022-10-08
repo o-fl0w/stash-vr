@@ -158,20 +158,23 @@ If a mesh is provided but no layout then default layout `SBS` will be used.
 Most common combination is `DOME`+`SBS` meaning most VR videos only need the `DOME` tag.
 
 ## Known issues/Missing features
-### Scene count limits
-* DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
-  * For HereSphere the limit seems to be around 10k unique scenes.
-  * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try explicitly setting env. var. `FILTERS` with a list of filter ids such that the total amount of videos are lowered to a "reasonable" amount.
 
 ### Unsupported filter types
-* Premade Filters (i.e. Recently Released Scenes etc.) from Stash front page are not supported. 
+* Premade Filters (i.e. Recently Released Scenes etc.) from Stash front page are not supported.
   * Tip: If you really want such filters to show they can easily be recreated and saved using regular filters in Stash.
+
 ### HereSphere sync of Markers
 When using `Video Tags` in HereSphere to edit Markers Stash-VR will delete and (re)create them on updates.
 There currently is no support for correlating the markers (tags) in HereSphere to a Marker in Stash.
 
 **!! Any metadata, besides the primary tag and title, related to a marker will NOT be retained !!**\
 (id, preview, secondary tags and created/updated time). If you're not using these fields anyway you probably won't notice the difference.
+
+### Scene count limits
+DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
+  * For HereSphere the limit seems to be around 10k unique scenes.
+    * Fixed in HereSphere v0.7.3?
+  * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try explicitly setting env. var. `FILTERS` with a list of filter ids such that the total amount of videos are lowered to a "reasonable" amount.
 
 ### Reflecting changes made in Stash
 When the index page of Stash-VR is loaded Stash-VR will immediately respond with a cached version. At the same time Stash-VR will request the latest data and store it in the cache for the next request.
