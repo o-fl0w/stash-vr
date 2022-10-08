@@ -76,10 +76,10 @@ func Build(ctx context.Context, client graphql.Client) []section.Section {
 	}
 
 	if len(sections) == 0 {
-		log.Ctx(ctx).Info().Msg("No scenes found using current filters. Adding a default 'All' section.")
+		log.Ctx(ctx).Info().Msg("No scenes found using current filters. Adding a default section with all scenes.")
 		s, err := internal.SectionWithAllScenes(ctx, client)
 		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build custom section 'All'")
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build custom section with all scenes")
 		} else {
 			if len(s.PreviewPartsList) == 0 {
 				log.Ctx(ctx).Info().Msg("No scenes found in Stash.")

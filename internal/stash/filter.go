@@ -44,8 +44,12 @@ func FindSavedFilterIdsByFrontPage(ctx context.Context, client graphql.Client) (
 	for _, _filter := range frontPageFilters {
 		filter := _filter.(map[string]interface{})
 		typeName := filter["__typename"].(string)
+		if typeName == "CustomFilter" {
+			log.Ctx(ctx).Debug().Msg("Filter skipped: Predefined filter on front page: Only user created saved scene filters are supported.")
+			continue
+		}
 		if typeName != "SavedFilter" {
-			log.Ctx(ctx).Info().Str("type", typeName).Msg("Filter skipped: Unsupported type. Only user created saved scene filters are supported")
+			log.Ctx(ctx).Debug().Str("type", typeName).Msg("Filter skipped: Filter of unsupported type on front page: Only user created saved scene filters are supported")
 			continue
 		}
 

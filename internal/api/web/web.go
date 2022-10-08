@@ -22,12 +22,13 @@ const (
 )
 
 type indexData struct {
+	Redact                  func(string) string
 	Version                 string
 	LogLevel                string
 	ForceHTTPS              bool
 	IsSyncMarkersAllowed    bool
 	StashGraphQLUrl         string
-	IsApiKeyProvided        bool
+	ApiKey                  string
 	StashConnectionResponse string
 	StashVersion            string
 	SectionCount            int
@@ -38,12 +39,13 @@ type indexData struct {
 func IndexHandler(client graphql.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := indexData{
+			Redact:                  config.Redacted,
 			Version:                 application.BuildVersion,
 			LogLevel:                config.Get().LogLevel,
 			ForceHTTPS:              config.Get().ForceHTTPS,
 			IsSyncMarkersAllowed:    config.Get().IsSyncMarkersAllowed,
 			StashGraphQLUrl:         config.Get().StashGraphQLUrl,
-			IsApiKeyProvided:        config.Get().StashApiKey != "",
+			ApiKey:                  config.Get().StashApiKey,
 			StashConnectionResponse: fail,
 		}
 

@@ -26,12 +26,22 @@
             <td>{{.IsSyncMarkersAllowed}}</td>
         </tr>
         <tr>
-            <td>Stash GraphQL Url</td>
-            <td>{{.StashGraphQLUrl}}</td>
+            <td>Stash GraphQL</td>
+            <td>
+                <details>
+                    <summary>{{call .Redact .StashGraphQLUrl}}</summary>
+                    {{.StashGraphQLUrl}}
+                </details>
+            </td>
         </tr>
         <tr>
-            <td>API Key provided</td>
-            <td>{{.IsApiKeyProvided}}</td>
+            <td>API Key</td>
+            <td>
+                <details>
+                    <summary>{{call .Redact .ApiKey}}</summary>
+                    {{.ApiKey}}
+                </details>
+            </td>
         </tr>
         <tr>
             <td>Stash connection</td>
@@ -60,7 +70,7 @@
 <main>
     {{if eq .StashConnectionResponse "OK"}}
     <p>
-        <mark>All OK!</mark>
+        <mark style="background-color: #00ff00">All OK!</mark>
     </p>
     <p>Open this endpoint in your favorite supported VR video player to browse your library.</p>
     {{else}}
@@ -90,7 +100,8 @@
     </ul>
 </details>
 
-<footer><p><a href="https://github.com/o-fl0w/stash-vr" target="_blank">https://github.com/o-fl0w/stash-vr</a></p></footer>
+<footer><p><a href="https://github.com/o-fl0w/stash-vr" target="_blank">https://github.com/o-fl0w/stash-vr</a></p>
+</footer>
 
 </body>
 </html>
