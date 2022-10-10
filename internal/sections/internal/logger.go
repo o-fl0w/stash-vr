@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"stash-vr/internal/section"
+	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 )

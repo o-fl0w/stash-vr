@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/section"
+	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"

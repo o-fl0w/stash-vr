@@ -6,9 +6,8 @@ import (
 	"html/template"
 	"net/http"
 	"stash-vr/internal/application"
-	"stash-vr/internal/cache"
 	"stash-vr/internal/config"
-	"stash-vr/internal/section"
+	"stash-vr/internal/sections"
 	"stash-vr/internal/stash/gql"
 	"strings"
 )
@@ -52,9 +51,9 @@ func IndexHandler(client graphql.Client) http.HandlerFunc {
 		if version, err := gql.Version(r.Context(), client); err == nil {
 			data.StashConnectionResponse = ok
 			data.StashVersion = version.Version.Version
-			sections := cache.GetSections(r.Context(), client)
-			data.SectionCount = len(sections)
-			count := section.Count(sections)
+			ss := sections.Get(r.Context(), client)
+			data.SectionCount = len(ss)
+			count := sections.Count(ss)
 			data.LinkCount = count.Links
 			data.SceneCount = count.Scenes
 		} else {

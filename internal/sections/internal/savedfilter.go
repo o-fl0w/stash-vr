@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/logger"
-	"stash-vr/internal/section"
+	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash/filter"
 	"stash-vr/internal/stash/gql"
 	"strings"

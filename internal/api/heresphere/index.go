@@ -2,10 +2,9 @@ package heresphere
 
 import (
 	"context"
-	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/cache"
-	"stash-vr/internal/section"
+	_library "stash-vr/internal/sections"
+	"stash-vr/internal/sections/section"
 	"stash-vr/internal/util"
 )
 
@@ -20,9 +19,9 @@ type library struct {
 }
 
 func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) index {
-	sections := cache.GetSections(ctx, client)
+	ss := _library.Get(ctx, client)
 
-	index := index{Access: 1, Library: fromSections(baseUrl, sections)}
+	index := index{Access: 1, Library: fromSections(baseUrl, ss)}
 
 	return index
 }
@@ -39,8 +38,4 @@ func fromSection(baseUrl string, section section.Section) library {
 		o.List = append(o.List, getVideoDataUrl(baseUrl, p.Id))
 	}
 	return o
-}
-
-func getVideoDataUrl(baseUrl string, id string) string {
-	return fmt.Sprintf("%s/heresphere/%s", baseUrl, id)
 }

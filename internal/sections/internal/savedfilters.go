@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/section"
+	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 )

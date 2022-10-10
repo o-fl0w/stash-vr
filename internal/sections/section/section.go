@@ -1,6 +1,8 @@
 package section
 
-import "stash-vr/internal/stash/gql"
+import (
+	"stash-vr/internal/stash/gql"
+)
 
 type Section struct {
 	Name             string

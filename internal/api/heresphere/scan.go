@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/cache"
+	_library "stash-vr/internal/sections"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strconv"
@@ -27,9 +27,9 @@ type scanDataElement struct {
 }
 
 func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scanDoc, error) {
-	sections := cache.GetSections(ctx, client)
+	ss := _library.Get(ctx, client)
 	sceneIdMap := make(map[int]any)
-	for _, s := range sections {
+	for _, s := range ss {
 		for _, preview := range s.PreviewPartsList {
 			id, _ := strconv.Atoi(preview.Id)
 			sceneIdMap[id] = struct{}{}

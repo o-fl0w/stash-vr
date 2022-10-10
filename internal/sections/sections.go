@@ -1,17 +1,17 @@
-package aggregate
+package sections
 
 import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/config"
-	"stash-vr/internal/section"
-	"stash-vr/internal/section/internal"
+	"stash-vr/internal/sections/internal"
+	"stash-vr/internal/sections/section"
 	"strings"
 	"sync"
 )
 
-func Build(ctx context.Context, client graphql.Client) []section.Section {
+func build(ctx context.Context, client graphql.Client) []section.Section {
 	sss := make([][]section.Section, 3)
 
 	filters := config.Get().Filters
@@ -89,7 +89,7 @@ func Build(ctx context.Context, client graphql.Client) []section.Section {
 		}
 	}
 
-	count := section.Count(sections)
+	count := Count(sections)
 
 	if count.Links > 10000 {
 		log.Ctx(ctx).Warn().Int("links", count.Links).Msg("More than 10.000 links generated. Known to cause issues with video players.")

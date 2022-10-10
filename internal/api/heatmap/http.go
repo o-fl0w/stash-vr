@@ -1,7 +1,8 @@
-package funscript
+package heatmap
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -27,9 +28,9 @@ func CoverHandler(client graphql.Client) http.HandlerFunc {
 			return
 		}
 		p := response.FindScene.Paths
-		cover, err := GetHeatmapCover(ctx, stash.ApiKeyed(p.Screenshot), stash.ApiKeyed(p.Interactive_heatmap))
+		cover, err := getHeatmapCover(ctx, stash.ApiKeyed(p.Screenshot), stash.ApiKeyed(p.Interactive_heatmap))
 		if err != nil {
-			log.Ctx(ctx).Err(err).Msg("GetHeatmapCover")
+			log.Ctx(ctx).Err(err).Msg("getHeatmapCover")
 			if errors.Is(err, NotFoundErr) {
 				w.WriteHeader(http.StatusBadGateway)
 			} else {
@@ -43,4 +44,8 @@ func CoverHandler(client graphql.Client) http.HandlerFunc {
 			return
 		}
 	}
+}
+
+func GetCoverUrl(baseUrl string, sceneId string) string {
+	return fmt.Sprintf("%s/cover/%s", baseUrl, sceneId)
 }

@@ -1,6 +1,7 @@
 package heresphere
 
 import (
+	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,4 +17,8 @@ func Router(client graphql.Client) http.Handler {
 	r.Post("/scan", internal.LogRoute("scan", httpHandler.scanHandler))
 	r.Post("/{videoId}", internal.LogRoute("videoData", internal.LogVideoId(httpHandler.videoDataHandler)))
 	return r
+}
+
+func getVideoDataUrl(baseUrl string, id string) string {
+	return fmt.Sprintf("%s/heresphere/%s", baseUrl, id)
 }

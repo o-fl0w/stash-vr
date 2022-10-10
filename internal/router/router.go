@@ -8,10 +8,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"stash-vr/internal/api/deovr"
+	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/api/web"
 	"stash-vr/internal/config"
-	"stash-vr/internal/funscript"
 	"stash-vr/internal/logger"
 	"stash-vr/internal/util"
 	"strings"
@@ -34,7 +34,7 @@ func Build(client graphql.Client) *chi.Mux {
 	router.Get("/*", logMod("static", staticHandler()).ServeHTTP)
 
 	if config.Get().IsHeatmapDisplayEnabled {
-		router.Get("/cover/{videoId}", logMod("funscript", funscript.CoverHandler(client)).ServeHTTP)
+		router.Get("/cover/{videoId}", logMod("heatmap", heatmap.CoverHandler(client)).ServeHTTP)
 	}
 
 	return router

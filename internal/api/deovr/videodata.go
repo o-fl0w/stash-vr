@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
+	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/config"
-	"stash-vr/internal/funscript"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"strings"
@@ -58,7 +58,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 
 	thumbnailUrl := stash.ApiKeyed(s.Paths.Screenshot)
 	if config.Get().IsHeatmapDisplayEnabled && s.ScriptParts.Interactive && s.ScriptParts.Paths.Interactive_heatmap != "" {
-		thumbnailUrl = funscript.GetCoverUrl(baseUrl, sceneId)
+		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
 	}
 
 	vd := videoData{

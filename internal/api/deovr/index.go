@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/cache"
-	"stash-vr/internal/section"
+	"stash-vr/internal/sections"
+	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 )
@@ -29,9 +29,9 @@ type previewData struct {
 }
 
 func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) index {
-	sections := cache.GetSections(ctx, client)
+	ss := sections.Get(ctx, client)
 
-	scenes := fromSections(baseUrl, sections)
+	scenes := fromSections(baseUrl, ss)
 
 	index := index{Authorized: "1", Scenes: scenes}
 

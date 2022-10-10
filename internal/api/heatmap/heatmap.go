@@ -1,4 +1,4 @@
-package funscript
+package heatmap
 
 import (
 	"context"
@@ -14,10 +14,6 @@ import (
 )
 
 var NotFoundErr = errors.New("not found")
-
-func GetCoverUrl(baseUrl string, sceneId string) string {
-	return fmt.Sprintf("%s/cover/%s", baseUrl, sceneId)
-}
 
 func fetchImage(ctx context.Context, fileUrl string) (image.Image, error) {
 	log.Ctx(ctx).Trace().Str("url", fileUrl).Msg("Fetching image")
@@ -44,7 +40,7 @@ func fetchImage(ctx context.Context, fileUrl string) (image.Image, error) {
 	return img, nil
 }
 
-func GetHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) (image.Image, error) {
+func getHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) (image.Image, error) {
 	chCover := make(chan draw.Image, 1)
 	chHeatmap := make(chan image.Image, 1)
 
