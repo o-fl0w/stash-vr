@@ -4,12 +4,22 @@ import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
+	"stash-vr/internal/cache"
 	"stash-vr/internal/config"
 	"stash-vr/internal/sections/internal"
 	"stash-vr/internal/sections/section"
 	"strings"
 	"sync"
 )
+
+var c cache.Cache[[]section.Section]
+
+func Get(ctx context.Context, client graphql.Client) []section.Section {
+	return c.Get(ctx, func(ctx context.Context) *[]section.Section {
+		ss := build(ctx, client)
+		return &ss
+	})
+}
 
 func build(ctx context.Context, client graphql.Client) []section.Section {
 	sss := make([][]section.Section, 3)
