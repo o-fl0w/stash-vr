@@ -51,9 +51,7 @@ func buildHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) 
 		if err != nil {
 			return fmt.Errorf("fetch cover: %w", err)
 		}
-		dest := image.NewRGBA(cover.Bounds())
-		draw.Copy(dest, image.Pt(0, 0), cover, cover.Bounds(), draw.Src, nil)
-		chCover <- dest
+		chCover <- cover.(draw.Image)
 		close(chCover)
 		return nil
 	})
