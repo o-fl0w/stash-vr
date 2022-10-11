@@ -12,7 +12,6 @@ import (
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/api/web"
 	"stash-vr/internal/config"
-	"stash-vr/internal/logger"
 	"stash-vr/internal/util"
 	"strings"
 	"time"
@@ -55,7 +54,7 @@ func rootHandler(client graphql.Client) http.HandlerFunc {
 
 func logMod(value string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := logger.WithMod(value).WithContext(r.Context())
+		ctx := log.Ctx(r.Context()).With().Str("mod", value).Logger().WithContext(r.Context())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

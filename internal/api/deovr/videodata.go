@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
@@ -80,7 +79,6 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 }
 
 func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {
-	log.Ctx(ctx).Trace().Str("codec", s.File.Video_codec).Send()
 	streams := stash.GetStreams(ctx, s, false)
 	videoData.Encodings = make([]encoding, len(streams))
 	for i, stream := range streams {

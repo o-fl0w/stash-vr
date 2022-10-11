@@ -16,11 +16,9 @@ func (c *Cache[T]) Get(ctx context.Context, fetch func(ctx context.Context) *T) 
 	c.dataLock.Lock()
 	defer c.dataLock.Unlock()
 	if c.data == nil {
-		log.Ctx(ctx).Trace().Msg("Cache miss")
 		c.data = fetch(ctx)
 		return *c.data
 	} else {
-		log.Ctx(ctx).Trace().Msg("Cache hit")
 		go func(ctx context.Context) {
 			ctx = log.Ctx(ctx).With().Str("op", "bg").Logger().WithContext(context.Background())
 			if c.fetchMutex.TryLock() {
