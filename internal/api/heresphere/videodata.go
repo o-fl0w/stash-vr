@@ -105,7 +105,7 @@ func setTags(s gql.SceneFullParts, videoData *videoData) {
 func setScripts(s gql.SceneFullParts, videoData *videoData) {
 	if s.ScriptParts.Interactive {
 		videoData.Scripts = append(videoData.Scripts, script{
-			Name: fmt.Sprintf("Script-%s", s.Title),
+			Name: "Script-" + s.Title,
 			Url:  stash.ApiKeyed(s.ScriptParts.Paths.Funscript),
 		})
 	}

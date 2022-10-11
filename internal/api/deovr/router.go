@@ -5,7 +5,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"stash-vr/internal/api/internal"
-	"strings"
 )
 
 func Router(client graphql.Client) http.Handler {
@@ -18,11 +17,5 @@ func Router(client graphql.Client) http.Handler {
 }
 
 func getVideoDataUrl(baseUrl string, id string) string {
-	path := "/deovr/"
-	sb := strings.Builder{}
-	sb.Grow(len(baseUrl) + len(path) + len(id))
-	sb.WriteString(baseUrl)
-	sb.WriteString(path)
-	sb.WriteString(id)
-	return sb.String()
+	return baseUrl + "/deovr/" + id
 }

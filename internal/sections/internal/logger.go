@@ -14,7 +14,7 @@ func sourceLogContext(ctx context.Context, source string) context.Context {
 
 func filterLogContext(ctx context.Context, filter gql.SavedFilterParts) context.Context {
 	return log.Ctx(ctx).With().
-		Str("filterId", filter.Id).Str("filterName", filter.Name).Interface("filterMode", filter.Mode).
+		Str("filterId", filter.Id).Str("filterName", filter.Name).Str("filterMode", string(filter.Mode)).
 		Logger().WithContext(ctx)
 }
 

@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -62,7 +61,7 @@ func logMod(value string, next http.Handler) http.Handler {
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		scheme := util.GetScheme(r)
-		url := fmt.Sprintf("%s://%s%s", scheme, config.Redacted(r.Host), r.RequestURI)
+		url := scheme + "://" + config.Redacted(r.Host) + r.RequestURI
 
 		baseLogger := log.Ctx(r.Context()).With().
 			Str("method", r.Method).

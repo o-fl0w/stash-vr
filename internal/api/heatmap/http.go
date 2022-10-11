@@ -2,7 +2,6 @@ package heatmap
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -50,5 +49,5 @@ func CoverHandler(client graphql.Client) http.HandlerFunc {
 }
 
 func GetCoverUrl(baseUrl string, sceneId string) string {
-	return fmt.Sprintf("%s/cover/%s", baseUrl, sceneId)
+	return baseUrl + "/cover/" + sceneId
 }

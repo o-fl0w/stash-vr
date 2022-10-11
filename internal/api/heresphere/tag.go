@@ -7,7 +7,6 @@ import (
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
-	"strings"
 )
 
 type tag struct {
@@ -18,6 +17,8 @@ type tag struct {
 	Rating float32 `json:"rating"`
 }
 
+const seperator = ":"
+
 func getTags(s gql.SceneScanParts) []tag {
 	var tagTracks [][]tag
 
@@ -25,23 +26,23 @@ func getTags(s gql.SceneScanParts) []tag {
 	performers := getPerformers(s)
 	fields := getFields(s)
 
-	var meta []tag
 	studio := getStudio(s)
 	stashTags := getStashTags(s)
 	movies := getMovies(s)
 
+	meta := make([]tag, 0, len(studio)+len(stashTags)+len(movies))
 	meta = append(meta, studio...)
 	meta = append(meta, stashTags...)
 	meta = append(meta, movies...)
 
 	if len(studio) == 0 {
-		fields = append(fields, tag{Name: fmt.Sprintf("%s:", internal.LegendStudio.Full)})
+		fields = append(fields, tag{Name: internal.LegendStudio.Full + seperator})
 	}
 	if len(stashTags) == 0 {
-		fields = append(fields, tag{Name: fmt.Sprintf("%s:", internal.LegendTag.Short)})
+		fields = append(fields, tag{Name: internal.LegendTag.Short + seperator})
 	}
 	if len(movies) == 0 {
-		fields = append(fields, tag{Name: fmt.Sprintf("%s:", internal.LegendMovie.Full)})
+		fields = append(fields, tag{Name: internal.LegendMovie.Full + seperator})
 	}
 
 	fillTagDurations(markers)
@@ -60,8 +61,8 @@ func getTags(s gql.SceneScanParts) []tag {
 	tagTracks = append(tagTracks, performers)
 	tagTracks = append(tagTracks, fields)
 
-	var tags []tag
 	track := 0
+	tags := make([]tag, 0, len(tagTracks))
 	for i := range tagTracks {
 		if len(tagTracks[i]) == 0 {
 			continue
@@ -79,7 +80,7 @@ func getPerformers(s gql.SceneScanParts) []tag {
 	tags := make([]tag, len(s.Performers))
 	for i, p := range s.Performers {
 		tags[i] = tag{
-			Name:   fmt.Sprintf("%s:%s", internal.LegendPerformer.Full, p.Name),
+			Name:   internal.LegendPerformer.Full + seperator + p.Name,
 			Rating: float32(p.Rating),
 		}
 	}
@@ -93,7 +94,7 @@ func getMovies(s gql.SceneScanParts) []tag {
 	tags := make([]tag, len(s.Movies))
 	for i, m := range s.Movies {
 		tags[i] = tag{
-			Name: fmt.Sprintf("%s:%s", internal.LegendMovie.Full, m.Movie.Name),
+			Name: internal.LegendMovie.Full + seperator + m.Movie.Name,
 		}
 	}
 	return tags
@@ -104,33 +105,27 @@ func getStudio(s gql.SceneScanParts) []tag {
 		return nil
 	}
 	return []tag{{
-		Name:   fmt.Sprintf("%s:%s", internal.LegendStudio.Full, s.Studio.Name),
+		Name:   internal.LegendStudio.Full + seperator + s.Studio.Name,
 		Rating: float32(s.Studio.Rating),
 	}}
 }
 
 func getFields(s gql.SceneScanParts) []tag {
-	var tags []tag
-
-	tags = append(tags, tag{
-		Name: fmt.Sprintf("%s:%d", internal.LegendOCount.Short, s.O_counter),
-	})
-
-	tags = append(tags, tag{
-		Name: fmt.Sprintf("%s:%v", internal.LegendOrganized.Short, s.Organized),
-	})
+	tags := []tag{
+		{Name: fmt.Sprintf("%s:%d", internal.LegendOCount.Short, s.O_counter)},
+		{Name: fmt.Sprintf("%s:%v", internal.LegendOrganized.Short, s.Organized)}}
 
 	return tags
 }
 
 func getStashTags(s gql.SceneScanParts) []tag {
-	tags := make([]tag, len(s.Tags))
+	tags := make([]tag, 0, len(s.Tags))
 	for _, t := range s.Tags {
 		if t.Name == config.Get().FavoriteTag {
 			continue
 		}
 		t := tag{
-			Name: fmt.Sprintf("%s:%s", internal.LegendTag.Short, t.Name),
+			Name: internal.LegendTag.Short + seperator + t.Name,
 		}
 		tags = append(tags, t)
 	}
@@ -138,16 +133,14 @@ func getStashTags(s gql.SceneScanParts) []tag {
 }
 
 func getMarkers(s gql.SceneScanParts) []tag {
-	tags := make([]tag, 0, len(s.Scene_markers))
+	tags := make([]tag, len(s.Scene_markers))
 	for i, sm := range s.Scene_markers {
-		sb := strings.Builder{}
-		sb.WriteString(sm.Primary_tag.Name)
+		tagName := sm.Primary_tag.Name
 		if sm.Title != "" {
-			sb.WriteString(":")
-			sb.WriteString(sm.Title)
+			tagName += seperator + sm.Title
 		}
 		t := tag{
-			Name:  sb.String(),
+			Name:  tagName,
 			Start: sm.Seconds * 1000,
 		}
 		tags[i] = t

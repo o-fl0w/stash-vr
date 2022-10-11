@@ -16,14 +16,12 @@ var c cache.Cache[[]section.Section]
 
 func Get(ctx context.Context, client graphql.Client) []section.Section {
 	return c.Get(ctx, func(ctx context.Context) []section.Section {
-		return build(ctx, client)
+		return build(ctx, client, config.Get().Filters)
 	})
 }
 
-func build(ctx context.Context, client graphql.Client) []section.Section {
+func build(ctx context.Context, client graphql.Client, filters string) []section.Section {
 	sss := make([][]section.Section, 3)
-
-	filters := config.Get().Filters
 
 	wg := sync.WaitGroup{}
 
