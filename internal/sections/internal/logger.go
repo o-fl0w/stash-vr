@@ -2,22 +2,24 @@ package internal
 
 import (
 	"context"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash/gql"
-	"stash-vr/internal/util"
 )
 
-func filterLogger(ctx context.Context, filter gql.SavedFilterParts, source string) *zerolog.Logger {
-	return util.Ptr(log.Ctx(ctx).With().
-		Str("filterId", filter.Id).Str("filterName", filter.Name).Interface("filterMode", filter.Mode).
-		Str("source", source).Logger())
+func sourceLogContext(ctx context.Context, source string) context.Context {
+	return log.Ctx(ctx).With().
+		Str("source", source).Logger().WithContext(ctx)
 }
 
-func sectionLogger(ctx context.Context, filter gql.SavedFilterParts, source string, section section.Section) *zerolog.Logger {
-	return util.Ptr(log.Ctx(ctx).With().
+func filterLogContext(ctx context.Context, filter gql.SavedFilterParts) context.Context {
+	return log.Ctx(ctx).With().
 		Str("filterId", filter.Id).Str("filterName", filter.Name).Interface("filterMode", filter.Mode).
-		Str("source", source).
-		Str("section", section.Name).Int("scenes", len(section.PreviewPartsList)).Logger())
+		Logger().WithContext(ctx)
+}
+
+func sectionLogContext(ctx context.Context, section section.Section) context.Context {
+	return log.Ctx(ctx).With().
+		Str("section", section.Name).Int("scenes", len(section.PreviewPartsList)).
+		Logger().WithContext(ctx)
 }

@@ -1,19 +1,20 @@
 package util
 
 import (
+	"errors"
 	"reflect"
 	"strconv"
 	"testing"
 )
 
-func TestTransform_Ordered(t *testing.T) {
-	var nonZeroIntToString = func(input int) *string {
-		if input == 0 {
-			return nil
-		}
-		s := strconv.Itoa(input)
-		return &s
+func nonZeroIntToString(input int) (string, error) {
+	if input == 0 {
+		return "", errors.New("zero int")
 	}
+	return strconv.Itoa(input), nil
+}
+
+func TestTransform_Ordered(t *testing.T) {
 	type args struct {
 		inputs []int
 	}
@@ -36,5 +37,11 @@ func TestTransform_Ordered(t *testing.T) {
 				t.Errorf("Ordered() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func BenchmarkTransform_Ordered(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Transform[int, string](nonZeroIntToString).Ordered([]int{10, 0, 1, 2, 10, 0, 1, 2, 10, 0, 1, 2, 10, 0, 1, 2, 10, 0, 1, 2, 10, 0, 1, 2})
 	}
 }

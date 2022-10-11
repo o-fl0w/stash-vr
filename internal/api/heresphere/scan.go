@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	_library "stash-vr/internal/sections"
+	"stash-vr/internal/sections"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strconv"
@@ -27,7 +27,7 @@ type scanDataElement struct {
 }
 
 func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scanDoc, error) {
-	ss := _library.Get(ctx, client)
+	ss := sections.Get(ctx, client)
 	sceneIdMap := make(map[int]any)
 	for _, s := range ss {
 		for _, preview := range s.PreviewPartsList {
@@ -45,8 +45,8 @@ func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scan
 	}
 
 	sceneScans := util.Transform[*gql.FindSceneScansByIdsFindScenesFindScenesResultTypeScenesScene, scanDataElement](
-		func(part *gql.FindSceneScansByIdsFindScenesFindScenesResultTypeScenesScene) *scanDataElement {
-			return &scanDataElement{
+		func(part *gql.FindSceneScansByIdsFindScenesFindScenesResultTypeScenesScene) (scanDataElement, error) {
+			return scanDataElement{
 				Link:         getVideoDataUrl(baseUrl, part.Id),
 				Title:        part.Title,
 				DateReleased: part.Date,
@@ -56,7 +56,7 @@ func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scan
 				Favorites:    part.O_counter,
 				IsFavorite:   ContainsFavoriteTag(part.TagPartsArray),
 				Tags:         getTags(part.SceneScanParts),
-			}
+			}, nil
 		}).Ordered(response.FindScenes.Scenes)
 	return scanDoc{ScanData: sceneScans}, nil
 }

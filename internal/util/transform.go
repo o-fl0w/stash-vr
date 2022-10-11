@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type Transform[Input any, Output any] func(Input) *Output
+type Transform[Input any, Output any] func(Input) (Output, error)
 
 func (f Transform[Input, Output]) Ordered(inputs []Input) []Output {
 	chXs := make(chan indexed[Output], len(inputs))
@@ -15,11 +15,11 @@ func (f Transform[Input, Output]) Ordered(inputs []Input) []Output {
 	for i, input := range inputs {
 		go func(i int, input Input) {
 			defer wg.Done()
-			output := f(input)
-			if output == nil {
+			output, err := f(input)
+			if err != nil {
 				return
 			}
-			chXs <- wrap(i, *output)
+			chXs <- wrap(i, output)
 		}(i, input)
 	}
 	wg.Wait()

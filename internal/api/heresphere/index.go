@@ -3,7 +3,7 @@ package heresphere
 import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
-	_library "stash-vr/internal/sections"
+	"stash-vr/internal/sections"
 	"stash-vr/internal/sections/section"
 	"stash-vr/internal/util"
 )
@@ -19,7 +19,7 @@ type library struct {
 }
 
 func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) index {
-	ss := _library.Get(ctx, client)
+	ss := sections.Get(ctx, client)
 
 	index := index{Access: 1, Library: fromSections(baseUrl, ss)}
 
@@ -27,15 +27,15 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) inde
 }
 
 func fromSections(baseUrl string, sections []section.Section) []library {
-	return util.Transform[section.Section, library](func(section section.Section) *library {
-		return util.Ptr(fromSection(baseUrl, section))
+	return util.Transform[section.Section, library](func(section section.Section) (library, error) {
+		return fromSection(baseUrl, section), nil
 	}).Ordered(sections)
 }
 
 func fromSection(baseUrl string, section section.Section) library {
-	o := library{Name: section.Name}
-	for _, p := range section.PreviewPartsList {
-		o.List = append(o.List, getVideoDataUrl(baseUrl, p.Id))
+	o := library{Name: section.Name, List: make([]string, len(section.PreviewPartsList))}
+	for i, p := range section.PreviewPartsList {
+		o.List[i] = getVideoDataUrl(baseUrl, p.Id)
 	}
 	return o
 }
