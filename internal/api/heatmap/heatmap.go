@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-var NotFoundErr = errors.New("not found")
+var imageNotFoundErr = errors.New("image not found")
 
 func fetchImage(ctx context.Context, fileUrl string) (image.Image, error) {
 	log.Ctx(ctx).Trace().Str("url", fileUrl).Msg("Fetching image")
@@ -28,7 +28,7 @@ func fetchImage(ctx context.Context, fileUrl string) (image.Image, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, NotFoundErr
+		return nil, imageNotFoundErr
 	}
 
 	img, format, err := image.Decode(resp.Body)
@@ -40,7 +40,7 @@ func fetchImage(ctx context.Context, fileUrl string) (image.Image, error) {
 	return img, nil
 }
 
-func getHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) (image.Image, error) {
+func buildHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) (image.Image, error) {
 	chCover := make(chan draw.Image, 1)
 	chHeatmap := make(chan image.Image, 1)
 
@@ -80,7 +80,6 @@ func getHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) (i
 	if err != nil {
 		return nil, fmt.Errorf("overlay heatmap on cover: %w", err)
 	}
-	log.Ctx(ctx).Trace().Msg("heatmap overlayed on cover")
 	return heatmapCover, nil
 }
 
