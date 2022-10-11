@@ -2,7 +2,6 @@ package deovr
 
 import (
 	"context"
-	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/sections/section"
@@ -59,8 +58,4 @@ func fromSection(baseUrl string, section section.Section) scene {
 		}
 	}
 	return s
-}
-
-func getVideoDataUrl(baseUrl string, id string) string {
-	return fmt.Sprintf("%s/deovr/%s", baseUrl, id)
 }

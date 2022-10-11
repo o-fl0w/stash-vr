@@ -1,12 +1,12 @@
 package heresphere
 
 import (
-	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
 	"stash-vr/internal/api/internal"
+	"strings"
 )
 
 func Router(client graphql.Client) http.Handler {
@@ -20,5 +20,11 @@ func Router(client graphql.Client) http.Handler {
 }
 
 func getVideoDataUrl(baseUrl string, id string) string {
-	return fmt.Sprintf("%s/heresphere/%s", baseUrl, id)
+	path := "/heresphere/"
+	sb := strings.Builder{}
+	sb.Grow(len(baseUrl) + len(path) + len(id))
+	sb.WriteString(baseUrl)
+	sb.WriteString(path)
+	sb.WriteString(id)
+	return sb.String()
 }
