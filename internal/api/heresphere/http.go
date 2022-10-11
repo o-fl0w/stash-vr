@@ -80,5 +80,4 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 	if err := internal.WriteJson(ctx, w, data); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("write")
 	}
-
 }

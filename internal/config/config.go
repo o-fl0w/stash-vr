@@ -57,11 +57,12 @@ func Get() Application {
 }
 
 func getEnvOrDefault(key string, defaultValue string) string {
-	if val, ok := os.LookupEnv(key); !ok {
+	val, ok := os.LookupEnv(key)
+	if !ok {
 		return defaultValue
-	} else {
-		return val
 	}
+	return val
+
 }
 
 func findEnvOrDefault(keys []string, defaultValue string) string {

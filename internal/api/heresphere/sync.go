@@ -144,7 +144,7 @@ func updateFavorite(ctx context.Context, client graphql.Client, sceneId string, 
 		return
 	}
 
-	var newTagIds []string
+	newTagIds := make([]string, 0, len(response.FindScene.Tags)+1)
 	var contains bool
 	for _, t := range response.FindScene.Tags {
 		if t.Id == favoriteTagId {
@@ -234,7 +234,8 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 
 		tagType, tagName, isCategorized := strings.Cut(tagReq.Name, ":")
 
-		if isCategorized && internal.LegendTag.IsMatch(tagType) {
+		switch {
+		case isCategorized && internal.LegendTag.IsMatch(tagType):
 			if tagName == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty tag name, skipping")
 				continue
@@ -245,7 +246,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 				continue
 			}
 			request.tagIds = append(request.tagIds, id)
-		} else if isCategorized && internal.LegendStudio.IsMatch(tagType) {
+		case isCategorized && internal.LegendStudio.IsMatch(tagType):
 			if tagName == "" {
 				continue
 			}
@@ -255,7 +256,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 				continue
 			}
 			request.studioId = id
-		} else if isCategorized && internal.LegendPerformer.IsMatch(tagType) {
+		case isCategorized && internal.LegendPerformer.IsMatch(tagType):
 			if tagName == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty performer name, skipping")
 				continue
@@ -266,10 +267,10 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 				continue
 			}
 			request.performerIds = append(request.performerIds, id)
-		} else if isCategorized && (internal.LegendMovie.IsMatch(tagType) || internal.LegendOCount.IsMatch(tagType) || internal.LegendOrganized.IsMatch(tagType)) {
+		case isCategorized && (internal.LegendMovie.IsMatch(tagType) || internal.LegendOCount.IsMatch(tagType) || internal.LegendOrganized.IsMatch(tagType)):
 			log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Tag type is reserved, skipping")
 			continue
-		} else {
+		default:
 			var markerTitle string
 			markerPrimaryTag := tagType
 			if isCategorized {
@@ -278,7 +279,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 			request.markers = append(request.markers, marker{
 				tag:   markerPrimaryTag,
 				title: markerTitle,
-				start: float64(tagReq.Start) / 1000,
+				start: tagReq.Start / 1000,
 			})
 		}
 	}

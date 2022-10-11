@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
@@ -21,7 +22,7 @@ func Listen(ctx context.Context, listenAddress string, client graphql.Client) er
 
 	g.Go(func() error {
 		log.Ctx(ctx).Info().Msg(fmt.Sprintf("Server listening at %s", listenAddress))
-		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); errors.Is(err, http.ErrServerClosed) {
 			return fmt.Errorf("listen: %w", err)
 		}
 		return nil
@@ -35,7 +36,7 @@ func Listen(ctx context.Context, listenAddress string, client graphql.Client) er
 
 		go func() {
 			<-ctxShutdown.Done()
-			if ctxShutdown.Err() == context.DeadlineExceeded {
+			if errors.Is(ctxShutdown.Err(), context.DeadlineExceeded) {
 				log.Ctx(ctx).Warn().Err(ctxShutdown.Err()).Msg("Shutdown timed out")
 			}
 		}()

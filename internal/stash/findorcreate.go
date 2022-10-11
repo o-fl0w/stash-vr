@@ -23,9 +23,8 @@ func FindOrCreateTag(ctx context.Context, client graphql.Client, name string) (s
 		}
 		log.Ctx(ctx).Debug().Str("name", name).Str("id", createResponse.TagCreate.Id).Msg("Tag created in stash")
 		return createResponse.TagCreate.Id, nil
-	} else {
-		return findResponse.FindTags.Tags[0].Id, nil
 	}
+	return findResponse.FindTags.Tags[0].Id, nil
 }
 
 func FindOrCreateStudio(ctx context.Context, client graphql.Client, name string) (string, error) {
@@ -43,9 +42,8 @@ func FindOrCreateStudio(ctx context.Context, client graphql.Client, name string)
 		}
 		log.Ctx(ctx).Debug().Str("name", name).Str("id", createResponse.StudioCreate.Id).Msg("Studio created in stash")
 		return createResponse.StudioCreate.Id, nil
-	} else {
-		return findResponse.FindStudios.Studios[0].Id, nil
 	}
+	return findResponse.FindStudios.Studios[0].Id, nil
 }
 
 func FindOrCreatePerformer(ctx context.Context, client graphql.Client, name string) (string, error) {
@@ -63,7 +61,6 @@ func FindOrCreatePerformer(ctx context.Context, client graphql.Client, name stri
 		}
 		log.Ctx(ctx).Debug().Str("name", name).Str("id", createResponse.PerformerCreate.Id).Msg("Performer created in stash")
 		return createResponse.PerformerCreate.Id, nil
-	} else {
-		return findResponse.FindPerformers.Performers[0].Id, nil
 	}
+	return findResponse.FindPerformers.Performers[0].Id, nil
 }

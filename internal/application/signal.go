@@ -21,5 +21,6 @@ func InterruptableContext() context.Context {
 		log.Ctx(ctx).Info().Stringer("signal", s).Msg("Exit SIGNAL received")
 		cancel()
 	}()
+
 	return ctx
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func FindFiltersById(ctx context.Context, client graphql.Client, filterIds []string) []gql.SavedFilterParts {
-	var filters []gql.SavedFilterParts
+	filters := make([]gql.SavedFilterParts, 0, len(filterIds))
 
 	for _, filterId := range filterIds {
 		savedFilterResponse, err := gql.FindSavedFilter(ctx, client, filterId)
@@ -34,13 +34,14 @@ func FindSavedFilterIdsByFrontPage(ctx context.Context, client graphql.Client) (
 		return nil, fmt.Errorf("UIConfiguration: %w", err)
 	}
 
-	var filterIds []string
 	frontPageContent := configurationResponse.Configuration.Ui["frontPageContent"]
 	if frontPageContent == nil {
 		log.Ctx(ctx).Info().Msg("No frontpage content found")
 		return nil, nil
 	}
+
 	frontPageFilters := configurationResponse.Configuration.Ui["frontPageContent"].([]interface{})
+	filterIds := make([]string, 0, len(frontPageFilters))
 	for _, _filter := range frontPageFilters {
 		filter := _filter.(map[string]interface{})
 		typeName := filter["__typename"].(string)

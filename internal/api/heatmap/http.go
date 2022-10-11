@@ -33,7 +33,7 @@ func CoverHandler(client graphql.Client) http.HandlerFunc {
 		cover, err := buildHeatmapCover(ctx, stash.ApiKeyed(p.Screenshot), stash.ApiKeyed(p.Interactive_heatmap))
 		if err != nil {
 			log.Ctx(ctx).Err(err).Msg("buildHeatmapCover")
-			if errors.Is(err, imageNotFoundErr) {
+			if errors.Is(err, errImageNotFound) {
 				w.WriteHeader(http.StatusNotFound)
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)

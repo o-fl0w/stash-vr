@@ -124,7 +124,7 @@ func getFields(s gql.SceneScanParts) []tag {
 }
 
 func getStashTags(s gql.SceneScanParts) []tag {
-	var tags []tag
+	tags := make([]tag, len(s.Tags))
 	for _, t := range s.Tags {
 		if t.Name == config.Get().FavoriteTag {
 			continue
@@ -138,8 +138,8 @@ func getStashTags(s gql.SceneScanParts) []tag {
 }
 
 func getMarkers(s gql.SceneScanParts) []tag {
-	var tags []tag
-	for _, sm := range s.Scene_markers {
+	tags := make([]tag, 0, len(s.Scene_markers))
+	for i, sm := range s.Scene_markers {
 		sb := strings.Builder{}
 		sb.WriteString(sm.Primary_tag.Name)
 		if sm.Title != "" {
@@ -150,7 +150,7 @@ func getMarkers(s gql.SceneScanParts) []tag {
 			Name:  sb.String(),
 			Start: sm.Seconds * 1000,
 		}
-		tags = append(tags, t)
+		tags[i] = t
 	}
 	return tags
 }

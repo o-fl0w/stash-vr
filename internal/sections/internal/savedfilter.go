@@ -16,7 +16,7 @@ import (
 
 type sectionFromSavedFilterFunc = util.Transform[gql.SavedFilterParts, section.Section]
 
-var noScenesFoundErr = errors.New("no scenes found")
+var errNoScenesFound = errors.New("no scenes found")
 
 func sectionFromSavedFilterFuncBuilder(ctx context.Context, client graphql.Client, prefix string, source string) sectionFromSavedFilterFunc {
 	return func(savedFilter gql.SavedFilterParts) (section.Section, error) {
@@ -28,7 +28,7 @@ func sectionFromSavedFilterFuncBuilder(ctx context.Context, client graphql.Clien
 		}
 		if len(s.PreviewPartsList) == 0 {
 			log.Ctx(ctx).Debug().Msg("Filter skipped: 0 scenes")
-			return section.Section{}, noScenesFoundErr
+			return section.Section{}, errNoScenesFound
 		}
 		ctx = sectionLogContext(ctx, s)
 		log.Ctx(ctx).Debug().Msg("Section built")

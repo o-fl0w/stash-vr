@@ -19,17 +19,17 @@ type jsonCriterion struct {
 	Value    interface{} `json:"value"`
 }
 
-type unexpectedTypeErr struct {
+type errUnexpectedType struct {
 	sourceType      string
 	destinationType string
 }
 
-func (e unexpectedTypeErr) Error() string {
+func (e errUnexpectedType) Error() string {
 	return fmt.Sprintf("unexpected type %s is not assertable to %s", e.sourceType, e.destinationType)
 }
 
-func newUnexpectedTypeErr(source any, destinationType string) *unexpectedTypeErr {
-	return &unexpectedTypeErr{
+func newUnexpectedTypeErr(source any, destinationType string) *errUnexpectedType {
+	return &errUnexpectedType{
 		sourceType:      fmt.Sprintf("%T", source),
 		destinationType: destinationType,
 	}
@@ -54,8 +54,8 @@ func (c jsonCriterion) asHierarchicalMultiCriterionInput() (*gql.HierarchicalMul
 	if !ok {
 		return nil, newUnexpectedTypeErr(m["items"], "[]interface{}")
 	}
-	var ids []string
-	for _, item := range items {
+	ids := make([]string, len(items))
+	for i, item := range items {
 		mid, ok := item.(map[string]interface{})
 		if !ok {
 			return nil, newUnexpectedTypeErr(item, "map[string]interface{}")
@@ -64,7 +64,7 @@ func (c jsonCriterion) asHierarchicalMultiCriterionInput() (*gql.HierarchicalMul
 		if !ok {
 			return nil, newUnexpectedTypeErr(mid["id"], "string")
 		}
-		ids = append(ids, id)
+		ids[i] = id
 	}
 
 	return &gql.HierarchicalMultiCriterionInput{
@@ -191,13 +191,13 @@ func (c jsonCriterion) asMultiCriterionInput() (*gql.MultiCriterionInput, error)
 	if !ok {
 		return nil, newUnexpectedTypeErr(c.Value, "[]interface{}")
 	}
-	var ss []string
-	for _, v := range cs {
+	ss := make([]string, len(cs))
+	for i, v := range cs {
 		s, ok := v.(string)
 		if !ok {
 			return nil, newUnexpectedTypeErr(v, "string")
 		}
-		ss = append(ss, s)
+		ss[i] = s
 	}
 	return &gql.MultiCriterionInput{
 		Value:    ss,
