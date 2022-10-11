@@ -12,11 +12,12 @@ type Cache[T any] struct {
 	data       *T
 }
 
-func (c *Cache[T]) Get(ctx context.Context, fetch func(ctx context.Context) *T) T {
+func (c *Cache[T]) Get(ctx context.Context, fetch func(ctx context.Context) T) T {
 	c.dataLock.Lock()
 	defer c.dataLock.Unlock()
 	if c.data == nil {
-		c.data = fetch(ctx)
+		d := fetch(ctx)
+		c.data = &d
 		return *c.data
 	} else {
 		go func(ctx context.Context) {
@@ -27,7 +28,7 @@ func (c *Cache[T]) Get(ctx context.Context, fetch func(ctx context.Context) *T) 
 				d := fetch(ctx)
 				c.dataLock.Lock()
 				defer c.dataLock.Unlock()
-				c.data = d
+				c.data = &d
 			} else {
 				log.Ctx(ctx).Trace().Msg("Already fetching...")
 			}

@@ -15,9 +15,8 @@ import (
 var c cache.Cache[[]section.Section]
 
 func Get(ctx context.Context, client graphql.Client) []section.Section {
-	return c.Get(ctx, func(ctx context.Context) *[]section.Section {
-		ss := build(ctx, client)
-		return &ss
+	return c.Get(ctx, func(ctx context.Context) []section.Section {
+		return build(ctx, client)
 	})
 }
 
