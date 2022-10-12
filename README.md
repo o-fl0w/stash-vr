@@ -55,7 +55,6 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
 * `ALLOW_SYNC_MARKERS`
   * Default: `false`
   * Enable sync of Marker from HereSphere [NOTE](#heresphere-sync-of-markers)
-  * (Previously ~~`HERESPHERE_SYNC_MARKERS`~~)
 * `FAVORITE_TAG`
   * Default: `FAVORITE`
   * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
@@ -68,13 +67,9 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
       * Show only filters from this list.
     * Empty
       * Show all saved filters.
-* `ENABLE_GLANCE_MARKERS`
+* `DISABLE_HEATMAP`
   * Default: `false`
-  * Put markers, instead of studio and tags, above the seekbar in HereSphere for quick access.
-  * (Previously ~~`HERESPHERE_QUICK_MARKERS`~~)
-* `ENABLE_HEATMAP_DISPLAY`
-  * Default: `true`
-  * Shows funscript heatmap if available, as a small bar on the preview thumbnail.
+  * Disable display of funscript heatmaps. Shown by default if available, as a small bar on the preview thumbnail.
 * `FORCE_HTTPS`
   * Default: `false`
   * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.
