@@ -232,6 +232,10 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 			}
 		}
 
+		if tagReq.Name == "" {
+			continue
+		}
+
 		tagType, tagName, isCategorized := strings.Cut(tagReq.Name, ":")
 
 		switch {
@@ -271,14 +275,13 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 			log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Tag type is reserved, skipping")
 			continue
 		default:
-			var markerTitle string
-			markerPrimaryTag := tagType
-			if isCategorized {
-				markerTitle = tagName
+			if tagType == "" {
+				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty marker primary tag, skipping")
+				continue
 			}
 			request.markers = append(request.markers, marker{
-				tag:   markerPrimaryTag,
-				title: markerTitle,
+				tag:   tagType,
+				title: tagName,
 				start: tagReq.Start / 1000,
 			})
 		}
