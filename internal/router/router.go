@@ -31,7 +31,7 @@ func Build(client graphql.Client) *chi.Mux {
 	router.Get("/", rootHandler(client))
 	router.Get("/*", logMod("static", staticHandler()).ServeHTTP)
 
-	if config.Get().IsHeatmapDisplayEnabled {
+	if !config.Get().IsHeatmapDisabled {
 		router.Get("/cover/{videoId}", logMod("heatmap", heatmap.CoverHandler(client)).ServeHTTP)
 	}
 

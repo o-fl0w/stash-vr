@@ -65,7 +65,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	s := findSceneResponse.FindScene.SceneFullParts
 
 	thumbnailUrl := stash.ApiKeyed(s.Paths.Screenshot)
-	if config.Get().IsHeatmapDisplayEnabled && s.ScriptParts.Interactive && s.ScriptParts.Paths.Interactive_heatmap != "" {
+	if !config.Get().IsHeatmapDisabled && s.ScriptParts.Interactive && s.ScriptParts.Paths.Interactive_heatmap != "" {
 		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
 	}
 

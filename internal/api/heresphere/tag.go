@@ -18,6 +18,7 @@ type tag struct {
 }
 
 const seperator = ":"
+const isGlanceMarkersEnabled = true
 
 func getTags(s gql.SceneScanParts) []tag {
 	var tagTracks [][]tag
@@ -51,7 +52,7 @@ func getTags(s gql.SceneScanParts) []tag {
 	equallyDivideTagDurations(duration, fields)
 	equallyDivideTagDurations(duration, meta)
 
-	if config.Get().IsGlanceMarkersEnabled {
+	if isGlanceMarkersEnabled {
 		tagTracks = append(tagTracks, markers)
 		tagTracks = append(tagTracks, meta)
 	} else {

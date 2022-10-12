@@ -8,30 +8,27 @@ import (
 )
 
 const (
-	envKeyStashGraphQLUrl      = "STASH_GRAPHQL_URL"
-	envKeyStashApiKey          = "STASH_API_KEY"
-	envKeyFavoriteTag          = "FAVORITE_TAG"
-	envKeyFilters              = "FILTERS"
-	envKeyLogLevel             = "LOG_LEVEL"
-	envKeyDisableRedact        = "DISABLE_REDACT"
-	envKeyForceHTTPS           = "FORCE_HTTPS"
-	envKeyEnableHeatmapDisplay = "ENABLE_HEATMAP_DISPLAY"
+	envKeyStashGraphQLUrl  = "STASH_GRAPHQL_URL"
+	envKeyStashApiKey      = "STASH_API_KEY"
+	envKeyFavoriteTag      = "FAVORITE_TAG"
+	envKeyFilters          = "FILTERS"
+	envKeyLogLevel         = "LOG_LEVEL"
+	envKeyDisableRedact    = "DISABLE_REDACT"
+	envKeyForceHTTPS       = "FORCE_HTTPS"
+	envKeyDisableHeatmap   = "DISABLE_HEATMAP"
+	envKeyAllowSyncMarkers = "ALLOW_SYNC_MARKERS"
 )
 
-var envKeyEnableGlanceMarkers = []string{"ENABLE_GLANCE_MARKERS", "HERESPHERE_QUICK_MARKERS"}
-var envKeyAllowSyncMarkers = []string{"ALLOW_SYNC_MARKERS", "HERESPHERE_SYNC_MARKERS"}
-
 type Application struct {
-	StashGraphQLUrl         string
-	StashApiKey             string
-	FavoriteTag             string
-	Filters                 string
-	IsGlanceMarkersEnabled  bool
-	IsSyncMarkersAllowed    bool
-	LogLevel                string
-	IsRedactDisabled        bool
-	ForceHTTPS              bool
-	IsHeatmapDisplayEnabled bool
+	StashGraphQLUrl      string
+	StashApiKey          string
+	FavoriteTag          string
+	Filters              string
+	IsSyncMarkersAllowed bool
+	LogLevel             string
+	IsRedactDisabled     bool
+	ForceHTTPS           bool
+	IsHeatmapDisabled    bool
 }
 
 var cfg Application
@@ -41,16 +38,15 @@ var once sync.Once
 func Get() Application {
 	once.Do(func() {
 		cfg = Application{
-			StashGraphQLUrl:         getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
-			StashApiKey:             getEnvOrDefault(envKeyStashApiKey, ""),
-			FavoriteTag:             getEnvOrDefault(envKeyFavoriteTag, "FAVORITE"),
-			Filters:                 getEnvOrDefault(envKeyFilters, ""),
-			IsGlanceMarkersEnabled:  findEnvOrDefault(envKeyEnableGlanceMarkers, "false") == "true",
-			IsSyncMarkersAllowed:    findEnvOrDefault(envKeyAllowSyncMarkers, "false") == "true",
-			LogLevel:                strings.ToLower(getEnvOrDefault(envKeyLogLevel, "info")),
-			IsRedactDisabled:        getEnvOrDefault(envKeyDisableRedact, "false") == "true",
-			ForceHTTPS:              getEnvOrDefault(envKeyForceHTTPS, "false") == "true",
-			IsHeatmapDisplayEnabled: getEnvOrDefault(envKeyEnableHeatmapDisplay, "true") == "true",
+			StashGraphQLUrl:      getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
+			StashApiKey:          getEnvOrDefault(envKeyStashApiKey, ""),
+			FavoriteTag:          getEnvOrDefault(envKeyFavoriteTag, "FAVORITE"),
+			Filters:              getEnvOrDefault(envKeyFilters, ""),
+			IsSyncMarkersAllowed: getEnvOrDefault(envKeyAllowSyncMarkers, "false") == "true",
+			LogLevel:             strings.ToLower(getEnvOrDefault(envKeyLogLevel, "info")),
+			IsRedactDisabled:     getEnvOrDefault(envKeyDisableRedact, "false") == "true",
+			ForceHTTPS:           getEnvOrDefault(envKeyForceHTTPS, "false") == "true",
+			IsHeatmapDisabled:    getEnvOrDefault(envKeyDisableHeatmap, "false") == "true",
 		}
 	})
 	return cfg
