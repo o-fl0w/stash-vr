@@ -25,7 +25,7 @@ type Source struct {
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
 func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc bool) []Stream {
-	var streams []Stream
+	streams := make([]Stream, 0, 2)
 
 	original := Stream{
 		Name: fsp.File.Video_codec,
@@ -87,12 +87,10 @@ func getMp4Sources(ctx context.Context, sps gql.StreamsParts) []Source {
 	sourceMap := make(map[int]Source)
 
 	for _, s := range sps.SceneStreams {
-		lowerCaseLabel := strings.ToLower(s.Label)
-
-		if strings.Contains(lowerCaseLabel, "mp4") {
-			resolution, err := parseResolutionFromLabel(lowerCaseLabel)
+		if strings.Contains(s.Label, "MP4") {
+			resolution, err := parseResolutionFromLabel(s.Label)
 			if err != nil {
-				log.Ctx(ctx).Warn().Err(err).Str("label", lowerCaseLabel).Msg("Failed to parse resolution from label")
+				log.Ctx(ctx).Warn().Err(err).Str("label", s.Label).Msg("Failed to parse resolution from label")
 				continue
 			}
 
@@ -104,7 +102,7 @@ func getMp4Sources(ctx context.Context, sps gql.StreamsParts) []Source {
 				Resolution: resolution,
 				Url:        s.Url,
 			}
-		} else if lowerCaseLabel == "direct stream" {
+		} else if s.Label == "Direct stream" {
 			sourceMap[sps.File.Height] = Source{
 				Resolution: sps.File.Height,
 				Url:        s.Url,

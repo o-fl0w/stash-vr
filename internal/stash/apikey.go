@@ -6,18 +6,13 @@ import (
 )
 
 func ApiKeyed(url string) string {
-	if config.Get().StashApiKey == "" || strings.Contains(url, "apikey") {
+	apiKey := config.Get().StashApiKey
+	if apiKey == "" || strings.Contains(url, "apikey") {
 		return url
 	}
-	sb := strings.Builder{}
-	sb.WriteString(url)
 	if strings.Contains(url, "?") {
-		sb.WriteString("&")
-	} else {
-		sb.WriteString("?")
+		return url + "&apikey=" + apiKey
 	}
-	sb.WriteString("apikey=")
-	sb.WriteString(config.Get().StashApiKey)
-	s := sb.String()
-	return s
+
+	return url + "?apikey=" + apiKey
 }
