@@ -17,8 +17,7 @@ services:
       #FILTERS: "frontpage" # show only scene filters from front page
 
       #ALLOW_SYNC_MARKERS: "true"
-      #ENABLE_GLANCE_MARKERS: "true"
-      #ENABLE_HEATMAP_DISPLAY: "false"
+      #DISABLE_HEATMAP: "true"
       #LOG_LEVEL: "debug"
 
       #FORCE_HTTPS: "true"

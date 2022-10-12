@@ -19,6 +19,8 @@ const (
 	envKeyAllowSyncMarkers = "ALLOW_SYNC_MARKERS"
 )
 
+var deprecatedEnvKeys = []string{"ENABLE_GLANCE_MARKERS", "HERESPHERE_QUICK_MARKERS", "HERESPHERE_SYNC_MARKERS", "ENABLE_HEATMAP_DISPLAY"}
+
 type Application struct {
 	StashGraphQLUrl      string
 	StashApiKey          string
@@ -37,6 +39,7 @@ var once sync.Once
 
 func Get() Application {
 	once.Do(func() {
+		logDeprecatedKeysInUse()
 		cfg = Application{
 			StashGraphQLUrl:      getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
 			StashApiKey:          getEnvOrDefault(envKeyStashApiKey, ""),
@@ -50,6 +53,15 @@ func Get() Application {
 		}
 	})
 	return cfg
+}
+
+func logDeprecatedKeysInUse() {
+	for _, key := range deprecatedEnvKeys {
+		val, found := os.LookupEnv(key)
+		if found {
+			log.Warn().Str("key", key).Str("value", val).Msg("Deprecated/removed option found. Ignoring.")
+		}
+	}
 }
 
 func getEnvOrDefault(key string, defaultValue string) string {
