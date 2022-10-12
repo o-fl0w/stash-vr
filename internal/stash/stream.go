@@ -52,11 +52,12 @@ func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc b
 		})
 		streams = append(streams, original)
 	default:
-		log.Ctx(ctx).Debug().Str("codec", fsp.File.Video_codec).Msg("Codec not supported? Adding transcoded streams only")
+		log.Ctx(ctx).Debug().Str("codec", fsp.File.Video_codec).Msg("Codec not supported?")
 		streams = append(streams, Stream{
 			Name:    "tc/other",
 			Sources: mp4Sources,
 		})
+		streams = append(streams, original)
 	}
 
 	// stash adds query parameter 'apikey' for direct stream but not for transcoded streams - add it
