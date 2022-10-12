@@ -47,17 +47,22 @@ func buildHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) 
 	g, gCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		cover, err := fetchImage(gCtx, coverUrl)
+		cover, err := fetchImage(log.Ctx(gCtx).With().Str("image", "cover").Logger().WithContext(gCtx), coverUrl)
 		if err != nil {
 			return fmt.Errorf("fetch cover: %w", err)
 		}
-		chCover <- cover.(draw.Image)
+		dest, ok := cover.(draw.Image)
+		if !ok {
+			dest = image.NewRGBA(cover.Bounds())
+			draw.Copy(dest, image.Pt(0, 0), cover, cover.Bounds(), draw.Src, nil)
+		}
+		chCover <- dest
 		close(chCover)
 		return nil
 	})
 
 	g.Go(func() error {
-		heatmap, err := fetchImage(gCtx, heatmapUrl)
+		heatmap, err := fetchImage(log.Ctx(gCtx).With().Str("image", "heatmap").Logger().WithContext(gCtx), heatmapUrl)
 		if err != nil {
 			return fmt.Errorf("fetch heatmap: %w", err)
 		}
