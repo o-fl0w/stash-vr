@@ -144,6 +144,7 @@ fragment SceneFullParts on Scene{
     details,
     file{video_codec,size,width, height},
     paths{screenshot, preview, stream},
+    path,
     ...ScriptParts
     ...StreamsParts
 }
