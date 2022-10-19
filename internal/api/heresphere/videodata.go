@@ -64,7 +64,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	}
 	s := findSceneResponse.FindScene.SceneFullParts
 
-	if len(s.Files) == 0 {
+	if len(s.SceneScanParts.Files) == 0 {
 		return videoData{}, fmt.Errorf("scene %s has no files", sceneId)
 	}
 
@@ -73,9 +73,14 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
 	}
 
+	title := s.Title
+	if title == "" {
+		title = s.SceneScanParts.Files[0].Basename
+	}
+
 	vd := videoData{
 		Access:         1,
-		Title:          s.Title,
+		Title:          title,
 		Description:    s.Details,
 		ThumbnailImage: thumbnailUrl,
 		ThumbnailVideo: stash.ApiKeyed(s.Paths.Preview),
@@ -158,7 +163,7 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 }
 
 func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {
-	for _, stream := range stash.GetStreams(ctx, s, true) {
+	for _, stream := range stash.GetStreams(ctx, s.StreamsParts, true) {
 		e := media{
 			Name: stream.Name,
 		}

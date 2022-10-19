@@ -142,10 +142,7 @@ fragment ScenePreviewParts on Scene{
 fragment SceneFullParts on Scene{
     ...SceneScanParts
     details,
-    paths{screenshot, preview, stream},
-    files{
-        path,video_codec,size,width, height
-    }
+    paths{screenshot, preview},
     ...ScriptParts
     ...StreamsParts
 }
@@ -153,7 +150,7 @@ fragment SceneFullParts on Scene{
 fragment SceneScanParts on Scene{
     id, title, rating, created_at, date
     files{
-        duration
+        basename, duration
     }
     ...TagPartsArray
     studio{
@@ -189,7 +186,8 @@ fragment TagParts on Tag{
 
 
 fragment StreamsParts on Scene{
-    files{height}
+    paths {stream}
+    files{path,video_codec,height}
     sceneStreams{url, mime_type, label}
 }
 

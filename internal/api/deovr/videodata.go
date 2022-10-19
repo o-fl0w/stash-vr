@@ -55,7 +55,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	}
 	s := findSceneResponse.FindScene.SceneFullParts
 
-	if len(s.Files) == 0 {
+	if len(s.SceneScanParts.Files) == 0 {
 		return videoData{}, fmt.Errorf("scene %s has no files", sceneId)
 	}
 
@@ -64,10 +64,15 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
 	}
 
+	title := s.Title
+	if title == "" {
+		title = s.SceneScanParts.Files[0].Basename
+	}
+
 	vd := videoData{
 		Authorized:   "1",
 		FullAccess:   true,
-		Title:        s.Title,
+		Title:        title,
 		Id:           s.Id,
 		VideoLength:  int(s.SceneScanParts.Files[0].Duration),
 		SkipIntro:    0,
@@ -83,7 +88,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 }
 
 func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {
-	streams := stash.GetStreams(ctx, s, false)
+	streams := stash.GetStreams(ctx, s.StreamsParts, false)
 	videoData.Encodings = make([]encoding, len(streams))
 	for i, stream := range streams {
 		videoData.Encodings[i] = encoding{

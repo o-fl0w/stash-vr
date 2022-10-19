@@ -25,7 +25,7 @@ type Source struct {
 
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
-func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc bool) []Stream {
+func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc bool) []Stream {
 	streams := make([]Stream, 2)
 
 	directStream := Stream{
@@ -40,13 +40,13 @@ func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc b
 	case "h264", "hevc", "h265", "mpeg4":
 		streams[0] = Stream{
 			Name:    "transcoding",
-			Sources: getSources(ctx, fsp.StreamsParts, "MP4", "Direct stream", sortResolutionAsc),
+			Sources: getSources(ctx, fsp, "MP4", "Direct stream", sortResolutionAsc),
 		}
 		streams[1] = directStream
 	case "vp8", "vp9":
 		streams[0] = Stream{
 			Name:    "transcoding",
-			Sources: getSources(ctx, fsp.StreamsParts, "WEBM", "Direct stream", sortResolutionAsc),
+			Sources: getSources(ctx, fsp, "WEBM", "Direct stream", sortResolutionAsc),
 		}
 		streams[1] = directStream
 	default:
@@ -54,7 +54,7 @@ func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc b
 		streams[0] = Stream{
 			Name: "transcoding",
 			//transcode unsupported codecs to webm by default - or should we do mp4?
-			Sources: getSources(ctx, fsp.StreamsParts, "WEBM", "webm", sortResolutionAsc),
+			Sources: getSources(ctx, fsp, "WEBM", "webm", sortResolutionAsc),
 		}
 	}
 
