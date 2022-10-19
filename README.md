@@ -177,4 +177,9 @@ This means if changes are made in Stash and the player refreshed, it will receiv
 Just refresh again and the player should receive the latest changes. In other words, refresh twice.
 
 ### Stash version
-Stash-VR has been tested against Stash v.0.16.1 - if you have issues arising from running an older version of Stash the recommended path is to upgrade Stash before attempting a fix.
+#### Stash v0.17.x
+Compatible with Stash-VR version >= v0.5.0
+#### Stash v0.16.1
+Compatible with Stash-VR version <= v0.4.4
+#### Older Stash versions
+If you have issues arising from running an older version of Stash the recommended path is to upgrade Stash before attempting a fix.
