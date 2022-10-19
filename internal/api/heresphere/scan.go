@@ -51,7 +51,7 @@ func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scan
 				Title:        part.Title,
 				DateReleased: part.Date,
 				DateAdded:    part.Created_at.Format("2006-01-02"),
-				Duration:     part.File.Duration,
+				Duration:     part.Files[0].Duration,
 				Rating:       float32(part.Rating),
 				Favorites:    part.O_counter,
 				IsFavorite:   ContainsFavoriteTag(part.TagPartsArray),

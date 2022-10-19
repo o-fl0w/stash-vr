@@ -31,12 +31,12 @@ func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc b
 	directStream := Stream{
 		Name: "direct",
 		Sources: []Source{{
-			Resolution: fsp.File.Height,
+			Resolution: fsp.Files[0].Height,
 			Url:        fsp.Paths.Stream,
 		}},
 	}
 
-	switch fsp.File.Video_codec {
+	switch fsp.Files[0].Video_codec {
 	case "h264", "hevc", "h265", "mpeg4":
 		streams[0] = Stream{
 			Name:    "transcoding",
@@ -50,7 +50,7 @@ func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc b
 		}
 		streams[1] = directStream
 	default:
-		log.Ctx(ctx).Warn().Str("codec", fsp.File.Video_codec).Str("file ext", filepath.Ext(fsp.Path)).Msg("Codec not supported? Selecting transcoding sources.")
+		log.Ctx(ctx).Warn().Str("codec", fsp.Files[0].Video_codec).Str("file ext", filepath.Ext(fsp.Files[0].Path)).Msg("Codec not supported? Selecting transcoding sources.")
 		streams[0] = Stream{
 			Name: "transcoding",
 			//transcode unsupported codecs to webm by default - or should we do mp4?
@@ -102,8 +102,8 @@ func getSources(ctx context.Context, sps gql.StreamsParts, format string, defaul
 				Url:        s.Url,
 			}
 		} else if s.Label == defaultSourceLabel {
-			sourceMap[sps.File.Height] = Source{
-				Resolution: sps.File.Height,
+			sourceMap[sps.Files[0].Height] = Source{
+				Resolution: sps.Files[0].Height,
 				Url:        s.Url,
 			}
 		}

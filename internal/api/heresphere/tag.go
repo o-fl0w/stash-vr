@@ -47,7 +47,7 @@ func getTags(s gql.SceneScanParts) []tag {
 	}
 
 	fillTagDurations(markers)
-	duration := s.File.Duration * 1000
+	duration := s.Files[0].Duration * 1000
 	equallyDivideTagDurations(duration, performers)
 	equallyDivideTagDurations(duration, fields)
 	equallyDivideTagDurations(duration, meta)

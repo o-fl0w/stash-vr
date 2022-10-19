@@ -164,7 +164,11 @@ func setSceneFilterCriterion(criterion jsonCriterion, sceneFilter *gql.SceneFilt
 		if err != nil {
 			return fmt.Errorf("AsIntCriterionInput: %w", err)
 		}
-
+	case "file_count":
+		sceneFilter.File_count, err = criterion.asIntCriterionInput()
+		if err != nil {
+			return fmt.Errorf("AsIntCriterionInput: %w", err)
+		}
 	//bool
 	case "organized":
 		sceneFilter.Organized, err = criterion.asBool()
