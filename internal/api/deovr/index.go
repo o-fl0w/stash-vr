@@ -53,7 +53,7 @@ func fromSection(baseUrl string, section section.Section) scene {
 			Id:           p.Id,
 			ThumbnailUrl: stash.ApiKeyed(p.Paths.Screenshot),
 			Title:        p.Title,
-			VideoLength:  int(p.File.Duration),
+			VideoLength:  int(p.Files[0].Duration),
 			VideoUrl:     getVideoDataUrl(baseUrl, p.Id),
 		}
 	}

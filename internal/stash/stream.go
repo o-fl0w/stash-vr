@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/rs/zerolog/log"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"stash-vr/internal/config"
@@ -25,41 +26,39 @@ type Source struct {
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
 func GetStreams(ctx context.Context, fsp gql.SceneFullParts, sortResolutionAsc bool) []Stream {
-	streams := make([]Stream, 0, 2)
+	streams := make([]Stream, 2)
 
-	original := Stream{
-		Name: fsp.File.Video_codec,
+	directStream := Stream{
+		Name: "direct",
 		Sources: []Source{{
-			Resolution: fsp.File.Height,
+			Resolution: fsp.Files[0].Height,
 			Url:        fsp.Paths.Stream,
 		}},
 	}
 
-	mp4Sources := getMp4Sources(ctx, fsp.StreamsParts)
-	sortSourcesByResolution(mp4Sources, sortResolutionAsc)
-
-	switch fsp.File.Video_codec {
-	case "h264":
-		streams = append(streams, Stream{
-			Name:    "tc/h264",
-			Sources: mp4Sources,
-		})
-		streams = append(streams, original)
-	case "hevc", "h265":
-		streams = append(streams, Stream{
-			Name:    "tc/h265",
-			Sources: mp4Sources,
-		})
-		streams = append(streams, original)
+	switch fsp.Files[0].Video_codec {
+	case "h264", "hevc", "h265", "mpeg4":
+		streams[0] = Stream{
+			Name:    "transcoding",
+			Sources: getSources(ctx, fsp.StreamsParts, "MP4", "Direct stream", sortResolutionAsc),
+		}
+		streams[1] = directStream
+	case "vp8", "vp9":
+		streams[0] = Stream{
+			Name:    "transcoding",
+			Sources: getSources(ctx, fsp.StreamsParts, "WEBM", "Direct stream", sortResolutionAsc),
+		}
+		streams[1] = directStream
 	default:
-		log.Ctx(ctx).Debug().Str("codec", fsp.File.Video_codec).Msg("Codec not supported? Adding transcoded streams only")
-		streams = append(streams, Stream{
-			Name:    "tc/other",
-			Sources: mp4Sources,
-		})
+		log.Ctx(ctx).Warn().Str("codec", fsp.Files[0].Video_codec).Str("file ext", filepath.Ext(fsp.Files[0].Path)).Msg("Codec not supported? Selecting transcoding sources.")
+		streams[0] = Stream{
+			Name: "transcoding",
+			//transcode unsupported codecs to webm by default - or should we do mp4?
+			Sources: getSources(ctx, fsp.StreamsParts, "WEBM", "webm", sortResolutionAsc),
+		}
 	}
 
-	// stash adds query parameter 'apikey' for direct stream but not for transcoded streams - add it
+	// stash adds query parameter 'apikey' for direct stream but not for transcoding streams - add it
 	if config.Get().StashApiKey != "" {
 		for i, stream := range streams {
 			for j, source := range stream.Sources {
@@ -83,11 +82,11 @@ func parseResolutionFromLabel(label string) (int, error) {
 	return res, nil
 }
 
-func getMp4Sources(ctx context.Context, sps gql.StreamsParts) []Source {
+func getSources(ctx context.Context, sps gql.StreamsParts, format string, defaultSourceLabel string, sortResolutionAsc bool) []Source {
 	sourceMap := make(map[int]Source)
 
 	for _, s := range sps.SceneStreams {
-		if strings.Contains(s.Label, "MP4") {
+		if strings.Contains(s.Label, format) {
 			resolution, err := parseResolutionFromLabel(s.Label)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Str("label", s.Label).Msg("Failed to parse resolution from label")
@@ -102,9 +101,9 @@ func getMp4Sources(ctx context.Context, sps gql.StreamsParts) []Source {
 				Resolution: resolution,
 				Url:        s.Url,
 			}
-		} else if s.Label == "Direct stream" {
-			sourceMap[sps.File.Height] = Source{
-				Resolution: sps.File.Height,
+		} else if s.Label == defaultSourceLabel {
+			sourceMap[sps.Files[0].Height] = Source{
+				Resolution: sps.Files[0].Height,
 				Url:        s.Url,
 			}
 		}
@@ -113,6 +112,7 @@ func getMp4Sources(ctx context.Context, sps gql.StreamsParts) []Source {
 	for _, v := range sourceMap {
 		sources = append(sources, v)
 	}
+	sortSourcesByResolution(sources, sortResolutionAsc)
 	return sources
 }
 

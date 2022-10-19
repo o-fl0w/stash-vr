@@ -136,21 +136,25 @@ fragment SavedFilterParts on SavedFilter{
 }
 
 fragment ScenePreviewParts on Scene{
-    id, title, file{duration}, paths {screenshot}
+    id, title, files{duration}, paths {screenshot}
 }
 
 fragment SceneFullParts on Scene{
     ...SceneScanParts
     details,
-    file{video_codec,size,width, height},
     paths{screenshot, preview, stream},
+    files{
+        path,video_codec,size,width, height
+    }
     ...ScriptParts
     ...StreamsParts
 }
 
 fragment SceneScanParts on Scene{
     id, title, rating, created_at, date
-    file{duration},
+    files{
+        duration
+    }
     ...TagPartsArray
     studio{
         id, name, rating
@@ -185,7 +189,7 @@ fragment TagParts on Tag{
 
 
 fragment StreamsParts on Scene{
-    file{height}
+    files{height}
     sceneStreams{url, mime_type, label}
 }
 

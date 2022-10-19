@@ -55,6 +55,10 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	}
 	s := findSceneResponse.FindScene.SceneFullParts
 
+	if len(s.Files) == 0 {
+		return videoData{}, fmt.Errorf("scene %s has no files", sceneId)
+	}
+
 	thumbnailUrl := stash.ApiKeyed(s.Paths.Screenshot)
 	if !config.Get().IsHeatmapDisabled && s.ScriptParts.Interactive && s.ScriptParts.Paths.Interactive_heatmap != "" {
 		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
@@ -65,7 +69,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		FullAccess:   true,
 		Title:        s.Title,
 		Id:           s.Id,
-		VideoLength:  int(s.SceneScanParts.File.Duration),
+		VideoLength:  int(s.SceneScanParts.Files[0].Duration),
 		SkipIntro:    0,
 		VideoPreview: stash.ApiKeyed(s.Paths.Preview),
 		ThumbnailUrl: thumbnailUrl,

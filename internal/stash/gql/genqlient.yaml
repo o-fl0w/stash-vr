@@ -15,3 +15,5 @@ bindings:
     type: time.Time
   Map:
     type: map[string]interface{}
+  Int64:
+    type: int64
