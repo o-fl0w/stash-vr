@@ -50,7 +50,7 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
   * Api key to your Stash if it's using authentication, otherwise not required.
 
 <details>
-<summary>Optional</summary>
+<summary>Optional (click to expand)</summary>
 
 * `ALLOW_SYNC_MARKERS`
   * Default: `false`
