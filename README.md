@@ -70,6 +70,9 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
 * `DISABLE_HEATMAP`
   * Default: `false`
   * Disable display of funscript heatmaps. Shown by default if available, as a small bar on the preview thumbnail.
+* `HEATMAP_HEIGHT_PX`
+  * Default: 0 (use height of heatmap)
+  * Manually set height of all heatmaps. If not set, height of the heatmap retrieved from Stash will be used, currently 15 by default.
 * `FORCE_HTTPS`
   * Default: `false`
   * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.

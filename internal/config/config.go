@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/rs/zerolog/log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -16,6 +17,7 @@ const (
 	envKeyDisableRedact    = "DISABLE_REDACT"
 	envKeyForceHTTPS       = "FORCE_HTTPS"
 	envKeyDisableHeatmap   = "DISABLE_HEATMAP"
+	envKeyHeatmapHeightPx  = "HEATMAP_HEIGHT_PX"
 	envKeyAllowSyncMarkers = "ALLOW_SYNC_MARKERS"
 )
 
@@ -31,6 +33,7 @@ type Application struct {
 	IsRedactDisabled     bool
 	ForceHTTPS           bool
 	IsHeatmapDisabled    bool
+	HeatmapHeightPx      int
 }
 
 var cfg Application
@@ -41,15 +44,16 @@ func Get() Application {
 	once.Do(func() {
 		logDeprecatedKeysInUse()
 		cfg = Application{
-			StashGraphQLUrl:      getEnvOrDefault(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
-			StashApiKey:          getEnvOrDefault(envKeyStashApiKey, ""),
-			FavoriteTag:          getEnvOrDefault(envKeyFavoriteTag, "FAVORITE"),
-			Filters:              getEnvOrDefault(envKeyFilters, ""),
-			IsSyncMarkersAllowed: getEnvOrDefault(envKeyAllowSyncMarkers, "false") == "true",
-			LogLevel:             strings.ToLower(getEnvOrDefault(envKeyLogLevel, "info")),
-			IsRedactDisabled:     getEnvOrDefault(envKeyDisableRedact, "false") == "true",
-			ForceHTTPS:           getEnvOrDefault(envKeyForceHTTPS, "false") == "true",
-			IsHeatmapDisabled:    getEnvOrDefault(envKeyDisableHeatmap, "false") == "true",
+			StashGraphQLUrl:      getEnvOrDefaultStr(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
+			StashApiKey:          getEnvOrDefaultStr(envKeyStashApiKey, ""),
+			FavoriteTag:          getEnvOrDefaultStr(envKeyFavoriteTag, "FAVORITE"),
+			Filters:              getEnvOrDefaultStr(envKeyFilters, ""),
+			IsSyncMarkersAllowed: getEnvOrDefaultBool(envKeyAllowSyncMarkers, false),
+			LogLevel:             strings.ToLower(getEnvOrDefaultStr(envKeyLogLevel, "info")),
+			IsRedactDisabled:     getEnvOrDefaultBool(envKeyDisableRedact, false),
+			ForceHTTPS:           getEnvOrDefaultBool(envKeyForceHTTPS, false),
+			IsHeatmapDisabled:    getEnvOrDefaultBool(envKeyDisableHeatmap, false),
+			HeatmapHeightPx:      getEnvOrDefaultInt(envKeyHeatmapHeightPx, 0),
 		}
 	})
 	return cfg
@@ -64,13 +68,38 @@ func logDeprecatedKeysInUse() {
 	}
 }
 
-func getEnvOrDefault(key string, defaultValue string) string {
+func getEnvOrDefaultInt(key string, defaultValue int) int {
+	s, ok := os.LookupEnv(key)
+	if !ok {
+		return defaultValue
+	}
+	val, err := strconv.Atoi(s)
+	if err != nil {
+		log.Fatal().Err(err).Str("key", key).Str("value", s).Msg("Invalid value in environment arguments. Must be an integer.")
+		return 0
+	}
+	return val
+}
+
+func getEnvOrDefaultStr(key string, defaultValue string) string {
 	val, ok := os.LookupEnv(key)
 	if !ok {
 		return defaultValue
 	}
 	return val
+}
 
+func getEnvOrDefaultBool(key string, defaultValue bool) bool {
+	s, ok := os.LookupEnv(key)
+	if !ok {
+		return defaultValue
+	}
+	val, err := strconv.ParseBool(s)
+	if err != nil {
+		log.Fatal().Err(err).Str("key", key).Str("value", s).Msg("Invalid value in environment arguments. Must be a valid boolean (1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False)")
+		return false
+	}
+	return val
 }
 
 func findEnvOrDefault(keys []string, defaultValue string) string {

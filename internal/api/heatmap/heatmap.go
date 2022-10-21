@@ -10,7 +10,9 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"math"
 	"net/http"
+	"stash-vr/internal/config"
 )
 
 var errImageNotFound = errors.New("image not found")
@@ -85,6 +87,11 @@ func buildHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) 
 
 func overlay(dest draw.Image, heatmap image.Image) image.Image {
 	destSize := dest.Bounds().Size()
-	draw.NearestNeighbor.Scale(dest, image.Rect(0, destSize.Y, destSize.X, destSize.Y-heatmap.Bounds().Size().Y), heatmap, heatmap.Bounds(), draw.Src, nil)
+	heatmapHeight := config.Get().HeatmapHeightPx
+	if heatmapHeight == 0 {
+		heatmapHeight = heatmap.Bounds().Size().Y
+	}
+	heatmapHeight = int(math.Min(float64(destSize.Y), float64(heatmapHeight)))
+	draw.NearestNeighbor.Scale(dest, image.Rect(0, destSize.Y, destSize.X, destSize.Y-heatmapHeight), heatmap, heatmap.Bounds(), draw.Src, nil)
 	return dest
 }
