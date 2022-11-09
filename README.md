@@ -168,7 +168,7 @@ There currently is no support for correlating the markers (tags) in HereSphere t
 **!! Any metadata, besides the primary tag and title, related to a marker will NOT be retained !!**\
 (id, preview, secondary tags and created/updated time). If you're not using these fields anyway you probably won't notice the difference.
 
-### Scene count limits
+### Scene count limits (More than 10.000 links generated)
 DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.
   * For HereSphere the limit seems to be around 10k unique scenes.
     * Fixed in HereSphere v0.7.3?
