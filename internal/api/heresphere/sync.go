@@ -2,14 +2,14 @@ package heresphere
 
 import (
 	"context"
-	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
-	"math"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"strings"
+
+	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 )
 
 type updateVideoData struct {
@@ -107,14 +107,7 @@ func toggleOrganized(ctx context.Context, client graphql.Client, sceneId string)
 }
 
 func updateRating(ctx context.Context, client graphql.Client, sceneId string, rating float32) {
-	var newRating int
-	if rating == 0.5 {
-		//special case to set zero rating
-		newRating = 0
-	} else {
-		newRating = int(math.Ceil(float64(rating)))
-	}
-
+	var newRating int = int(rating*20 + 0.5)
 	_, err := gql.SceneUpdateRating(ctx, client, sceneId, newRating)
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Int("rating", newRating).Msg("Failed to update rating")
