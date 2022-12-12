@@ -129,7 +129,7 @@ func setSceneFilterCriterion(criterion jsonCriterion, sceneFilter *gql.SceneFilt
 		}
 
 	//IntCriterionInput
-	case "rating":
+	case "rating", "rating100":
 		sceneFilter.Rating, err = criterion.asIntCriterionInput()
 		if err != nil {
 			return fmt.Errorf("AsIntCriterionInput: %w", err)
