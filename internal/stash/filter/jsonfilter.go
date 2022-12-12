@@ -74,6 +74,12 @@ func (c jsonCriterion) asHierarchicalMultiCriterionInput() (*gql.HierarchicalMul
 }
 
 func (c jsonCriterion) asStringCriterionInput() (*gql.StringCriterionInput, error) {
+	if c.isNullable() {
+		return &gql.StringCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
+	}
+
 	s, ok := c.Value.(string)
 	if !ok {
 		return nil, newUnexpectedTypeErr(c.Value, "string")
@@ -85,6 +91,12 @@ func (c jsonCriterion) asStringCriterionInput() (*gql.StringCriterionInput, erro
 }
 
 func (c jsonCriterion) asIntCriterionInput() (*gql.IntCriterionInput, error) {
+	if c.isNullable() {
+		return &gql.IntCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
+	}
+
 	m, ok := c.Value.(map[string]interface{})
 	if !ok {
 		return nil, newUnexpectedTypeErr(c.Value, "map[string]interface{}")
@@ -203,4 +215,8 @@ func (c jsonCriterion) asMultiCriterionInput() (*gql.MultiCriterionInput, error)
 		Value:    ss,
 		Modifier: gql.CriterionModifier(c.Modifier),
 	}, nil
+}
+
+func (c jsonCriterion) isNullable() bool {
+	return c.Value == nil && (c.Modifier == string(gql.CriterionModifierIsNull) || c.Modifier == string(gql.CriterionModifierNotNull))
 }
