@@ -1,7 +1,7 @@
 mutation SceneUpdateRating($id: ID!, $rating: Int) {
     sceneUpdate(input: {
         id: $id,
-        rating: $rating
+        rating100: $rating
     }){id}
 }
 

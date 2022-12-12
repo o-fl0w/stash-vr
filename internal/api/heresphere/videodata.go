@@ -3,11 +3,12 @@ package heresphere
 import (
 	"context"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
+
+	"github.com/Khan/genqlient/graphql"
 )
 
 type videoData struct {
@@ -87,7 +88,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		DateReleased:   s.Date,
 		DateAdded:      s.Created_at.Format("2006-01-02"),
 		Duration:       s.SceneScanParts.Files[0].Duration * 1000,
-		Rating:         float32(s.Rating),
+		Rating:         float32(s.Rating100) / 20.0,
 		Favorites:      s.O_counter,
 		WriteFavorite:  true,
 		WriteRating:    true,

@@ -148,13 +148,13 @@ fragment SceneFullParts on Scene{
 }
 
 fragment SceneScanParts on Scene{
-    id, title, rating, created_at, date
+    id, title, rating100, created_at, date
     files{
         basename, duration
     }
     ...TagPartsArray
     studio{
-        id, name, rating
+        id, name, rating100
     },
     scene_markers {
         id, seconds, title, primary_tag {
@@ -162,7 +162,7 @@ fragment SceneScanParts on Scene{
         }
     },
     performers {
-        id, name, rating
+        id, name, rating100
     },
     movies {
         scene_index,

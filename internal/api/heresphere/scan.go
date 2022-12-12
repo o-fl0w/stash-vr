@@ -3,11 +3,12 @@ package heresphere
 import (
 	"context"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 	"strconv"
+
+	"github.com/Khan/genqlient/graphql"
 )
 
 type scanDoc struct {
@@ -52,7 +53,7 @@ func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scan
 				DateReleased: part.Date,
 				DateAdded:    part.Created_at.Format("2006-01-02"),
 				Duration:     part.Files[0].Duration,
-				Rating:       float32(part.Rating),
+				Rating:       float32(part.Rating100) / 20.0,
 				Favorites:    part.O_counter,
 				IsFavorite:   ContainsFavoriteTag(part.TagPartsArray),
 				Tags:         getTags(part.SceneScanParts),
