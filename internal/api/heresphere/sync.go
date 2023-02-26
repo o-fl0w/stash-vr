@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
-	"math"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
@@ -12,22 +11,27 @@ import (
 	"strings"
 )
 
-type updateVideoData struct {
-	Rating     *float32 `json:"rating,omitempty"`
-	IsFavorite *bool    `json:"isFavorite,omitempty"`
-	Tags       *[]tag   `json:"tags,omitempty"`
-	DeleteFile *bool    `json:"deleteFile,omitempty"`
+type videoDataRequest struct {
+	Rating           *float32 `json:"rating,omitempty"`
+	IsFavorite       *bool    `json:"isFavorite,omitempty"`
+	Tags             *[]tag   `json:"tags,omitempty"`
+	DeleteFile       *bool    `json:"deleteFile,omitempty"`
+	NeedsMediaSource *bool    `json:"needsMediaSource,omitempty"`
 }
 
-func (v updateVideoData) isUpdateRequest() bool {
+func (v videoDataRequest) isUpdateRequest() bool {
 	return v.Rating != nil || v.IsFavorite != nil || v.Tags != nil
 }
 
-func (v updateVideoData) isDeleteRequest() bool {
+func (v videoDataRequest) isDeleteRequest() bool {
 	return v.DeleteFile != nil && *v.DeleteFile
 }
 
-func update(ctx context.Context, client graphql.Client, sceneId string, updateReq updateVideoData) {
+func (v videoDataRequest) isPlayRequest() bool {
+	return v.NeedsMediaSource != nil && *v.NeedsMediaSource
+}
+
+func update(ctx context.Context, client graphql.Client, sceneId string, updateReq videoDataRequest) {
 	log.Ctx(ctx).Debug().Interface("data", updateReq).Msg("Update request")
 
 	if updateReq.Rating != nil {
@@ -97,6 +101,15 @@ func incrementO(ctx context.Context, client graphql.Client, sceneId string) {
 	log.Ctx(ctx).Debug().Interface("O-count", response.SceneIncrementO).Msg("Incremented O-count")
 }
 
+func incrementPlayCount(ctx context.Context, client graphql.Client, sceneId string) {
+	response, err := gql.SceneIncrementPlayCount(ctx, client, sceneId)
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment play count")
+		return
+	}
+	log.Ctx(ctx).Debug().Interface("Play Count", response.SceneIncrementPlayCount).Msg("Incremented play count")
+}
+
 func toggleOrganized(ctx context.Context, client graphql.Client, sceneId string) {
 	newOrganized, err := stash.SceneToggleOrganized(ctx, client, sceneId)
 	if err != nil {
@@ -107,15 +120,9 @@ func toggleOrganized(ctx context.Context, client graphql.Client, sceneId string)
 }
 
 func updateRating(ctx context.Context, client graphql.Client, sceneId string, rating float32) {
-	var newRating int
-	if rating == 0.5 {
-		//special case to set zero rating
-		newRating = 0
-	} else {
-		newRating = int(math.Ceil(float64(rating)))
-	}
+	newRating := int(rating * 20)
 
-	_, err := gql.SceneUpdateRating(ctx, client, sceneId, newRating)
+	_, err := gql.SceneUpdateRating100(ctx, client, sceneId, newRating)
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Int("rating", newRating).Msg("Failed to update rating")
 		return
@@ -271,7 +278,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 				continue
 			}
 			request.performerIds = append(request.performerIds, id)
-		case isCategorized && (internal.LegendMovie.IsMatch(tagType) || internal.LegendOCount.IsMatch(tagType) || internal.LegendOrganized.IsMatch(tagType)):
+		case isCategorized && (internal.LegendMovie.IsMatch(tagType) || internal.LegendOCount.IsMatch(tagType) || internal.LegendOrganized.IsMatch(tagType) || internal.LegendPlayCount.IsMatch(tagType)):
 			log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Tag type is reserved, skipping")
 			continue
 		default:

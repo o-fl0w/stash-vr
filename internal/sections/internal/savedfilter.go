@@ -37,7 +37,7 @@ func sectionFromSavedFilterFuncBuilder(ctx context.Context, client graphql.Clien
 }
 
 func sectionFromSavedFilter(ctx context.Context, client graphql.Client, prefix string, savedFilter gql.SavedFilterParts) (section.Section, error) {
-	filterQuery, err := filter.SavedFilterToSceneFilter(savedFilter)
+	filterQuery, err := filter.SavedFilterToSceneFilter(ctx, savedFilter)
 	if err != nil {
 		return section.Section{}, fmt.Errorf("SavedFilterToSceneFilter: %w", err)
 	}

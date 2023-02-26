@@ -54,7 +54,7 @@ type script struct {
 	Url  string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, sceneId string) (videoData, error) {
+func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, sceneId string, includeMediaSource bool) (videoData, error) {
 	findSceneResponse, err := gql.FindSceneFull(ctx, client, sceneId)
 	if err != nil {
 		return videoData{}, fmt.Errorf("FindSceneFull: %w", err)
@@ -87,7 +87,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		DateReleased:   s.Date,
 		DateAdded:      s.Created_at.Format("2006-01-02"),
 		Duration:       s.SceneScanParts.Files[0].Duration * 1000,
-		Rating:         float32(s.Rating),
+		Rating:         float32(s.Rating100) / 20,
 		Favorites:      s.O_counter,
 		WriteFavorite:  true,
 		WriteRating:    true,
@@ -96,7 +96,10 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 
 	setIsFavorite(s, &vd)
 
-	setStreamSources(ctx, s, &vd)
+	if includeMediaSource {
+		setMediaSources(ctx, s, &vd)
+	}
+
 	set3DFormat(s, &vd)
 
 	setTags(s, &vd)
@@ -162,7 +165,7 @@ func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
 	}
 }
 
-func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {
+func setMediaSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {
 	for _, stream := range stash.GetStreams(ctx, s.StreamsParts, true) {
 		e := media{
 			Name: stream.Name,

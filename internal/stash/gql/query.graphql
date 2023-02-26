@@ -148,7 +148,7 @@ fragment SceneFullParts on Scene{
 }
 
 fragment SceneScanParts on Scene{
-    id, title, rating, created_at, date
+    id, title, rating100, created_at, date
     files{
         basename, duration
     }
@@ -169,7 +169,8 @@ fragment SceneScanParts on Scene{
         movie {
             name
         }
-    }
+    },
+    play_count,
     o_counter,
     organized
 }

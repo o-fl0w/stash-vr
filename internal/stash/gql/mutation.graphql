@@ -1,7 +1,7 @@
-mutation SceneUpdateRating($id: ID!, $rating: Int) {
+mutation SceneUpdateRating100($id: ID!, $rating: Int) {
     sceneUpdate(input: {
         id: $id,
-        rating: $rating
+        rating100: $rating
     }){id}
 }
 
@@ -63,4 +63,8 @@ mutation SceneIncrementO($id: ID!){
 
 mutation SceneUpdateOrganized($id: ID!, $isOrganized: Boolean){
     sceneUpdate(input: {id: $id, organized: $isOrganized}){id, organized}
+}
+
+mutation SceneIncrementPlayCount($id: ID!){
+    sceneIncrementPlayCount(id: $id)
 }

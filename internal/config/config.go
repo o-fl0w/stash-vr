@@ -19,6 +19,7 @@ const (
 	envKeyDisableHeatmap   = "DISABLE_HEATMAP"
 	envKeyHeatmapHeightPx  = "HEATMAP_HEIGHT_PX"
 	envKeyAllowSyncMarkers = "ALLOW_SYNC_MARKERS"
+	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
 )
 
 var deprecatedEnvKeys = []string{"ENABLE_GLANCE_MARKERS", "HERESPHERE_QUICK_MARKERS", "HERESPHERE_SYNC_MARKERS", "ENABLE_HEATMAP_DISPLAY"}
@@ -34,6 +35,7 @@ type Application struct {
 	ForceHTTPS           bool
 	IsHeatmapDisabled    bool
 	HeatmapHeightPx      int
+	IsPlayCountDisabled  bool
 }
 
 var cfg Application
@@ -54,6 +56,7 @@ func Get() Application {
 			ForceHTTPS:           getEnvOrDefaultBool(envKeyForceHTTPS, false),
 			IsHeatmapDisabled:    getEnvOrDefaultBool(envKeyDisableHeatmap, false),
 			HeatmapHeightPx:      getEnvOrDefaultInt(envKeyHeatmapHeightPx, 0),
+			IsPlayCountDisabled:  getEnvOrDefaultBool(envKeyDisablePlayCount, false),
 		}
 	})
 	return cfg

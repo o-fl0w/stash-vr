@@ -73,6 +73,9 @@ Stash-VR listens on port `9666`, use docker port binding to change local port, e
 * `HEATMAP_HEIGHT_PX`
   * Default: 0 (use height of heatmap)
   * Manually set height of all heatmaps. If not set, height of the heatmap retrieved from Stash will be used, currently 15 by default.
+* `DISABLE_PLAY_COUNT`
+  * Default: `false`
+  * Disable incrementing Stash play count for scenes. Will otherwise send request to Stash to increment play count when video is played in HereSphere.
 * `FORCE_HTTPS`
   * Default: `false`
   * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.
@@ -119,11 +122,7 @@ When the favorite-feature of HereSphere is first used Stash-VR will create a tag
 **Tip:** Create a filter using that tag, so it shows up in HereSphere for quick access to favorites.
 
 #### Rating
-HereSphere uses fractions for ratings, i.e. 4.5 is a valid rating. Stash uses whole numbers.
-If you set a half star in HereSphere Stash-VR will round up the rating. That is if you set a rating of 3.5 the scene will receive a rating of 4 in Stash.
-In other words, click anywhere on a star to set the rating to that amount of stars.
-
-**Exception:** To remove a rating, rate the scene 0.5 (half a star).
+Ratings set in HereSphere will be converted to its equivalent in Stash (4.5 stars => 90).
 
 #### O-counter
 Increment o-count by adding a tag named `!O` (case-insensitive) in `Video Tags`.
@@ -179,10 +178,12 @@ When the index page of Stash-VR is loaded Stash-VR will immediately respond with
 This means if changes are made in Stash and the player refreshed, it will receive the cached version built during the last (previous) request.
 Just refresh again and the player should receive the latest changes. In other words, refresh twice.
 
-### Stash version
-#### Stash v0.17.x
-Compatible with Stash-VR version >= v0.5.0
-#### Stash v0.16.1
-Compatible with Stash-VR version <= v0.4.4
+### Stash version compatibility
+| Stash-VR | Stash   |
+|---------|---------|
+| v0.6.x | v0.18.x |
+| v0.5.x | v0.17.x |
+| v0.4.x | v0.16.x |
+
 #### Older Stash versions
 If you have issues arising from running an older version of Stash the recommended path is to upgrade Stash before attempting a fix.

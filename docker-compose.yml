@@ -19,6 +19,7 @@ services:
       #ALLOW_SYNC_MARKERS: "true"
       #DISABLE_HEATMAP: "true"
       #HEATMAP_HEIGHT_PX: 45
+      #DISABLE_PLAY_COUNT: "true"
       #LOG_LEVEL: "debug"
 
       #FORCE_HTTPS: "true"

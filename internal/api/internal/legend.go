@@ -9,6 +9,7 @@ var (
 	LegendMovie     = newLegend("/", "Movie")
 	LegendOCount    = newLegend("O", "O-Count")
 	LegendOrganized = newLegend("Org", "Organized")
+	LegendPlayCount = newLegend("P", "PlayCount")
 )
 
 type Legend struct {

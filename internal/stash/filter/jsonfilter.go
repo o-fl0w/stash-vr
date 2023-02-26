@@ -14,25 +14,23 @@ type jsonFilter struct {
 }
 
 type jsonCriterion struct {
-	Modifier string      `json:"modifier"`
-	Type     string      `json:"type"`
-	Value    interface{} `json:"value"`
+	Modifier string `json:"modifier"`
+	Type     string `json:"type"`
+	Value    any    `json:"value"`
 }
 
 type errUnexpectedType struct {
-	sourceType      string
-	destinationType string
+	source any
 }
+
+type stringAnyMap = map[string]any
 
 func (e errUnexpectedType) Error() string {
-	return fmt.Sprintf("unexpected type %s is not assertable to %s", e.sourceType, e.destinationType)
+	return fmt.Sprintf("could not assert '%T' with value='%v'", e.source, e.source)
 }
 
-func newUnexpectedTypeErr(source any, destinationType string) *errUnexpectedType {
-	return &errUnexpectedType{
-		sourceType:      fmt.Sprintf("%T", source),
-		destinationType: destinationType,
-	}
+func newUnexpectedTypeErr(source any) *errUnexpectedType {
+	return &errUnexpectedType{source}
 }
 
 func parseJsonCriterion(raw string) (jsonCriterion, error) {
@@ -46,23 +44,30 @@ func parseJsonCriterion(raw string) (jsonCriterion, error) {
 }
 
 func (c jsonCriterion) asHierarchicalMultiCriterionInput() (*gql.HierarchicalMultiCriterionInput, error) {
-	m, ok := c.Value.(map[string]interface{})
-	if !ok {
-		return nil, newUnexpectedTypeErr(c.Value, "map[string]interface{}")
+	if c.Value == nil {
+		return &gql.HierarchicalMultiCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
 	}
-	items, ok := m["items"].([]interface{})
+	m, ok := c.Value.(stringAnyMap)
 	if !ok {
-		return nil, newUnexpectedTypeErr(m["items"], "[]interface{}")
+		return nil, newUnexpectedTypeErr(c.Value)
 	}
+
+	items, err := getValue[[]any](m, "items")
+	if err != nil {
+		return nil, err
+	}
+
 	ids := make([]string, len(items))
 	for i, item := range items {
-		mid, ok := item.(map[string]interface{})
+		mid, ok := item.(stringAnyMap)
 		if !ok {
-			return nil, newUnexpectedTypeErr(item, "map[string]interface{}")
+			return nil, newUnexpectedTypeErr(item)
 		}
 		id, ok := mid["id"].(string)
 		if !ok {
-			return nil, newUnexpectedTypeErr(mid["id"], "string")
+			return nil, newUnexpectedTypeErr(mid["id"])
 		}
 		ids[i] = id
 	}
@@ -74,9 +79,14 @@ func (c jsonCriterion) asHierarchicalMultiCriterionInput() (*gql.HierarchicalMul
 }
 
 func (c jsonCriterion) asStringCriterionInput() (*gql.StringCriterionInput, error) {
+	if c.Value == nil {
+		return &gql.StringCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
+	}
 	s, ok := c.Value.(string)
 	if !ok {
-		return nil, newUnexpectedTypeErr(c.Value, "string")
+		return nil, newUnexpectedTypeErr(c.Value)
 	}
 	return &gql.StringCriterionInput{
 		Value:    s,
@@ -85,50 +95,49 @@ func (c jsonCriterion) asStringCriterionInput() (*gql.StringCriterionInput, erro
 }
 
 func (c jsonCriterion) asIntCriterionInput() (*gql.IntCriterionInput, error) {
-	m, ok := c.Value.(map[string]interface{})
+	if c.Value == nil {
+		return &gql.IntCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
+	}
+	m, ok := c.Value.(stringAnyMap)
 	if !ok {
-		return nil, newUnexpectedTypeErr(c.Value, "map[string]interface{}")
+		return nil, newUnexpectedTypeErr(c.Value)
 	}
 
-	v, ok := m["value"].(float64)
-	if !ok {
-		return nil, newUnexpectedTypeErr(m["value"], "float64")
+	value, err := getValue[float64](m, "value")
+	if err != nil {
+		return nil, newUnexpectedTypeErr(m["value"])
 	}
 
-	var v2 float64
-	if m["value2"] != nil {
-		v2, ok = m["value2"].(float64)
-		if !ok {
-			return nil, newUnexpectedTypeErr(m["value2"], "float64")
-		}
+	value2, err := getValue[float64](m, "value2")
+	if err != nil {
+		return nil, newUnexpectedTypeErr(m["value2"])
 	}
+
 	return &gql.IntCriterionInput{
-		Value:    int(v),
-		Value2:   int(v2),
+		Value:    int(value),
+		Value2:   int(value2),
 		Modifier: gql.CriterionModifier(c.Modifier),
 	}, nil
 }
 
 func (c jsonCriterion) asBool() (bool, error) {
-	s, ok := c.Value.(string)
+	value, ok := c.Value.(string)
 	if !ok {
-		return false, newUnexpectedTypeErr(c.Value, "string")
+		return false, newUnexpectedTypeErr(c.Value)
 	}
-	b, err := strconv.ParseBool(s)
+	b, err := strconv.ParseBool(value)
 	if err != nil {
-		return false, fmt.Errorf("failed to parse bool from '%s': %w", s, err)
+		return false, fmt.Errorf("failed to parse bool from '%s': %w", value, err)
 	}
 	return b, nil
 }
 
 func (c jsonCriterion) asPHashDuplicationCriterionInput() (*gql.PHashDuplicationCriterionInput, error) {
-	s, ok := c.Value.(string)
-	if !ok {
-		return nil, newUnexpectedTypeErr(c.Value, "string")
-	}
-	b, err := strconv.ParseBool(s)
+	b, err := c.asBool()
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse bool from '%s': %w", s, err)
+		return nil, err
 	}
 	return &gql.PHashDuplicationCriterionInput{
 		Duplicated: b,
@@ -136,44 +145,49 @@ func (c jsonCriterion) asPHashDuplicationCriterionInput() (*gql.PHashDuplication
 }
 
 func (c jsonCriterion) asResolutionCriterionInput() (*gql.ResolutionCriterionInput, error) {
-	s, ok := c.Value.(string)
+	if c.Value == nil {
+		return &gql.ResolutionCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
+	}
+	value, ok := c.Value.(string)
 	if !ok {
-		return nil, newUnexpectedTypeErr(c.Value, "string")
+		return nil, newUnexpectedTypeErr(c.Value)
 	}
 
-	var rs gql.ResolutionEnum
+	var res gql.ResolutionEnum
 
-	switch s {
+	switch value {
 	case "144p":
-		rs = gql.ResolutionEnumVeryLow
+		res = gql.ResolutionEnumVeryLow
 	case "240p":
-		rs = gql.ResolutionEnumLow
+		res = gql.ResolutionEnumLow
 	case "360p":
-		rs = gql.ResolutionEnumR360p
+		res = gql.ResolutionEnumR360p
 	case "480p":
-		rs = gql.ResolutionEnumStandard
+		res = gql.ResolutionEnumStandard
 	case "540p":
-		rs = gql.ResolutionEnumWebHd
+		res = gql.ResolutionEnumWebHd
 	case "720p":
-		rs = gql.ResolutionEnumStandardHd
+		res = gql.ResolutionEnumStandardHd
 	case "1080p":
-		rs = gql.ResolutionEnumFullHd
+		res = gql.ResolutionEnumFullHd
 	case "1440p":
-		rs = gql.ResolutionEnumQuadHd
+		res = gql.ResolutionEnumQuadHd
 	case "1920p":
-		rs = gql.ResolutionEnumVrHd
+		res = gql.ResolutionEnumVrHd
 	case "4k":
-		rs = gql.ResolutionEnumFourK
+		res = gql.ResolutionEnumFourK
 	case "5k":
-		rs = gql.ResolutionEnumFiveK
+		res = gql.ResolutionEnumFiveK
 	case "6k":
-		rs = gql.ResolutionEnumSixK
+		res = gql.ResolutionEnumSixK
 	case "8k":
-		rs = gql.ResolutionEnumEightK
+		res = gql.ResolutionEnumEightK
 	}
 
 	return &gql.ResolutionCriterionInput{
-		Value:    rs,
+		Value:    res,
 		Modifier: gql.CriterionModifier(c.Modifier),
 	}, nil
 }
@@ -181,21 +195,27 @@ func (c jsonCriterion) asResolutionCriterionInput() (*gql.ResolutionCriterionInp
 func (c jsonCriterion) asString() (string, error) {
 	s, ok := c.Value.(string)
 	if !ok {
-		return "", newUnexpectedTypeErr(c.Value, "string")
+		return "", newUnexpectedTypeErr(c.Value)
 	}
 	return s, nil
 }
 
 func (c jsonCriterion) asMultiCriterionInput() (*gql.MultiCriterionInput, error) {
-	cs, ok := c.Value.([]interface{})
-	if !ok {
-		return nil, newUnexpectedTypeErr(c.Value, "[]interface{}")
+	if c.Value == nil {
+		return &gql.MultiCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
 	}
-	ss := make([]string, len(cs))
-	for i, v := range cs {
+
+	value, ok := c.Value.([]any)
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value)
+	}
+	ss := make([]string, len(value))
+	for i, v := range value {
 		s, ok := v.(string)
 		if !ok {
-			return nil, newUnexpectedTypeErr(v, "string")
+			return nil, newUnexpectedTypeErr(v)
 		}
 		ss[i] = s
 	}
@@ -203,4 +223,103 @@ func (c jsonCriterion) asMultiCriterionInput() (*gql.MultiCriterionInput, error)
 		Value:    ss,
 		Modifier: gql.CriterionModifier(c.Modifier),
 	}, nil
+}
+
+func (c jsonCriterion) asTimestampCriterionInput() (*gql.TimestampCriterionInput, error) {
+	if c.Value == nil {
+		return &gql.TimestampCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
+	}
+
+	m, ok := c.Value.(stringAnyMap)
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value)
+	}
+
+	value, err := getValue[string](m, "value")
+	if err != nil {
+		return nil, err
+	}
+
+	value2, err := getValue[string](m, "value2")
+	if err != nil {
+		return nil, err
+	}
+
+	return &gql.TimestampCriterionInput{
+		Value:    value,
+		Value2:   value2,
+		Modifier: gql.CriterionModifier(c.Modifier),
+	}, nil
+}
+
+func (c jsonCriterion) asDateCriterionInput() (*gql.DateCriterionInput, error) {
+	if c.Value == nil {
+		return &gql.DateCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
+	}
+
+	m, ok := c.Value.(stringAnyMap)
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value)
+	}
+
+	value, err := getValue[string](m, "value")
+	if err != nil {
+		return nil, err
+	}
+
+	value2, err := getValue[string](m, "value2")
+	if err != nil {
+		return nil, err
+	}
+
+	return &gql.DateCriterionInput{
+		Value:    value,
+		Value2:   value2,
+		Modifier: gql.CriterionModifier(c.Modifier),
+	}, nil
+}
+
+func (c jsonCriterion) asStashIDCriterionInput() (*gql.StashIDCriterionInput, error) {
+	if c.Value == nil {
+		return &gql.StashIDCriterionInput{
+			Modifier: gql.CriterionModifier(c.Modifier),
+		}, nil
+	}
+
+	m, ok := c.Value.(stringAnyMap)
+	if !ok {
+		return nil, newUnexpectedTypeErr(c.Value)
+	}
+
+	endpoint, err := getValue[string](m, "endpoint")
+	if err != nil {
+		return nil, err
+	}
+
+	stashId, err := getValue[string](m, "stash_id")
+	if err != nil {
+		return nil, err
+	}
+
+	return &gql.StashIDCriterionInput{
+		Endpoint: endpoint,
+		Stash_id: stashId,
+		Modifier: gql.CriterionModifier(c.Modifier),
+	}, nil
+}
+
+func getValue[T any](m stringAnyMap, key string) (T, error) {
+	_, ok := m[key]
+	if !ok {
+		return *new(T), nil
+	}
+	value, ok := m[key].(T)
+	if !ok {
+		return *new(T), newUnexpectedTypeErr(m[key])
+	}
+	return value, nil
 }

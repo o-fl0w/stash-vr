@@ -113,6 +113,7 @@ func getStudio(s gql.SceneScanParts) []tag {
 
 func getFields(s gql.SceneScanParts) []tag {
 	tags := []tag{
+		{Name: fmt.Sprintf("%s:%d", internal.LegendPlayCount.Short, s.Play_count)},
 		{Name: fmt.Sprintf("%s:%d", internal.LegendOCount.Short, s.O_counter)},
 		{Name: fmt.Sprintf("%s:%v", internal.LegendOrganized.Short, s.Organized)}}
 

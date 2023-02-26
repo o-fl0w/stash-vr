@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"stash-vr/internal/api/internal"
+	"stash-vr/internal/config"
 )
 
 type httpHandler struct {
@@ -53,25 +54,33 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	var updateVideoData updateVideoData
-	err = json.Unmarshal(body, &updateVideoData)
+	var vdReq videoDataRequest
+	err = json.Unmarshal(body, &vdReq)
 	if err != nil {
-		log.Ctx(ctx).Debug().Err(err).Bytes("body", body).Msg("body: unmarshal")
-	} else {
-		if updateVideoData.isUpdateRequest() {
-			update(ctx, h.Client, sceneId, updateVideoData)
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		if updateVideoData.isDeleteRequest() {
-			destroy(ctx, h.Client, sceneId)
-			w.WriteHeader(http.StatusOK)
-			return
-		}
+		log.Ctx(ctx).Error().Err(err).Bytes("body", body).Msg("body: unmarshal")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	data, err := buildVideoData(ctx, h.Client, baseUrl, sceneId)
+	if vdReq.isUpdateRequest() {
+		update(ctx, h.Client, sceneId, vdReq)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if vdReq.isDeleteRequest() {
+		destroy(ctx, h.Client, sceneId)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if vdReq.isPlayRequest() && !config.Get().IsPlayCountDisabled {
+		incrementPlayCount(ctx, h.Client, sceneId)
+	}
+
+	var includeMediaSource = vdReq.NeedsMediaSource == nil || *vdReq.NeedsMediaSource
+
+	data, err := buildVideoData(ctx, h.Client, baseUrl, sceneId, includeMediaSource)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)
