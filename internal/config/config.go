@@ -20,6 +20,7 @@ const (
 	envKeyHeatmapHeightPx  = "HEATMAP_HEIGHT_PX"
 	envKeyAllowSyncMarkers = "ALLOW_SYNC_MARKERS"
 	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
+	envKeyEventServerUrl   = "EVENT_SERVER_URL"
 )
 
 var deprecatedEnvKeys = []string{"ENABLE_GLANCE_MARKERS", "HERESPHERE_QUICK_MARKERS", "HERESPHERE_SYNC_MARKERS", "ENABLE_HEATMAP_DISPLAY"}
@@ -36,6 +37,7 @@ type Application struct {
 	IsHeatmapDisabled    bool
 	HeatmapHeightPx      int
 	IsPlayCountDisabled  bool
+	EventServerUrl       string
 }
 
 var cfg Application
@@ -57,6 +59,7 @@ func Get() Application {
 			IsHeatmapDisabled:    getEnvOrDefaultBool(envKeyDisableHeatmap, false),
 			HeatmapHeightPx:      getEnvOrDefaultInt(envKeyHeatmapHeightPx, 0),
 			IsPlayCountDisabled:  getEnvOrDefaultBool(envKeyDisablePlayCount, false),
+			EventServerUrl:       getEnvOrDefaultStr(envKeyEventServerUrl, ""),
 		}
 	})
 	return cfg

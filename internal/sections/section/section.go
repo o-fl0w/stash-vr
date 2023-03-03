@@ -5,9 +5,9 @@ import (
 )
 
 type Section struct {
-	Name             string
-	FilterId         string
-	PreviewPartsList []gql.ScenePreviewParts
+	Name     string
+	FilterId string
+	Scene    []gql.ScenePreviewParts
 }
 
 func ContainsFilterId(id string, list []Section) bool {

@@ -1,14 +1,15 @@
 package heresphere
 
 import (
-	"encoding/json"
+	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
-	"io"
 	"net/http"
+	"net/url"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
+	"stash-vr/internal/efile"
 )
 
 type httpHandler struct {
@@ -46,19 +47,19 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
-	sceneId := chi.URLParam(req, "videoId")
-
-	body, err := io.ReadAll(req.Body)
+	videoId, err := url.QueryUnescape(chi.URLParam(req, "videoId"))
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("body: read")
+		log.Ctx(ctx).Warn().Err(err).Msg("malformed videoId")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	var vdReq videoDataRequest
-	err = json.Unmarshal(body, &vdReq)
+	sceneId, _, _ := efile.GetSceneIdAndEFileSuffix(videoId)
+
+	vdReq, err := internal.UnmarshalBody[videoDataRequest](req)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Bytes("body", body).Msg("body: unmarshal")
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Ctx(ctx).Warn().Err(err).Msg("failed to parse request body")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -80,7 +81,7 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 
 	var includeMediaSource = vdReq.NeedsMediaSource == nil || *vdReq.NeedsMediaSource
 
-	data, err := buildVideoData(ctx, h.Client, baseUrl, sceneId, includeMediaSource)
+	data, err := buildVideoData(ctx, h.Client, baseUrl, videoId, includeMediaSource)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -89,4 +90,17 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 	if err := internal.WriteJson(ctx, w, data); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("write")
 	}
+}
+
+func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	event, err := internal.UnmarshalBody[playbackEvent](req)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to parse request body")
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	log.Ctx(ctx).Trace().Str("event", fmt.Sprintf("%v", event)).Send()
+	return
 }

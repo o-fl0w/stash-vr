@@ -46,9 +46,9 @@ func fromSections(baseUrl string, sections []section.Section) []scene {
 func fromSection(baseUrl string, section section.Section) scene {
 	s := scene{
 		Name: section.Name,
-		List: make([]previewData, len(section.PreviewPartsList)),
+		List: make([]previewData, len(section.Scene)),
 	}
-	for i, p := range section.PreviewPartsList {
+	for i, p := range section.Scene {
 		s.List[i] = previewData{
 			Id:           p.Id,
 			ThumbnailUrl: stash.ApiKeyed(p.Paths.Screenshot),

@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
+	"stash-vr/internal/efile"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/title"
 	"stash-vr/internal/util"
 	"strconv"
 )
@@ -15,6 +18,7 @@ type scanDoc struct {
 }
 
 type scanDataElement struct {
+	id           string
 	Link         string  `json:"link"`
 	Title        string  `json:"title"`
 	DateReleased string  `json:"dateReleased"`
@@ -26,18 +30,34 @@ type scanDataElement struct {
 	Tags         []tag   `json:"tags"`
 }
 
+type eScene struct {
+	sceneId     string
+	eFileSuffix string
+}
+
 func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scanDoc, error) {
 	ss := sections.Get(ctx, client)
 	sceneIdMap := make(map[int]any)
+	var eScenes []eScene
 	for _, s := range ss {
-		for _, preview := range s.PreviewPartsList {
-			id, _ := strconv.Atoi(preview.Id)
-			sceneIdMap[id] = struct{}{}
+		for _, preview := range s.Scene {
+			sceneId, eFileSuffix, isEScene := efile.GetSceneIdAndEFileSuffix(preview.Id)
+
+			if isEScene {
+				eScenes = append(eScenes, eScene{
+					sceneId:     sceneId,
+					eFileSuffix: eFileSuffix,
+				})
+				continue
+			}
+
+			sid, _ := strconv.Atoi(sceneId)
+			sceneIdMap[sid] = struct{}{}
 		}
 	}
 	sceneIds := make([]int, 0, len(sceneIdMap))
-	for id := range sceneIdMap {
-		sceneIds = append(sceneIds, id)
+	for sceneId := range sceneIdMap {
+		sceneIds = append(sceneIds, sceneId)
 	}
 	response, err := gql.FindSceneScansByIds(ctx, client, sceneIds)
 	if err != nil {
@@ -45,18 +65,35 @@ func buildScan(ctx context.Context, client graphql.Client, baseUrl string) (scan
 	}
 
 	sceneScans := util.Transform[*gql.FindSceneScansByIdsFindScenesFindScenesResultTypeScenesScene, scanDataElement](
-		func(part *gql.FindSceneScansByIdsFindScenesFindScenesResultTypeScenesScene) (scanDataElement, error) {
+		func(scene *gql.FindSceneScansByIdsFindScenesFindScenesResultTypeScenesScene) (scanDataElement, error) {
 			return scanDataElement{
-				Link:         getVideoDataUrl(baseUrl, part.Id),
-				Title:        part.Title,
-				DateReleased: part.Date,
-				DateAdded:    part.Created_at.Format("2006-01-02"),
-				Duration:     part.Files[0].Duration,
-				Rating:       float32(part.Rating100) / 20,
-				Favorites:    part.O_counter,
-				IsFavorite:   ContainsFavoriteTag(part.TagPartsArray),
-				Tags:         getTags(part.SceneScanParts),
+				id:           scene.Id,
+				Link:         getVideoDataUrl(baseUrl, scene.Id),
+				Title:        title.GetSceneTitle(scene.Title, scene.GetFiles()[0].Basename),
+				DateReleased: scene.Date,
+				DateAdded:    scene.Created_at.Format("2006-01-02"),
+				Duration:     scene.Files[0].Duration,
+				Rating:       float32(scene.Rating100) / 20,
+				Favorites:    scene.O_counter,
+				IsFavorite:   ContainsFavoriteTag(scene.TagPartsArray),
+				Tags:         getTags(scene.SceneScanParts),
 			}, nil
 		}).Ordered(response.FindScenes.Scenes)
+	for _, e := range eScenes {
+		el := findScanDataElement(e.sceneId, sceneScans)
+		el.Link = getVideoDataUrl(baseUrl, efile.MakeESceneIdWithEFileSuffix(e.sceneId, e.eFileSuffix))
+		el.Title = efile.MakeESceneTitleWithEFileSuffix(el.Title, e.eFileSuffix)
+		sceneScans = append(sceneScans, el)
+	}
+	log.Ctx(ctx).Trace().Int("count", len(sceneScans)).Msg("/scan")
 	return scanDoc{ScanData: sceneScans}, nil
+}
+
+func findScanDataElement(sceneId string, es []scanDataElement) scanDataElement {
+	for _, e := range es {
+		if e.id == sceneId {
+			return e
+		}
+	}
+	return scanDataElement{}
 }

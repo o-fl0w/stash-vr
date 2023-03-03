@@ -26,7 +26,7 @@ func sectionFromSavedFilterFuncBuilder(ctx context.Context, client graphql.Clien
 			log.Ctx(ctx).Warn().Err(err).Msg("Filter skipped")
 			return section.Section{}, err
 		}
-		if len(s.PreviewPartsList) == 0 {
+		if len(s.Scene) == 0 {
 			log.Ctx(ctx).Debug().Msg("Filter skipped: 0 scenes")
 			return section.Section{}, errNoScenesFound
 		}
@@ -48,13 +48,13 @@ func sectionFromSavedFilter(ctx context.Context, client graphql.Client, prefix s
 	}
 
 	s := section.Section{
-		Name:             getSectionName(prefix, savedFilter),
-		FilterId:         savedFilter.Id,
-		PreviewPartsList: make([]gql.ScenePreviewParts, len(scenesResponse.FindScenes.Scenes)),
+		Name:     getSectionName(prefix, savedFilter),
+		FilterId: savedFilter.Id,
+		Scene:    make([]gql.ScenePreviewParts, len(scenesResponse.FindScenes.Scenes)),
 	}
 
 	for i, v := range scenesResponse.FindScenes.Scenes {
-		s.PreviewPartsList[i] = v.ScenePreviewParts
+		s.Scene[i] = v.ScenePreviewParts
 	}
 	return s, nil
 }

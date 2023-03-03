@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
+	"net/url"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/config"
+	"stash-vr/internal/efile"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/title"
 )
 
 type videoData struct {
@@ -27,6 +31,7 @@ type videoData struct {
 	Stereo         string   `json:"stereo"`
 	Fov            float32  `json:"fov"`
 	Lens           string   `json:"lens"`
+	EventServer    string   `json:"eventServer"`
 	Scripts        []script `json:"scripts"`
 	Tags           []tag    `json:"tags"`
 	Media          []media  `json:"media"`
@@ -37,7 +42,7 @@ type videoData struct {
 }
 
 type media struct {
-	Name    string   `json:"name"`
+	Name    string   `json:"name,omitempty"`
 	Sources []source `json:"sources"`
 }
 
@@ -54,7 +59,9 @@ type script struct {
 	Url  string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, sceneId string, includeMediaSource bool) (videoData, error) {
+func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, videoId string, includeMediaSource bool) (videoData, error) {
+	sceneId, eFileSuffix, isEScene := efile.GetSceneIdAndEFileSuffix(videoId)
+
 	findSceneResponse, err := gql.FindSceneFull(ctx, client, sceneId)
 	if err != nil {
 		return videoData{}, fmt.Errorf("FindSceneFull: %w", err)
@@ -73,9 +80,19 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
 	}
 
-	title := s.Title
-	if title == "" {
-		title = s.SceneScanParts.Files[0].Basename
+	title := title.GetSceneTitle(s.Title, s.GetFiles()[0].Basename)
+
+	var eventServer string
+
+	if isEScene && config.Get().EventServerUrl != "" {
+		eventServerUrl, _ := url.Parse(config.Get().EventServerUrl + "/events")
+		eventServerQuery, _ := url.ParseQuery(eventServerUrl.RawQuery)
+		eventServerQuery.Add("filename", s.GetFiles()[0].Basename)
+		eventServerQuery.Add("esuffix", eFileSuffix)
+		eventServerUrl.RawQuery = eventServerQuery.Encode()
+		eventServer = eventServerUrl.String()
+		log.Ctx(ctx).Debug().Str("eventServer", eventServer).Msg("Providing eventServer")
+		title = efile.MakeESceneTitleWithEFileSuffix(title, eFileSuffix)
 	}
 
 	vd := videoData{
@@ -92,12 +109,15 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		WriteFavorite:  true,
 		WriteRating:    true,
 		WriteTags:      true,
+		EventServer:    eventServer,
 	}
 
 	setIsFavorite(s, &vd)
 
 	if includeMediaSource {
 		setMediaSources(ctx, s, &vd)
+	} else {
+		vd.Media = []media{{Sources: []source{{}}}}
 	}
 
 	set3DFormat(s, &vd)

@@ -25,12 +25,12 @@ func SectionWithAllScenes(ctx context.Context, client graphql.Client) (section.S
 	}
 
 	s := section.Section{
-		Name:             "All",
-		PreviewPartsList: make([]gql.ScenePreviewParts, len(scenesResponse.FindScenes.Scenes)),
+		Name:  "All",
+		Scene: make([]gql.ScenePreviewParts, len(scenesResponse.FindScenes.Scenes)),
 	}
 
 	for i, v := range scenesResponse.FindScenes.Scenes {
-		s.PreviewPartsList[i] = v.ScenePreviewParts
+		s.Scene[i] = v.ScenePreviewParts
 	}
 	return s, nil
 }

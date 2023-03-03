@@ -20,6 +20,8 @@ services:
       #DISABLE_HEATMAP: "true"
       #HEATMAP_HEIGHT_PX: 45
       #DISABLE_PLAY_COUNT: "true"
+      #EVENT_SERVER_URL: "http://192.168.0.127:8099":"
+
       #LOG_LEVEL: "debug"
 
       #FORCE_HTTPS: "true"

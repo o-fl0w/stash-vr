@@ -136,7 +136,7 @@ fragment SavedFilterParts on SavedFilter{
 }
 
 fragment ScenePreviewParts on Scene{
-    id, title, files{duration}, paths {screenshot}
+    id, title, files{basename, duration}, paths {screenshot}
 }
 
 fragment SceneFullParts on Scene{
