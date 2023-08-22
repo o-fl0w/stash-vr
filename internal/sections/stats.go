@@ -11,9 +11,9 @@ func Count(sections []section.Section) Stats {
 	var linkCount int
 	sceneIds := make(map[string]any)
 	for _, s := range sections {
-		linkCount += len(s.Scene)
-		for _, p := range s.Scene {
-			sceneIds[p.Id] = struct{}{}
+		linkCount += len(s.Scenes)
+		for _, p := range s.Scenes {
+			sceneIds[p.ScenePreviewParts.Id] = struct{}{}
 		}
 	}
 	return Stats{

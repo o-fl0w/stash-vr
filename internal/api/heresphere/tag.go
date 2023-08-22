@@ -105,10 +105,14 @@ func getStudio(s gql.SceneScanParts) []tag {
 	if s.Studio == nil {
 		return nil
 	}
-	return []tag{{
-		Name:   internal.LegendStudio.Full + seperator + s.Studio.Name,
-		Rating: float32(s.Studio.Rating),
-	}}
+	return []tag{StudioTag(s.Studio.Name, float32(s.Studio.Rating))}
+}
+
+func StudioTag(s string, rating float32) tag {
+	return tag{
+		Name:   internal.LegendStudio.Full + seperator + s,
+		Rating: rating,
+	}
 }
 
 func getFields(s gql.SceneScanParts) []tag {

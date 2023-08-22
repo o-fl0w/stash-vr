@@ -33,9 +33,9 @@ func fromSections(baseUrl string, sections []section.Section) []library {
 }
 
 func fromSection(baseUrl string, section section.Section) library {
-	o := library{Name: section.Name, List: make([]string, len(section.Scene))}
-	for i, p := range section.Scene {
-		o.List[i] = getVideoDataUrl(baseUrl, p.Id)
+	o := library{Name: section.Name, List: make([]string, len(section.Scenes))}
+	for i, p := range section.Scenes {
+		o.List[i] = getVideoDataUrl(baseUrl, p.Id())
 	}
 	return o
 }

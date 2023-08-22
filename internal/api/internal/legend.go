@@ -5,6 +5,8 @@ import "strings"
 var (
 	LegendTag       = newLegend("#", "Tag")
 	LegendStudio    = newLegend("$", "Studio")
+	LegendEStudio   = newLegend("*", "E-Studio")
+	LegendEFile     = newLegend("F", "E-File")
 	LegendPerformer = newLegend("@", "Performer")
 	LegendMovie     = newLegend("/", "Movie")
 	LegendOCount    = newLegend("O", "O-Count")

@@ -3,6 +3,7 @@ package deovr
 import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
+	"stash-vr/internal/efile"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash"
@@ -39,6 +40,9 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) inde
 
 func fromSections(baseUrl string, sections []section.Section) []scene {
 	return util.Transform[section.Section, scene](func(section section.Section) (scene, error) {
+		if section.FilterId == efile.ESectionFilterId {
+			return scene{}, nil
+		}
 		return fromSection(baseUrl, section), nil
 	}).Ordered(sections)
 }
@@ -46,15 +50,15 @@ func fromSections(baseUrl string, sections []section.Section) []scene {
 func fromSection(baseUrl string, section section.Section) scene {
 	s := scene{
 		Name: section.Name,
-		List: make([]previewData, len(section.Scene)),
+		List: make([]previewData, len(section.Scenes)),
 	}
-	for i, p := range section.Scene {
+	for i, p := range section.Scenes {
 		s.List[i] = previewData{
-			Id:           p.Id,
+			Id:           p.Id(),
 			ThumbnailUrl: stash.ApiKeyed(p.Paths.Screenshot),
-			Title:        p.Title,
+			Title:        p.ScenePreviewParts.Title,
 			VideoLength:  int(p.Files[0].Duration),
-			VideoUrl:     getVideoDataUrl(baseUrl, p.Id),
+			VideoUrl:     getVideoDataUrl(baseUrl, p.Id()),
 		}
 	}
 	return s

@@ -7,10 +7,16 @@ enum GenderEnum {
   NON_BINARY
 }
 
+enum CircumisedEnum {
+  CUT
+  UNCUT
+}
+
 type Performer {
   id: ID!
-  checksum: String!
-  name: String
+  checksum: String @deprecated(reason: "Not used")
+  name: String!
+  disambiguation: String
   url: String
   gender: GenderEnum
   twitter: String
@@ -23,18 +29,24 @@ type Performer {
   height_cm: Int
   measurements: String
   fake_tits: String
+  penis_length: Float
+  circumcised: CircumisedEnum
   career_length: String
   tattoos: String
   piercings: String
-  aliases: String
+  aliases: String @deprecated(reason: "Use alias_list")
+  alias_list: [String!]!
   favorite: Boolean!
   tags: [Tag!]!
   ignore_auto_tag: Boolean!
 
   image_path: String # Resolver
-  scene_count: Int # Resolver
-  image_count: Int # Resolver
-  gallery_count: Int # Resolver
+  scene_count: Int! # Resolver
+  image_count: Int! # Resolver
+  gallery_count: Int! # Resolver
+  movie_count: Int! # Resolver
+  performer_count: Int! # Resolver
+  o_counter: Int # Resolver
   scenes: [Scene!]!
   stash_ids: [StashID!]!
   # rating expressed as 1-5
@@ -47,12 +59,12 @@ type Performer {
   weight: Int
   created_at: Time!
   updated_at: Time!
-  movie_count: Int
   movies: [Movie!]!
 }
 
 input PerformerCreateInput {
   name: String!
+  disambiguation: String
   url: String
   gender: GenderEnum
   birthdate: String
@@ -64,15 +76,18 @@ input PerformerCreateInput {
   height_cm: Int
   measurements: String
   fake_tits: String
+  penis_length: Float
+  circumcised: CircumisedEnum
   career_length: String
   tattoos: String
   piercings: String
-  aliases: String
+  aliases: String @deprecated(reason: "Use alias_list")
+  alias_list: [String!]
   twitter: String
   instagram: String
   favorite: Boolean
   tag_ids: [ID!]
-  """This should be a URL or a base64 encoded data URL"""
+  "This should be a URL or a base64 encoded data URL"
   image: String
   stash_ids: [StashIDInput!]
   # rating expressed as 1-5
@@ -89,6 +104,7 @@ input PerformerCreateInput {
 input PerformerUpdateInput {
   id: ID!
   name: String
+  disambiguation: String
   url: String
   gender: GenderEnum
   birthdate: String
@@ -100,15 +116,18 @@ input PerformerUpdateInput {
   height_cm: Int
   measurements: String
   fake_tits: String
+  penis_length: Float
+  circumcised: CircumisedEnum
   career_length: String
   tattoos: String
   piercings: String
-  aliases: String
+  aliases: String @deprecated(reason: "Use alias_list")
+  alias_list: [String!]
   twitter: String
   instagram: String
   favorite: Boolean
   tag_ids: [ID!]
-  """This should be a URL or a base64 encoded data URL"""
+  "This should be a URL or a base64 encoded data URL"
   image: String
   stash_ids: [StashIDInput!]
   # rating expressed as 1-5
@@ -122,9 +141,15 @@ input PerformerUpdateInput {
   ignore_auto_tag: Boolean
 }
 
+input BulkUpdateStrings {
+  values: [String!]
+  mode: BulkUpdateIdMode!
+}
+
 input BulkPerformerUpdateInput {
   clientMutationId: String
   ids: [ID!]
+  disambiguation: String
   url: String
   gender: GenderEnum
   birthdate: String
@@ -136,10 +161,13 @@ input BulkPerformerUpdateInput {
   height_cm: Int
   measurements: String
   fake_tits: String
+  penis_length: Float
+  circumcised: CircumisedEnum
   career_length: String
   tattoos: String
   piercings: String
-  aliases: String
+  aliases: String @deprecated(reason: "Use alias_list")
+  alias_list: BulkUpdateStrings
   twitter: String
   instagram: String
   favorite: Boolean

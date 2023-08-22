@@ -232,53 +232,52 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 			cmd := tagReq.Name[1:]
 			if internal.LegendOCount.IsMatch(cmd) {
 				request.incrementO = true
-				continue
 			} else if internal.LegendOrganized.IsMatch(cmd) {
 				request.toggleOrganized = true
-				continue
 			}
+			continue
 		}
-
 		if tagReq.Name == "" {
 			continue
 		}
 
-		tagType, tagName, isCategorized := strings.Cut(tagReq.Name, ":")
+		tagType, tagValue, isCategorized := strings.Cut(tagReq.Name, ":")
 
 		switch {
 		case isCategorized && internal.LegendTag.IsMatch(tagType):
-			if tagName == "" {
+			if tagValue == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty tag name, skipping")
 				continue
 			}
-			id, err := stash.FindOrCreateTag(ctx, client, tagName)
+			id, err := stash.FindOrCreateTag(ctx, client, tagValue)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Str("request", tagReq.Name).Msg("Failed to find or create tag")
 				continue
 			}
 			request.tagIds = append(request.tagIds, id)
 		case isCategorized && internal.LegendStudio.IsMatch(tagType):
-			if tagName == "" {
+			if tagValue == "" {
 				continue
 			}
-			id, err := stash.FindOrCreateStudio(ctx, client, tagName)
+			id, err := stash.FindOrCreateStudio(ctx, client, tagValue)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Str("request", tagReq.Name).Msg("Failed to find or create studio")
 				continue
 			}
 			request.studioId = id
 		case isCategorized && internal.LegendPerformer.IsMatch(tagType):
-			if tagName == "" {
+			if tagValue == "" {
 				log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Empty performer name, skipping")
 				continue
 			}
-			id, err := stash.FindOrCreatePerformer(ctx, client, tagName)
+			id, err := stash.FindOrCreatePerformer(ctx, client, tagValue)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Str("request", tagReq.Name).Msg("Failed to find or create performer")
 				continue
 			}
 			request.performerIds = append(request.performerIds, id)
-		case isCategorized && (internal.LegendMovie.IsMatch(tagType) || internal.LegendOCount.IsMatch(tagType) || internal.LegendOrganized.IsMatch(tagType) || internal.LegendPlayCount.IsMatch(tagType)):
+		case isCategorized && (internal.LegendMovie.IsMatch(tagType) || internal.LegendOCount.IsMatch(tagType) ||
+			internal.LegendOrganized.IsMatch(tagType) || internal.LegendPlayCount.IsMatch(tagType)):
 			log.Ctx(ctx).Trace().Str("request", tagReq.Name).Msg("Tag type is reserved, skipping")
 			continue
 		default:
@@ -288,7 +287,7 @@ func parseUpdateRequestTags(ctx context.Context, client graphql.Client, tags []t
 			}
 			request.markers = append(request.markers, marker{
 				tag:   tagType,
-				title: tagName,
+				title: tagValue,
 				start: tagReq.Start / 1000,
 			})
 		}

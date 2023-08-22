@@ -20,6 +20,6 @@ func filterLogContext(ctx context.Context, filter gql.SavedFilterParts) context.
 
 func sectionLogContext(ctx context.Context, section section.Section) context.Context {
 	return log.Ctx(ctx).With().
-		Str("section", section.Name).Int("scenes", len(section.Scene)).
+		Str("section", section.Name).Int("scenes", len(section.Scenes)).
 		Logger().WithContext(ctx)
 }

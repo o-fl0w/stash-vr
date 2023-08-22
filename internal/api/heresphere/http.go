@@ -54,13 +54,13 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	sceneId, _, _ := efile.GetSceneIdAndEFileSuffix(videoId)
+	sceneId, _, _ := efile.GetSceneIdAndOshash(videoId)
 
 	vdReq, err := internal.UnmarshalBody[videoDataRequest](req)
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("failed to parse request body")
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		//w.WriteHeader(http.StatusBadRequest)
+		//return
 	}
 
 	if vdReq.isUpdateRequest() {

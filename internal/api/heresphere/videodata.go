@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"github.com/rs/zerolog/log"
 	"net/url"
 	"stash-vr/internal/api/heatmap"
+	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/efile"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/title"
+	"time"
 )
 
 type videoData struct {
@@ -60,7 +61,7 @@ type script struct {
 }
 
 func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, videoId string, includeMediaSource bool) (videoData, error) {
-	sceneId, eFileSuffix, isEScene := efile.GetSceneIdAndEFileSuffix(videoId)
+	sceneId, oshash, isEScene := efile.GetSceneIdAndOshash(videoId)
 
 	findSceneResponse, err := gql.FindSceneFull(ctx, client, sceneId)
 	if err != nil {
@@ -83,16 +84,20 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	title := title.GetSceneTitle(s.Title, s.GetFiles()[0].Basename)
 
 	var eventServer string
+	var dateAdded = s.Created_at.Format(time.DateOnly)
+	var eScene *efile.EScene
 
-	if isEScene && config.Get().EventServerUrl != "" {
-		eventServerUrl, _ := url.Parse(config.Get().EventServerUrl + "/events")
-		eventServerQuery, _ := url.ParseQuery(eventServerUrl.RawQuery)
-		eventServerQuery.Add("filename", s.GetFiles()[0].Basename)
-		eventServerQuery.Add("esuffix", eFileSuffix)
-		eventServerUrl.RawQuery = eventServerQuery.Encode()
-		eventServer = eventServerUrl.String()
-		log.Ctx(ctx).Debug().Str("eventServer", eventServer).Msg("Providing eventServer")
-		title = efile.MakeESceneTitleWithEFileSuffix(title, eFileSuffix)
+	if isEScene && config.Get().EFileServer != "" {
+		eventServer, _ = url.JoinPath(config.Get().EFileServer, "event")
+
+		e, err := efile.GetEScene(config.Get().EFileServer, oshash, sceneId)
+		if err != nil {
+			return videoData{}, fmt.Errorf("failed to retrieve data for EScene: %w", err)
+		}
+		eScene = &e
+		title = e.Title
+		dateAdded = e.AddedTime.Format(time.DateOnly)
+		thumbnailUrl, _ = url.JoinPath(config.Get().EFileServer, "cover", fmt.Sprintf("%s_cover.png", e.Oshash))
 	}
 
 	vd := videoData{
@@ -102,7 +107,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		ThumbnailImage: thumbnailUrl,
 		ThumbnailVideo: stash.ApiKeyed(s.Paths.Preview),
 		DateReleased:   s.Date,
-		DateAdded:      s.Created_at.Format("2006-01-02"),
+		DateAdded:      dateAdded,
 		Duration:       s.SceneScanParts.Files[0].Duration * 1000,
 		Rating:         float32(s.Rating100) / 20,
 		Favorites:      s.O_counter,
@@ -123,10 +128,29 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	set3DFormat(s, &vd)
 
 	setTags(s, &vd)
+	if isEScene {
+		vd.Tags = append(vd.Tags, getETags(*eScene)...)
+	}
 
 	setScripts(s, &vd)
 
 	return vd, nil
+}
+
+func getETags(es efile.EScene) []tag {
+	tags := make([]tag, 1+len(es.FileNames))
+
+	tags[0] = tag{
+		Name: internal.LegendEStudio.Short + seperator + es.Artist,
+		End:  es.Duration.Seconds(),
+	}
+
+	for i := range es.FileNames {
+		tags[i+1] = tag{
+			Name: internal.LegendEFile.Short + seperator + es.FileNames[i],
+		}
+	}
+	return tags
 }
 
 func setTags(s gql.SceneFullParts, videoData *videoData) {

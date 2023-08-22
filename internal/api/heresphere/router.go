@@ -15,7 +15,7 @@ func Router(client graphql.Client) http.Handler {
 	r.Use(middleware.SetHeader("HereSphere-JSON-Version", "1"))
 	r.Post("/", internal.LogRoute("index", httpHandler.indexHandler))
 	r.Post("/scan", internal.LogRoute("scan", httpHandler.scanHandler))
-	r.Post("/{videoId}", internal.LogRoute("videoData", internal.LogVideoId(httpHandler.videoDataHandler)))
+	r.Handle("/{videoId}", internal.LogRoute("videoData", internal.LogVideoId(httpHandler.videoDataHandler)))
 	r.Post("/events", internal.LogRoute("events", httpHandler.eventsHandler))
 	return r
 }

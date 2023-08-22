@@ -1,8 +1,9 @@
-"""A performer from a scraping operation..."""
+"A performer from a scraping operation..."
 type ScrapedPerformer {
-  """Set if performer matched"""
+  "Set if performer matched"
   stored_id: ID
   name: String
+  disambiguation: String
   gender: String
   url: String
   twitter: String
@@ -14,13 +15,16 @@ type ScrapedPerformer {
   height: String
   measurements: String
   fake_tits: String
+  penis_length: String
+  circumcised: String
   career_length: String
   tattoos: String
   piercings: String
+  # aliases must be comma-delimited to be parsed correctly
   aliases: String
   tags: [ScrapedTag!]
 
-  """This should be a base64 encoded data URL"""
+  "This should be a base64 encoded data URL"
   image: String @deprecated(reason: "use images instead")
   images: [String!]
   details: String
@@ -31,9 +35,10 @@ type ScrapedPerformer {
 }
 
 input ScrapedPerformerInput {
-  """Set if performer matched"""
+  "Set if performer matched"
   stored_id: ID
   name: String
+  disambiguation: String
   gender: String
   url: String
   twitter: String
@@ -45,6 +50,8 @@ input ScrapedPerformerInput {
   height: String
   measurements: String
   fake_tits: String
+  penis_length: String
+  circumcised: String
   career_length: String
   tattoos: String
   piercings: String

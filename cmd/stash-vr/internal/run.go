@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/application"
 	"stash-vr/internal/config"
+	"stash-vr/internal/interrupt"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/server"
 	"stash-vr/internal/stash"
@@ -16,7 +17,7 @@ import (
 const listenAddress = ":9666"
 
 func Run() error {
-	ctx := application.InterruptableContext()
+	ctx := interrupt.Context()
 
 	log.Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
 

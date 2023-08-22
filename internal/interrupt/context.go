@@ -1,4 +1,4 @@
-package application
+package interrupt
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"syscall"
 )
 
-func InterruptableContext() context.Context {
+func Context() context.Context {
 	chSignal := make(chan os.Signal, 1)
 	signal.Notify(chSignal, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
