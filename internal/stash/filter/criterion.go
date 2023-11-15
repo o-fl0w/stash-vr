@@ -52,15 +52,13 @@ func parseHierarchicalMultiCriterionInput(c map[string]any) *gql.HierarchicalMul
 	out.Value = make([]string, len(items))
 
 	for i := range items {
-		id, _ := get[float64](items[i].(map[string]any), "id")
-		out.Value[i] = strconv.Itoa(int(id))
+		out.Value[i], _ = getAsString(items[i].(map[string]any), "id")
 	}
 
 	excluded, _ := get[[]any](c, "value.excluded")
 	out.Excludes = make([]string, len(excluded))
 	for i := range excluded {
-		id, _ := get[float64](excluded[i].(map[string]any), "id")
-		out.Excludes[i] = strconv.Itoa(int(id))
+		out.Excludes[i], _ = getAsString(excluded[i].(map[string]any), "id")
 	}
 	return &out
 }
@@ -70,29 +68,20 @@ func parseMultiCriterionInput(c map[string]any) *gql.MultiCriterionInput {
 		Modifier: modifier(c),
 	}
 
+	excluded, _ := get[[]any](c, "value.excluded")
+	out.Excludes = make([]string, len(excluded))
+	for i := range excluded {
+		out.Excludes[i], _ = getAsString(excluded[i].(map[string]any), "id")
+	}
+
 	items, err := get[[]any](c, "value.items")
+	if err != nil {
+		items, err = get[[]any](c, "value")
+	}
 	if err == nil {
 		out.Value = make([]string, len(items))
 		for i := range items {
-			id, _ := get[float64](items[i].(map[string]any), "id")
-			out.Value[i] = strconv.Itoa(int(id))
-		}
-
-		excluded, _ := get[[]any](c, "value.excluded")
-		out.Excludes = make([]string, len(excluded))
-		for i := range excluded {
-			id, _ := get[float64](items[i].(map[string]any), "id")
-			out.Excludes[i] = strconv.Itoa(int(id))
-		}
-		return &out
-	}
-
-	arr, err := get[[]any](c, "value")
-	if err == nil {
-		out.Value = make([]string, len(arr))
-		for i := range arr {
-			id, _ := get[float64](arr[i].(map[string]any), "id")
-			out.Value[i] = strconv.Itoa(int(id))
+			out.Value[i], _ = getAsString(items[i].(map[string]any), "id")
 		}
 		return &out
 	}
