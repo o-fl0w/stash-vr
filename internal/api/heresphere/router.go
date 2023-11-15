@@ -10,7 +10,7 @@ import (
 )
 
 func Router(client graphql.Client) http.Handler {
-	httpHandler := httpHandler{Client: client}
+	httpHandler := httpHandler{StashClient: client}
 	r := chi.NewRouter()
 	r.Use(middleware.SetHeader("HereSphere-JSON-Version", "1"))
 	r.Post("/", internal.LogRoute("index", httpHandler.indexHandler))

@@ -44,7 +44,7 @@ func sectionFromSavedFilter(ctx context.Context, client graphql.Client, prefix s
 
 	scenesResponse, err := gql.FindScenePreviewsByFilter(ctx, client, &filterQuery.SceneFilter, &filterQuery.FilterOpts)
 	if err != nil {
-		return section.Section{}, fmt.Errorf("FindScenePreviewsByFilter savedFilter=%+v parsedFilter=%+v: %w", savedFilter.Filter, logger.AsJsonStr(filterQuery), err)
+		return section.Section{}, fmt.Errorf("FindScenePreviewsByFilter savedFilter=%+v parsedFilter=%+v: %w", savedFilter.Object_filter, logger.AsJsonStr(filterQuery), err)
 	}
 
 	s := section.Section{

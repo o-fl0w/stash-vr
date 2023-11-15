@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/singleflight"
 	"sync"
 )
 
@@ -12,28 +13,27 @@ type Cache[T any] struct {
 	data       *T
 }
 
+var single = singleflight.Group{}
+
 func (c *Cache[T]) Get(ctx context.Context, fetch func(ctx context.Context) T) T {
-	c.dataLock.Lock()
-	defer c.dataLock.Unlock()
 
 	if c.data == nil {
-		d := fetch(ctx)
-		c.data = &d
-		return *c.data
+		d, _, _ := single.Do("", func() (interface{}, error) {
+			d := fetch(ctx)
+			c.data = &d
+			return d, nil
+		})
+		return d.(T)
 	}
 
 	go func(ctx context.Context) {
 		ctx = log.Ctx(ctx).With().Str("op", "bg").Logger().WithContext(context.Background())
-		if c.fetchMutex.TryLock() {
-			defer c.fetchMutex.Unlock()
+		single.Do("", func() (interface{}, error) {
 			log.Ctx(ctx).Trace().Msg("Prefetching...")
 			d := fetch(ctx)
-			c.dataLock.Lock()
-			defer c.dataLock.Unlock()
 			c.data = &d
-		} else {
-			log.Ctx(ctx).Trace().Msg("Already fetching...")
-		}
+			return d, nil
+		})
 	}(ctx)
 	return *c.data
 

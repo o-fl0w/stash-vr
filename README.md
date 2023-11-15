@@ -181,6 +181,7 @@ Just refresh again and the player should receive the latest changes. In other wo
 ### Stash version compatibility
 | Stash-VR | Stash   |
 |---------|---------|
+| v0.7.x | v0.23.x |
 | v0.6.x | v0.18.x |
 | v0.5.x | v0.17.x |
 | v0.4.x | v0.16.x |

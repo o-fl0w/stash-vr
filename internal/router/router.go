@@ -11,12 +11,13 @@ import (
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/api/web"
 	"stash-vr/internal/config"
+	"stash-vr/internal/stimhub"
 	"stash-vr/internal/util"
 	"strings"
 	"time"
 )
 
-func Build(client graphql.Client) *chi.Mux {
+func Build(stashClient graphql.Client, stimhubClient *stimhub.Client) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Use(requestLogger)
@@ -25,20 +26,20 @@ func Build(client graphql.Client) *chi.Mux {
 
 	//router.Mount("/debug", middleware.Profiler())
 
-	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(client)))
-	router.Mount("/deovr", logMod("deovr", deovr.Router(client)))
+	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(stashClient)))
+	router.Mount("/deovr", logMod("deovr", deovr.Router(stashClient)))
 
-	router.Get("/", rootHandler(client))
+	router.Get("/", rootHandler(stashClient, stimhubClient))
 	router.Get("/*", logMod("static", staticHandler()).ServeHTTP)
 
 	if !config.Get().IsHeatmapDisabled {
-		router.Get("/cover/{videoId}", logMod("heatmap", heatmap.CoverHandler(client)).ServeHTTP)
+		router.Get("/cover/{videoId}", logMod("heatmap", heatmap.CoverHandler(stashClient)).ServeHTTP)
 	}
 
 	return router
 }
 
-func rootHandler(client graphql.Client) http.HandlerFunc {
+func rootHandler(stashClient graphql.Client, stimhubClient *stimhub.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userAgent := r.Header.Get("User-Agent")
 
@@ -46,7 +47,7 @@ func rootHandler(client graphql.Client) http.HandlerFunc {
 			log.Ctx(r.Context()).Trace().Msg("Redirecting to /heresphere")
 			http.Redirect(w, r, "/heresphere", 307)
 		} else {
-			logMod("web", web.IndexHandler(client)).ServeHTTP(w, r)
+			logMod("web", web.IndexHandler(stashClient, stimhubClient)).ServeHTTP(w, r)
 		}
 	}
 }

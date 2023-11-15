@@ -9,6 +9,7 @@ import (
 	"stash-vr/internal/config"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/stimhub"
 	"strings"
 )
 
@@ -35,7 +36,7 @@ type indexData struct {
 	SceneCount              int
 }
 
-func IndexHandler(client graphql.Client) http.HandlerFunc {
+func IndexHandler(stashClient graphql.Client, stimhubClient *stimhub.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := indexData{
 			Redact:                  config.Redacted,
@@ -48,10 +49,10 @@ func IndexHandler(client graphql.Client) http.HandlerFunc {
 			StashConnectionResponse: fail,
 		}
 
-		if version, err := gql.Version(r.Context(), client); err == nil {
+		if version, err := gql.Version(r.Context(), stashClient); err == nil {
 			data.StashConnectionResponse = ok
 			data.StashVersion = version.Version.Version
-			ss := sections.Get(r.Context(), client)
+			ss := sections.Get(r.Context(), stashClient, stimhubClient)
 			data.SectionCount = len(ss)
 			count := sections.Count(ss)
 			data.LinkCount = count.Links

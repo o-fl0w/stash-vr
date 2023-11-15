@@ -139,7 +139,7 @@ query FindScriptDataBySceneId($id: ID!){
 }
 
 fragment SavedFilterParts on SavedFilter{
-    id, name, filter, mode
+    id, name, mode, find_filter {sort, direction}, object_filter
 }
 
 fragment ScenePreviewParts on Scene{

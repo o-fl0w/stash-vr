@@ -12,6 +12,7 @@ import (
 	"stash-vr/internal/server"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/stimhub"
 )
 
 const listenAddress = ":9666"
@@ -22,12 +23,16 @@ func Run() error {
 	log.Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
 
 	stashClient := stash.NewClient(config.Get().StashGraphQLUrl, config.Get().StashApiKey)
-
 	logVersions(ctx, stashClient)
 
-	sections.Get(ctx, stashClient)
+	var stimhubClient *stimhub.Client
+	if config.Get().StimhubUrl != "" {
+		stimhubClient = &stimhub.Client{Endpoint: config.Get().StimhubUrl}
+	}
 
-	err := server.Listen(ctx, listenAddress, stashClient)
+	sections.Get(ctx, stashClient, stimhubClient)
+
+	err := server.Listen(ctx, listenAddress, stashClient, stimhubClient)
 	if err != nil {
 		return fmt.Errorf("server: %w", err)
 	}

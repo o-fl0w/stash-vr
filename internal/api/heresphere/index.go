@@ -5,6 +5,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/sections/section"
+	"stash-vr/internal/stimhub"
 	"stash-vr/internal/util"
 )
 
@@ -18,8 +19,8 @@ type library struct {
 	List []string `json:"list"`
 }
 
-func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) index {
-	ss := sections.Get(ctx, client)
+func buildIndex(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client, baseUrl string) index {
+	ss := sections.Get(ctx, stashClient, stimhubClient)
 
 	index := index{Access: 1, Library: fromSections(baseUrl, ss)}
 

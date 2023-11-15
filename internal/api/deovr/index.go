@@ -3,10 +3,10 @@ package deovr
 import (
 	"context"
 	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/efile"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/sections/section"
 	"stash-vr/internal/stash"
+	"stash-vr/internal/stimhub"
 	"stash-vr/internal/util"
 )
 
@@ -29,7 +29,7 @@ type previewData struct {
 }
 
 func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) index {
-	ss := sections.Get(ctx, client)
+	ss := sections.Get(ctx, client, nil)
 
 	scenes := fromSections(baseUrl, ss)
 
@@ -40,7 +40,7 @@ func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) inde
 
 func fromSections(baseUrl string, sections []section.Section) []scene {
 	return util.Transform[section.Section, scene](func(section section.Section) (scene, error) {
-		if section.FilterId == efile.ESectionFilterId {
+		if section.FilterId == stimhub.FilterId {
 			return scene{}, nil
 		}
 		return fromSection(baseUrl, section), nil

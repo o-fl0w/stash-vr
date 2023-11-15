@@ -1,8 +1,9 @@
 package section
 
 import (
-	"stash-vr/internal/efile"
 	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/stimhub"
+	"stash-vr/internal/util"
 )
 
 type Section struct {
@@ -13,30 +14,19 @@ type Section struct {
 
 type ScenePreview struct {
 	gql.ScenePreviewParts
-	*efile.EScene
+	StimAudioCrc32 string
 }
 
 func (s ScenePreview) Title() string {
-	if s.EScene != nil && s.EScene.Title != "" {
-		return s.EScene.Title
+	if s.StimAudioCrc32 != "" {
+		return stimhub.Get(s.StimAudioCrc32, s.GetId()).Title
 	}
-	if s.ScenePreviewParts.Title != "" {
-		return s.ScenePreviewParts.Title
-	}
-	return s.ScenePreviewParts.Files[0].Basename
+	return util.FirstNonEmpty(s.ScenePreviewParts.Title, s.ScenePreviewParts.Files[0].Basename)
 }
 
 func (s ScenePreview) Id() string {
-	if s.EScene != nil {
-		return efile.MakeESceneId(s.ScenePreviewParts.Id, s.EScene.Oshash)
+	if s.StimAudioCrc32 != "" {
+		return stimhub.MakeStimSceneId(s.GetId(), s.StimAudioCrc32)
 	}
-	return s.ScenePreviewParts.Id
-}
-func ContainsFilterId(id string, list []Section) bool {
-	for _, v := range list {
-		if id == v.FilterId {
-			return true
-		}
-	}
-	return false
+	return s.GetId()
 }

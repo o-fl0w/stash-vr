@@ -9,18 +9,19 @@ import (
 	"net/url"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
-	"stash-vr/internal/efile"
+	"stash-vr/internal/stimhub"
 )
 
 type httpHandler struct {
-	Client graphql.Client
+	StashClient   graphql.Client
+	StimhubClient *stimhub.Client
 }
 
 func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
 
-	data := buildIndex(ctx, h.Client, baseUrl)
+	data := buildIndex(ctx, h.StashClient, h.StimhubClient, baseUrl)
 
 	if err := internal.WriteJson(ctx, w, data); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("write")
@@ -31,7 +32,7 @@ func (h *httpHandler) scanHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
 
-	data, err := buildScan(ctx, h.Client, baseUrl)
+	data, err := buildScan(ctx, h.StashClient, h.StimhubClient, baseUrl)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("scan")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -54,7 +55,7 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	sceneId, _, _ := efile.GetSceneIdAndOshash(videoId)
+	sceneId, _, _ := stimhub.SplitStimSceneId(videoId)
 
 	vdReq, err := internal.UnmarshalBody[videoDataRequest](req)
 	if err != nil {
@@ -64,24 +65,24 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 	}
 
 	if vdReq.isUpdateRequest() {
-		update(ctx, h.Client, sceneId, vdReq)
+		update(ctx, h.StashClient, sceneId, vdReq)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	if vdReq.isDeleteRequest() {
-		destroy(ctx, h.Client, sceneId)
+		destroy(ctx, h.StashClient, sceneId)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	if vdReq.isPlayRequest() && !config.Get().IsPlayCountDisabled {
-		incrementPlayCount(ctx, h.Client, sceneId)
+		incrementPlayCount(ctx, h.StashClient, sceneId)
 	}
 
 	var includeMediaSource = vdReq.NeedsMediaSource == nil || *vdReq.NeedsMediaSource
 
-	data, err := buildVideoData(ctx, h.Client, baseUrl, videoId, includeMediaSource)
+	data, err := buildVideoData(ctx, h.StashClient, h.StimhubClient, baseUrl, videoId, includeMediaSource)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)

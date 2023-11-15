@@ -19,7 +19,10 @@ func (f Transform[Input, Output]) Ordered(inputs []Input) []Output {
 			if err != nil {
 				return
 			}
-			chXs <- wrap(i, output)
+			chXs <- indexed[Output]{
+				i: i,
+				v: output,
+			}
 		}(i, input)
 	}
 	wg.Wait()
@@ -38,13 +41,6 @@ func (f Transform[Input, Output]) Ordered(inputs []Input) []Output {
 type indexed[T any] struct {
 	i int
 	v T
-}
-
-func wrap[T any](i int, v T) indexed[T] {
-	return indexed[T]{
-		i: i,
-		v: v,
-	}
 }
 
 func unwrap[T any](outputs []indexed[T]) []T {

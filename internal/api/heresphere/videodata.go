@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
-	"net/url"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
-	"stash-vr/internal/efile"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
-	"stash-vr/internal/title"
+	"stash-vr/internal/stimhub"
+	"stash-vr/internal/util"
 	"time"
 )
 
@@ -60,10 +59,14 @@ type script struct {
 	Url  string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, videoId string, includeMediaSource bool) (videoData, error) {
-	sceneId, oshash, isEScene := efile.GetSceneIdAndOshash(videoId)
+func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client, baseUrl string, videoId string, includeMediaSource bool) (videoData, error) {
+	sceneId, audioCrc32, isStimScene := stimhub.SplitStimSceneId(videoId)
 
-	findSceneResponse, err := gql.FindSceneFull(ctx, client, sceneId)
+	if isStimScene && stimhubClient == nil {
+		return videoData{}, fmt.Errorf("StimScene found but Stimhub client not configured")
+	}
+
+	findSceneResponse, err := gql.FindSceneFull(ctx, stashClient, sceneId)
 	if err != nil {
 		return videoData{}, fmt.Errorf("FindSceneFull: %w", err)
 	}
@@ -81,24 +84,7 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
 	}
 
-	title := title.GetSceneTitle(s.Title, s.GetFiles()[0].Basename)
-
-	var eventServer string
-	var dateAdded = s.Created_at.Format(time.DateOnly)
-	var eScene *efile.EScene
-
-	if isEScene && config.Get().EFileServer != "" {
-		eventServer, _ = url.JoinPath(config.Get().EFileServer, "event")
-
-		e, err := efile.GetEScene(config.Get().EFileServer, oshash, sceneId)
-		if err != nil {
-			return videoData{}, fmt.Errorf("failed to retrieve data for EScene: %w", err)
-		}
-		eScene = &e
-		title = e.Title
-		dateAdded = e.AddedTime.Format(time.DateOnly)
-		thumbnailUrl, _ = url.JoinPath(config.Get().EFileServer, "cover", fmt.Sprintf("%s_cover.png", e.Oshash))
-	}
+	title := util.FirstNonEmpty(s.Title, s.GetFiles()[0].Basename)
 
 	vd := videoData{
 		Access:         1,
@@ -107,17 +93,16 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 		ThumbnailImage: thumbnailUrl,
 		ThumbnailVideo: stash.ApiKeyed(s.Paths.Preview),
 		DateReleased:   s.Date,
-		DateAdded:      dateAdded,
+		DateAdded:      s.Created_at.Format(time.DateOnly),
 		Duration:       s.SceneScanParts.Files[0].Duration * 1000,
 		Rating:         float32(s.Rating100) / 20,
 		Favorites:      s.O_counter,
 		WriteFavorite:  true,
 		WriteRating:    true,
 		WriteTags:      true,
-		EventServer:    eventServer,
 	}
 
-	setIsFavorite(s, &vd)
+	vd.IsFavorite = ContainsFavoriteTag(s.TagPartsArray)
 
 	if includeMediaSource {
 		setMediaSources(ctx, s, &vd)
@@ -126,36 +111,40 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	}
 
 	set3DFormat(s, &vd)
-
-	setTags(s, &vd)
-	if isEScene {
-		vd.Tags = append(vd.Tags, getETags(*eScene)...)
-	}
-
 	setScripts(s, &vd)
+
+	vd.Tags = getTags(s.SceneScanParts)
+
+	if isStimScene {
+		stimScene := stimhub.Get(sceneId, audioCrc32)
+		vd.EventServer = stimhubClient.EventServerUrl()
+
+		if err != nil {
+			return videoData{}, fmt.Errorf("failed to retrieve data for EScene: %w", err)
+		}
+		vd.Title = stimScene.Title
+		vd.DateAdded = stimScene.DateAdded.Format(time.DateOnly)
+		vd.ThumbnailImage = stimhubClient.ThumbnailUrl(audioCrc32)
+		vd.Tags = append(vd.Tags, getStimSceneTags(*stimScene)...)
+	}
 
 	return vd, nil
 }
 
-func getETags(es efile.EScene) []tag {
-	tags := make([]tag, 1+len(es.FileNames))
+func getStimSceneTags(sc stimhub.StimScene) []tag {
+	tags := make([]tag, 1+len(sc.FileNames))
 
 	tags[0] = tag{
-		Name: internal.LegendEStudio.Short + seperator + es.Artist,
-		End:  es.Duration.Seconds(),
+		Name: internal.LegendEStudio.Short + seperator + sc.Artist,
+		End:  sc.Duration.Seconds(),
 	}
 
-	for i := range es.FileNames {
+	for i := range sc.FileNames {
 		tags[i+1] = tag{
-			Name: internal.LegendEFile.Short + seperator + es.FileNames[i],
+			Name: internal.LegendEFile.Short + seperator + sc.FileNames[i],
 		}
 	}
 	return tags
-}
-
-func setTags(s gql.SceneFullParts, videoData *videoData) {
-	tags := getTags(s.SceneScanParts)
-	videoData.Tags = tags
 }
 
 func setScripts(s gql.SceneFullParts, videoData *videoData) {
@@ -223,10 +212,6 @@ func setMediaSources(ctx context.Context, s gql.SceneFullParts, videoData *video
 		}
 		videoData.Media = append(videoData.Media, e)
 	}
-}
-
-func setIsFavorite(s gql.SceneFullParts, videoData *videoData) {
-	videoData.IsFavorite = ContainsFavoriteTag(s.TagPartsArray)
 }
 
 func ContainsFavoriteTag(ts gql.TagPartsArray) bool {

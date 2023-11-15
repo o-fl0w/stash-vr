@@ -9,13 +9,14 @@ import (
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	"stash-vr/internal/router"
+	"stash-vr/internal/stimhub"
 	"time"
 )
 
-func Listen(ctx context.Context, listenAddress string, client graphql.Client) error {
+func Listen(ctx context.Context, listenAddress string, stashClient graphql.Client, stimhubClient *stimhub.Client) error {
 	server := http.Server{
 		Addr:    listenAddress,
-		Handler: router.Build(client),
+		Handler: router.Build(stashClient, stimhubClient),
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)

@@ -1,11 +1,8 @@
-# Default genqlient config; for full documentation see:
 # https://github.com/Khan/genqlient/blob/main/docs/genqlient.yaml
 schema:
-  - schema/schema.graphql
-  - schema/types/*.graphql
+  - schema/local.graphql
 operations:
-  - query.graphql
-  - mutation.graphql
+  - documents/*.graphql
 generated: generated.go
 package: gql
 use_struct_references: true

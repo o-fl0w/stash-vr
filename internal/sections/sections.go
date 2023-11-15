@@ -8,15 +8,16 @@ import (
 	"stash-vr/internal/config"
 	"stash-vr/internal/sections/internal"
 	"stash-vr/internal/sections/section"
+	"stash-vr/internal/stimhub"
 	"strings"
 	"sync"
 )
 
 var c cache.Cache[[]section.Section]
 
-func Get(ctx context.Context, client graphql.Client) []section.Section {
+func Get(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client) []section.Section {
 	return c.Get(ctx, func(ctx context.Context) []section.Section {
-		sections := build(ctx, client, config.Get().Filters)
+		sections := build(ctx, stashClient, stimhubClient, config.Get().Filters)
 
 		go func() {
 			count := Count(sections)
@@ -31,7 +32,7 @@ func Get(ctx context.Context, client graphql.Client) []section.Section {
 	})
 }
 
-func build(ctx context.Context, client graphql.Client, filters string) []section.Section {
+func build(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client, filters string) []section.Section {
 	sss := make([][]section.Section, 4)
 
 	wg := sync.WaitGroup{}
@@ -40,7 +41,7 @@ func build(ctx context.Context, client graphql.Client, filters string) []section
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := internal.SectionsByFrontpage(ctx, client, "")
+			ss, err := internal.SectionsByFrontpage(ctx, stashClient, "")
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by front page")
 				return
@@ -54,7 +55,7 @@ func build(ctx context.Context, client graphql.Client, filters string) []section
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := internal.SectionsBySavedFilters(ctx, client, "?:")
+			ss, err := internal.SectionsBySavedFilters(ctx, stashClient, "?:")
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by saved filters")
 				return
@@ -69,7 +70,7 @@ func build(ctx context.Context, client graphql.Client, filters string) []section
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ss, err := internal.SectionsByFilterIds(ctx, client, "?:", filterIds)
+			ss, err := internal.SectionsByFilterIds(ctx, stashClient, "?:", filterIds)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by filter ids")
 				return
@@ -79,18 +80,18 @@ func build(ctx context.Context, client graphql.Client, filters string) []section
 		}()
 	}
 
-	if config.Get().EFileServer != "" {
+	if stimhubClient != nil {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			s, err := internal.ESection(ctx, config.Get().EFileServer, client)
+			s, err := internal.StimSection(ctx, *stimhubClient, stashClient)
 			if err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by ESceneServer")
+				log.Ctx(ctx).Warn().Err(err).Msg("Failed to build sections by stim server")
 				return
 			}
 			ss := []section.Section{s}
 			sss[3] = ss
-			log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from ESceneServer")
+			log.Ctx(ctx).Debug().Int("count", len(ss)).Msg("Sections built from stim server")
 		}()
 
 	}
@@ -101,9 +102,14 @@ func build(ctx context.Context, client graphql.Client, filters string) []section
 
 	for _, ss := range sss {
 		for _, s := range ss {
-			if s.FilterId != "" && section.ContainsFilterId(s.FilterId, sections) {
-				log.Ctx(ctx).Trace().Str("filterId", s.FilterId).Str("section", s.Name).Msg("Filter already added, skipping")
+			if s.FilterId == "" {
 				continue
+			}
+			for _, x := range sections {
+				if s.FilterId == x.FilterId {
+					log.Ctx(ctx).Trace().Str("filterId", s.FilterId).Str("section", s.Name).Msg("Filter already added, skipping")
+					continue
+				}
 			}
 
 			sections = append(sections, s)
@@ -112,12 +118,12 @@ func build(ctx context.Context, client graphql.Client, filters string) []section
 
 	if len(sections) == 0 {
 		log.Ctx(ctx).Info().Msg("No scenes found using current filters. Adding a default section with all scenes.")
-		s, err := internal.SectionWithAllScenes(ctx, client)
+		s, err := internal.SectionWithAllScenes(ctx, stashClient)
 		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build custom section with all scenes")
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to build default section with all scenes")
 		} else {
 			if len(s.Scenes) == 0 {
-				log.Ctx(ctx).Info().Msg("No scenes found in Stash.")
+				log.Ctx(ctx).Info().Msg("No scenes found.")
 			} else {
 				sections = append(sections, s)
 			}

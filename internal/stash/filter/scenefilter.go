@@ -2,7 +2,6 @@ package filter
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/stash/gql"
@@ -18,160 +17,151 @@ func SavedFilterToSceneFilter(ctx context.Context, savedFilter gql.SavedFilterPa
 		return Filter{}, fmt.Errorf("unsupported filter mode")
 	}
 
-	filterQuery, err := parseJsonEncodedFilter(ctx, savedFilter.Filter)
+	sceneFilter, err := parseObjectFilter(ctx, savedFilter.Object_filter)
 	if err != nil {
-		return Filter{}, fmt.Errorf("parseJsonEncodedFilter: %w", err)
+		return Filter{}, err
 	}
-	return filterQuery, nil
+
+	return Filter{
+		FilterOpts: gql.FindFilterType{
+			Direction: savedFilter.Find_filter.Direction,
+			Per_page:  -1,
+			Sort:      savedFilter.Find_filter.Sort,
+		},
+		SceneFilter: sceneFilter,
+	}, nil
+
 }
 
-func parseJsonEncodedFilter(ctx context.Context, raw string) (Filter, error) {
-	var filter jsonFilter
-
-	err := json.Unmarshal([]byte(raw), &filter)
-	if err != nil {
-		return Filter{}, fmt.Errorf("unmarshal json scene filter '%s': %w", raw, err)
-	}
-	f, err := parseSceneFilterCriteria(ctx, filter.C)
-	if err != nil {
-		return Filter{}, fmt.Errorf("parseSceneFilterCriteria: %w", err)
-	}
-
-	sortDir := gql.SortDirectionEnumAsc
-	if filter.SortDir == "desc" {
-		sortDir = gql.SortDirectionEnumDesc
-	}
-	return Filter{FilterOpts: gql.FindFilterType{
-		Per_page:  -1,
-		Sort:      filter.SortBy,
-		Direction: sortDir,
-	}, SceneFilter: f}, nil
-}
-
-func parseSceneFilterCriteria(ctx context.Context, jsonCriteria []string) (gql.SceneFilterType, error) {
-	f := gql.SceneFilterType{}
-	for _, jsonCriterion := range jsonCriteria {
-		c, err := parseJsonCriterion(jsonCriterion)
+func parseObjectFilter(ctx context.Context, objects map[string]any) (gql.SceneFilterType, error) {
+	var sft gql.SceneFilterType
+	for k, v := range objects {
+		err := setSceneFilterCriterion(ctx, k, v.(map[string]any), &sft)
 		if err != nil {
-			return gql.SceneFilterType{}, fmt.Errorf("parseJsonCriterion: %w", err)
-		}
-		err = setSceneFilterCriterion(ctx, c, &f)
-		if err != nil {
-			return gql.SceneFilterType{}, fmt.Errorf("setSceneFilterCriterion: %w", err)
+			return gql.SceneFilterType{}, err
 		}
 	}
-	return f, nil
+	return sft, nil
 }
 
-func setSceneFilterCriterion(ctx context.Context, criterion jsonCriterion, sceneFilter *gql.SceneFilterType) error {
+func setSceneFilterCriterion(ctx context.Context, criterionType string, criterionValue map[string]any, sceneFilter *gql.SceneFilterType) error {
 	var err error
-	switch criterion.Type {
+	switch criterionType {
 	//HierarchicalMultiCriterionInput
 	case "tags":
-		sceneFilter.Tags, err = criterion.asHierarchicalMultiCriterionInput()
+		sceneFilter.Tags = parseHierarchicalMultiCriterionInput(criterionValue)
 	case "studios":
-		sceneFilter.Studios, err = criterion.asHierarchicalMultiCriterionInput()
-	case "performerTags":
-		sceneFilter.Performer_tags, err = criterion.asHierarchicalMultiCriterionInput()
+		sceneFilter.Studios = parseHierarchicalMultiCriterionInput(criterionValue)
+	case "performer_tags":
+		sceneFilter.Performer_tags = parseHierarchicalMultiCriterionInput(criterionValue)
 
 	//StringCriterionInput
 	case "title":
-		sceneFilter.Title, err = criterion.asStringCriterionInput()
+		sceneFilter.Title = parseStringCriterionInput(criterionValue)
 	case "code":
-		sceneFilter.Code, err = criterion.asStringCriterionInput()
+		sceneFilter.Code = parseStringCriterionInput(criterionValue)
 	case "details":
-		sceneFilter.Details, err = criterion.asStringCriterionInput()
+		sceneFilter.Details = parseStringCriterionInput(criterionValue)
 	case "director":
-		sceneFilter.Director, err = criterion.asStringCriterionInput()
+		sceneFilter.Director = parseStringCriterionInput(criterionValue)
 	case "oshash":
-		sceneFilter.Oshash, err = criterion.asStringCriterionInput()
-	case "sceneChecksum":
-		sceneFilter.Checksum, err = criterion.asStringCriterionInput()
+		sceneFilter.Oshash = parseStringCriterionInput(criterionValue)
 	case "phash":
-		sceneFilter.Phash, err = criterion.asStringCriterionInput()
+		sceneFilter.Phash = parseStringCriterionInput(criterionValue)
 	case "path":
-		sceneFilter.Path, err = criterion.asStringCriterionInput()
+		sceneFilter.Path = parseStringCriterionInput(criterionValue)
 	case "stash_id":
-		sceneFilter.Stash_id, err = criterion.asStringCriterionInput()
+		sceneFilter.Stash_id = parseStringCriterionInput(criterionValue)
 	case "url":
-		sceneFilter.Url, err = criterion.asStringCriterionInput()
+		sceneFilter.Url = parseStringCriterionInput(criterionValue)
 	case "captions":
-		sceneFilter.Captions, err = criterion.asStringCriterionInput()
+		sceneFilter.Captions = parseStringCriterionInput(criterionValue)
+	case "audio_codec":
+		sceneFilter.Audio_codec = parseStringCriterionInput(criterionValue)
+	case "video_codec":
+		sceneFilter.Video_codec = parseStringCriterionInput(criterionValue)
+	case "checksum":
+		sceneFilter.Checksum = parseStringCriterionInput(criterionValue)
 
 	//IntCriterionInput
 	case "id":
-		sceneFilter.Id, err = criterion.asIntCriterionInput()
+		sceneFilter.Id = parseIntCriterionInput(criterionValue)
 	case "rating":
-		sceneFilter.Rating, err = criterion.asIntCriterionInput()
+		sceneFilter.Rating = parseIntCriterionInput(criterionValue)
 	case "rating100":
-		sceneFilter.Rating100, err = criterion.asIntCriterionInput()
+		sceneFilter.Rating100 = parseIntCriterionInput(criterionValue)
 	case "o_counter":
-		sceneFilter.O_counter, err = criterion.asIntCriterionInput()
+		sceneFilter.O_counter = parseIntCriterionInput(criterionValue)
 	case "duration":
-		sceneFilter.Duration, err = criterion.asIntCriterionInput()
+		sceneFilter.Duration = parseIntCriterionInput(criterionValue)
 	case "tag_count":
-		sceneFilter.Tag_count, err = criterion.asIntCriterionInput()
+		sceneFilter.Tag_count = parseIntCriterionInput(criterionValue)
 	case "performer_age":
-		sceneFilter.Performer_age, err = criterion.asIntCriterionInput()
+		sceneFilter.Performer_age = parseIntCriterionInput(criterionValue)
 	case "performer_count":
-		sceneFilter.Performer_count, err = criterion.asIntCriterionInput()
+		sceneFilter.Performer_count = parseIntCriterionInput(criterionValue)
 	case "interactive_speed":
-		sceneFilter.Interactive_speed, err = criterion.asIntCriterionInput()
+		sceneFilter.Interactive_speed = parseIntCriterionInput(criterionValue)
 	case "file_count":
-		sceneFilter.File_count, err = criterion.asIntCriterionInput()
+		sceneFilter.File_count = parseIntCriterionInput(criterionValue)
 	case "resume_time":
-		sceneFilter.Resume_time, err = criterion.asIntCriterionInput()
+		sceneFilter.Resume_time = parseIntCriterionInput(criterionValue)
 	case "play_count":
-		sceneFilter.Play_count, err = criterion.asIntCriterionInput()
+		sceneFilter.Play_count = parseIntCriterionInput(criterionValue)
 	case "play_duration":
-		sceneFilter.Play_duration, err = criterion.asIntCriterionInput()
+		sceneFilter.Play_duration = parseIntCriterionInput(criterionValue)
 
 	//bool
 	case "organized":
-		sceneFilter.Organized, err = criterion.asBool()
+		err = decodeSimple(criterionValue, &sceneFilter.Organized)
 	case "performer_favorite":
-		sceneFilter.Performer_favorite, err = criterion.asBool()
+		err = decodeSimple(criterionValue, &sceneFilter.Performer_favorite)
 	case "interactive":
-		sceneFilter.Interactive, err = criterion.asBool()
+		err = decodeSimple(criterionValue, &sceneFilter.Interactive)
 
 	//PHashDuplicationCriterionInput
 	case "duplicated":
-		sceneFilter.Duplicated, err = criterion.asPHashDuplicationCriterionInput()
+		sceneFilter.Duplicated = parsePHashDuplicationCriterionInput(criterionValue)
+
+	//PhashDistanceCriterionInput
+	case "phash_distance":
+		sceneFilter.Phash_distance = parsePhashDistanceCriterionInput(criterionValue)
 
 	//ResolutionCriterionInput
 	case "resolution":
-		sceneFilter.Resolution, err = criterion.asResolutionCriterionInput()
+		sceneFilter.Resolution = parseResolutionCriterionInput(criterionValue)
 
 	//string
-	case "hasMarkers":
-		sceneFilter.Has_markers, err = criterion.asString()
-	case "sceneIsMissing":
-		sceneFilter.Is_missing, err = criterion.asString()
+	case "has_markers":
+		err = decodeSimple(criterionValue, &sceneFilter.Has_markers)
+	case "is_missing":
+		err = decodeSimple(criterionValue, &sceneFilter.Is_missing)
 
 	//MultiCriterionInput
 	case "movies":
-		sceneFilter.Movies, err = criterion.asMultiCriterionInput()
+		sceneFilter.Movies = parseMultiCriterionInput(criterionValue)
 	case "performers":
-		sceneFilter.Performers, err = criterion.asMultiCriterionInput()
+		sceneFilter.Performers = parseMultiCriterionInput(criterionValue)
 
 	//TimestampCriterionInput
 	case "created_at":
-		sceneFilter.Created_at, err = criterion.asTimestampCriterionInput()
+		sceneFilter.Created_at = parseTimestampCriterionInput(criterionValue)
 	case "updated_at":
-		sceneFilter.Updated_at, err = criterion.asTimestampCriterionInput()
+		sceneFilter.Updated_at = parseTimestampCriterionInput(criterionValue)
 
 	//DateCriterionInput
 	case "date":
-		sceneFilter.Date, err = criterion.asDateCriterionInput()
+		sceneFilter.Date = parseDateCriterionInput(criterionValue)
+
+	//StashIDCriterionInput
 	case "stash_id_endpoint":
-		sceneFilter.Stash_id_endpoint, err = criterion.asStashIDCriterionInput()
-		//StashIDCriterionInput
+		sceneFilter.Stash_id_endpoint = parseStashIDCriterionInput(criterionValue)
 
 	default:
-		log.Ctx(ctx).Warn().Str("type", criterion.Type).Interface("value", criterion.Value).Msg("Ignoring unsupported criterion")
+		log.Ctx(ctx).Warn().Str("type", criterionType).Interface("value", criterionValue).Msg("Ignoring unsupported criterion")
 	}
 	if err != nil {
-		return fmt.Errorf("failed to parse criterion (%v): %w", criterion, err)
+		return fmt.Errorf("failed to parse criterion (%v): %w", criterionType, err)
 	}
 	return nil
 }
