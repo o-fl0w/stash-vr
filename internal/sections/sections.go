@@ -101,6 +101,7 @@ func build(ctx context.Context, stashClient graphql.Client, stimhubClient *stimh
 	var sections []section.Section
 
 	for _, ss := range sss {
+	outer:
 		for _, s := range ss {
 			if s.FilterId == "" {
 				continue
@@ -108,7 +109,7 @@ func build(ctx context.Context, stashClient graphql.Client, stimhubClient *stimh
 			for _, x := range sections {
 				if s.FilterId == x.FilterId {
 					log.Ctx(ctx).Trace().Str("filterId", s.FilterId).Str("section", s.Name).Msg("Filter already added, skipping")
-					continue
+					continue outer
 				}
 			}
 
