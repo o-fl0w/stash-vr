@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.19-alpine as build
+FROM golang:1.21-alpine as build
 
 ARG BUILD_VERSION
 
@@ -17,7 +17,7 @@ COPY ./internal ./internal/
 
 RUN go generate ./cmd/stash-vr/ && go build -ldflags "-X stash-vr/internal/application.BuildVersion=$BUILD_VERSION" -o ./stash-vr ./cmd/stash-vr/
 
-FROM alpine:3.16
+FROM alpine:3.18
 
 WORKDIR /app
 
