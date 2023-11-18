@@ -160,6 +160,8 @@ func parseResolutionCriterionInput(c map[string]any) *gql.ResolutionCriterionInp
 		out.Value = gql.ResolutionEnumSixK
 	case "8k":
 		out.Value = gql.ResolutionEnumEightK
+	case "Huge":
+		out.Value = gql.ResolutionEnumHuge
 	}
 
 	return &out
