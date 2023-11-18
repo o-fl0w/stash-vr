@@ -49,12 +49,12 @@ func FindSavedFilterIdsByFrontPage(ctx context.Context, client graphql.Client) (
 			log.Ctx(ctx).Debug().Msg("Filter skipped: Predefined filter on front page: Only user created saved scene filters are supported.")
 			continue
 		}
-		if typeName != "SavedFilter" {
+		fid := filter["savedFilterId"]
+		if typeName != "SavedFilter" || fid == nil {
 			log.Ctx(ctx).Debug().Str("type", typeName).Msg("Filter skipped: Filter of unsupported type on front page: Only user created saved scene filters are supported")
 			continue
 		}
-
-		filterId := strconv.Itoa(int(filter["savedFilterId"].(float64)))
+		filterId := strconv.Itoa(int(fid.(float64)))
 		filterIds = append(filterIds, filterId)
 	}
 
