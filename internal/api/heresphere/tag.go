@@ -82,7 +82,7 @@ func getPerformers(s gql.SceneScanParts) []tag {
 	for i, p := range s.Performers {
 		tags[i] = tag{
 			Name:   internal.LegendPerformer.Full + seperator + p.Name,
-			Rating: float32(p.Rating),
+			Rating: float32(p.Rating100),
 		}
 	}
 	return tags
@@ -105,10 +105,10 @@ func getStudio(s gql.SceneScanParts) []tag {
 	if s.Studio == nil {
 		return nil
 	}
-	return []tag{StudioTag(s.Studio.Name, float32(s.Studio.Rating))}
+	return []tag{studioTag(s.Studio.Name, float32(s.Studio.Rating100))}
 }
 
-func StudioTag(s string, rating float32) tag {
+func studioTag(s string, rating float32) tag {
 	return tag{
 		Name:   internal.LegendStudio.Full + seperator + s,
 		Rating: rating,

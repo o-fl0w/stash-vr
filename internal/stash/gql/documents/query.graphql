@@ -161,7 +161,7 @@ fragment SceneScanParts on Scene{
     }
     ...TagPartsArray
     studio{
-        id, name, rating
+        id, name, rating100
     },
     scene_markers {
         id, seconds, title, primary_tag {
@@ -169,7 +169,7 @@ fragment SceneScanParts on Scene{
         }
     },
     performers {
-        id, name, rating
+        id, name, rating100
     },
     movies {
         scene_index,
