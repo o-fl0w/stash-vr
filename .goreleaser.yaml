@@ -1,0 +1,19 @@
+project_name: example
+builds:
+  - main: ../../cmd/stash-vr
+    ldflags:
+      - -X stash-vr/internal/build.Version={{.Version}} -X stash-vr/internal/build.SHA={{.Commit}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip

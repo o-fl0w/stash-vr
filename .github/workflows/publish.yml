@@ -1,4 +1,4 @@
-name: Publish Docker image
+name: Publish Builds
 
 on:
   workflow_dispatch:
@@ -13,9 +13,8 @@ jobs:
     name: Push to Docker Hub
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-        
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       
