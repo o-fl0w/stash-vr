@@ -39,7 +39,7 @@ type Application struct {
 var cfg Application
 
 func init() {
-	pflag.String(envKeyStashGraphQLUrl, "http://stash.host:9999/graphql", "Url to Stash graphql")
+	pflag.String(envKeyStashGraphQLUrl, "http://localhost:9999/graphql", "Url to Stash graphql")
 	_ = viper.BindPFlag(envKeyStashGraphQLUrl, pflag.Lookup(envKeyStashGraphQLUrl))
 
 	pflag.String(envKeyStashApiKey, "", "Stash API key")

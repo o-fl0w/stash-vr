@@ -1,6 +1,7 @@
 package web
 
 import (
+	_ "embed"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
 	"html/template"
@@ -13,7 +14,9 @@ import (
 	"strings"
 )
 
-var tmpl = template.Must(template.ParseFiles("web/template/index.html"))
+//go:embed "index.html"
+var indexTemplate string
+var tmpl = template.Must(template.New("index").Parse(indexTemplate))
 
 const (
 	ok           = "OK"
