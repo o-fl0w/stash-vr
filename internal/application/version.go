@@ -1,3 +1,0 @@
-package application
-
-var BuildVersion = "???"

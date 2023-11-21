@@ -5,7 +5,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"html/template"
 	"net/http"
-	"stash-vr/internal/application"
+	"stash-vr/internal/build"
 	"stash-vr/internal/config"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/stash/gql"
@@ -40,7 +40,7 @@ func IndexHandler(stashClient graphql.Client, stimhubClient *stimhub.Client) htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := indexData{
 			Redact:                  config.Redacted,
-			Version:                 application.BuildVersion,
+			Version:                 build.FullVersion(),
 			LogLevel:                config.Get().LogLevel,
 			ForceHTTPS:              config.Get().ForceHTTPS,
 			IsSyncMarkersAllowed:    config.Get().IsSyncMarkersAllowed,

@@ -3,6 +3,7 @@
 FROM golang:1.21-alpine as build
 
 ARG BUILD_VERSION
+ARG BUILD_SHA
 
 WORKDIR /build
 
@@ -15,7 +16,7 @@ COPY ./cmd ./cmd/
 COPY ./internal ./internal/
 #COPY ./pkg ./pkg/
 
-RUN go generate ./cmd/stash-vr/ && go build -ldflags "-X stash-vr/internal/application.BuildVersion=$BUILD_VERSION" -o ./stash-vr ./cmd/stash-vr/
+RUN go generate ./cmd/stash-vr/ && go build -ldflags "-X stash-vr/internal/build.Version=$BUILD_VERSION -X stash-vr/internal/build.SHA=$BUILD_SHA" -o ./stash-vr ./cmd/stash-vr/
 
 FROM alpine:3.18
 
