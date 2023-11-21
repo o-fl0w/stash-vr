@@ -1,11 +1,9 @@
 package config
 
 import (
-	"github.com/rs/zerolog/log"
-	"os"
-	"strconv"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"strings"
-	"sync"
 )
 
 const (
@@ -22,8 +20,6 @@ const (
 	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
 	envKeyStimhubUrl       = "STIMHUB_URL"
 )
-
-var deprecatedEnvKeys = []string{"ENABLE_GLANCE_MARKERS", "HERESPHERE_QUICK_MARKERS", "HERESPHERE_SYNC_MARKERS", "ENABLE_HEATMAP_DISPLAY"}
 
 type Application struct {
 	StashGraphQLUrl      string
@@ -42,83 +38,64 @@ type Application struct {
 
 var cfg Application
 
-var once sync.Once
+func init() {
+	pflag.String(envKeyStashGraphQLUrl, "http://stash.host:9999/graphql", "Url to Stash graphql")
+	_ = viper.BindPFlag(envKeyStashGraphQLUrl, pflag.Lookup(envKeyStashGraphQLUrl))
+
+	pflag.String(envKeyStashApiKey, "", "Stash API key")
+	_ = viper.BindPFlag(envKeyStashApiKey, pflag.Lookup(envKeyStashApiKey))
+
+	pflag.String(envKeyFavoriteTag, "FAVORITE", "Name of tag in Stash to hold scenes marked as favorites")
+	_ = viper.BindPFlag(envKeyFavoriteTag, pflag.Lookup(envKeyFavoriteTag))
+
+	pflag.String(envKeyFilters, "", "Narrow the selection of filters to show. Either 'frontpage' or a comma seperated list of filter ids")
+	_ = viper.BindPFlag(envKeyFilters, pflag.Lookup(envKeyFilters))
+
+	pflag.Bool(envKeyAllowSyncMarkers, false, "Enable sync of Marker from HereSphere")
+	_ = viper.BindPFlag(envKeyAllowSyncMarkers, pflag.Lookup(envKeyAllowSyncMarkers))
+
+	pflag.String(envKeyLogLevel, "info", "Set log level - trace, debug, warn, info or error")
+	_ = viper.BindPFlag(envKeyLogLevel, pflag.Lookup(envKeyLogLevel))
+
+	pflag.Bool(envKeyDisableRedact, false, "Disable redacting sensitive information from logs")
+	_ = viper.BindPFlag(envKeyDisableRedact, pflag.Lookup(envKeyDisableRedact))
+
+	pflag.Bool(envKeyForceHTTPS, false, "Force Stash-VR to use HTTPS")
+	_ = viper.BindPFlag(envKeyForceHTTPS, pflag.Lookup(envKeyForceHTTPS))
+
+	pflag.Bool(envKeyDisableHeatmap, false, "Disable display of funscript heatmaps")
+	_ = viper.BindPFlag(envKeyDisableHeatmap, pflag.Lookup(envKeyDisableHeatmap))
+
+	pflag.Int(envKeyHeatmapHeightPx, 0, "Height of heatmaps")
+	_ = viper.BindPFlag(envKeyHeatmapHeightPx, pflag.Lookup(envKeyHeatmapHeightPx))
+
+	pflag.Bool(envKeyDisablePlayCount, false, "Disable incrementing Stash play count for scenes")
+	_ = viper.BindPFlag(envKeyDisablePlayCount, pflag.Lookup(envKeyDisablePlayCount))
+
+	pflag.String(envKeyStimhubUrl, "", "")
+	_ = viper.BindPFlag(envKeyStimhubUrl, pflag.Lookup(envKeyStimhubUrl))
+
+	pflag.Parse()
+
+	viper.AutomaticEnv()
+
+	cfg.StashGraphQLUrl = viper.GetString(envKeyStashGraphQLUrl)
+	cfg.StashApiKey = viper.GetString(envKeyStashApiKey)
+	cfg.FavoriteTag = viper.GetString(envKeyFavoriteTag)
+	cfg.Filters = viper.GetString(envKeyFilters)
+	cfg.IsSyncMarkersAllowed = viper.GetBool(envKeyAllowSyncMarkers)
+	cfg.LogLevel = strings.ToLower(viper.GetString(envKeyLogLevel))
+	cfg.IsRedactDisabled = viper.GetBool(envKeyDisableRedact)
+	cfg.ForceHTTPS = viper.GetBool(envKeyForceHTTPS)
+	cfg.IsHeatmapDisabled = viper.GetBool(envKeyDisableHeatmap)
+	cfg.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
+	cfg.IsPlayCountDisabled = viper.GetBool(envKeyDisablePlayCount)
+	cfg.StimhubUrl = viper.GetString(envKeyStimhubUrl)
+
+}
 
 func Get() Application {
-	once.Do(func() {
-		logDeprecatedKeysInUse()
-		cfg = Application{
-			StashGraphQLUrl:      getEnvOrDefaultStr(envKeyStashGraphQLUrl, "http://localhost:9999/graphql"),
-			StashApiKey:          getEnvOrDefaultStr(envKeyStashApiKey, ""),
-			FavoriteTag:          getEnvOrDefaultStr(envKeyFavoriteTag, "FAVORITE"),
-			Filters:              getEnvOrDefaultStr(envKeyFilters, ""),
-			IsSyncMarkersAllowed: getEnvOrDefaultBool(envKeyAllowSyncMarkers, false),
-			LogLevel:             strings.ToLower(getEnvOrDefaultStr(envKeyLogLevel, "info")),
-			IsRedactDisabled:     getEnvOrDefaultBool(envKeyDisableRedact, false),
-			ForceHTTPS:           getEnvOrDefaultBool(envKeyForceHTTPS, false),
-			IsHeatmapDisabled:    getEnvOrDefaultBool(envKeyDisableHeatmap, false),
-			HeatmapHeightPx:      getEnvOrDefaultInt(envKeyHeatmapHeightPx, 0),
-			IsPlayCountDisabled:  getEnvOrDefaultBool(envKeyDisablePlayCount, false),
-			StimhubUrl:           getEnvOrDefaultStr(envKeyStimhubUrl, ""),
-		}
-	})
 	return cfg
-}
-
-func logDeprecatedKeysInUse() {
-	for _, key := range deprecatedEnvKeys {
-		val, found := os.LookupEnv(key)
-		if found {
-			log.Warn().Str("key", key).Str("value", val).Msg("Deprecated/removed option found. Ignoring.")
-		}
-	}
-}
-
-func getEnvOrDefaultInt(key string, defaultValue int) int {
-	s, ok := os.LookupEnv(key)
-	if !ok {
-		return defaultValue
-	}
-	val, err := strconv.Atoi(s)
-	if err != nil {
-		log.Fatal().Err(err).Str("key", key).Str("value", s).Msg("Invalid value in environment arguments. Must be an integer.")
-		return 0
-	}
-	return val
-}
-
-func getEnvOrDefaultStr(key string, defaultValue string) string {
-	val, ok := os.LookupEnv(key)
-	if !ok {
-		return defaultValue
-	}
-	return val
-}
-
-func getEnvOrDefaultBool(key string, defaultValue bool) bool {
-	s, ok := os.LookupEnv(key)
-	if !ok {
-		return defaultValue
-	}
-	val, err := strconv.ParseBool(s)
-	if err != nil {
-		log.Fatal().Err(err).Str("key", key).Str("value", s).Msg("Invalid value in environment arguments. Must be a valid boolean (1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False)")
-		return false
-	}
-	return val
-}
-
-func findEnvOrDefault(keys []string, defaultValue string) string {
-	for i, key := range keys {
-		v, ok := os.LookupEnv(key)
-		if ok {
-			if i > 0 {
-				log.Warn().Str("deprecated", key).Str("replace with", keys[0]).Msg("Deprecated env. var. found")
-			}
-			return v
-		}
-	}
-	return defaultValue
 }
 
 func (a Application) Redacted() Application {
