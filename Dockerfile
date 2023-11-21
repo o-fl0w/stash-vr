@@ -22,7 +22,6 @@ FROM alpine:3.18
 
 WORKDIR /app
 
-COPY ./web ./web/
 COPY --from=build /build/stash-vr ./
 
 ENV STASH_GRAPHQL_URL=http://localhost:9999/graphql
