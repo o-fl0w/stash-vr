@@ -45,7 +45,8 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64,linux/arm
           build-args: |
-            BUILD_VERSION=${{ steps.meta.outputs.version }}
+            BUILD_VERSION=${{ steps.meta.outputs.tags }}
+            BUILD_SHA=${{ github.sha }}
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
-	"stash-vr/internal/application"
+	"stash-vr/internal/build"
 	"stash-vr/internal/config"
 	"stash-vr/internal/interrupt"
 	"stash-vr/internal/sections"
@@ -41,7 +41,7 @@ func Run() error {
 }
 
 func logVersions(ctx context.Context, client graphql.Client) {
-	log.Info().Str("Stash-VR version", application.BuildVersion).Send()
+	log.Info().Str("Stash-VR version", build.FullVersion()).Send()
 
 	if version, err := gql.Version(ctx, client); err != nil {
 		log.Warn().Err(err).Msg("Failed to retrieve stash version")
