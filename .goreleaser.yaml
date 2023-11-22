@@ -1,6 +1,6 @@
 project_name: example
 builds:
-  - main: ../../cmd/stash-vr
+  - main: cmd/stash-vr
     ldflags:
       - -X stash-vr/internal/build.Version={{.Version}} -X stash-vr/internal/build.SHA={{.Commit}}
     env:
