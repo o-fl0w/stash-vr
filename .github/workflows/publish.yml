@@ -59,6 +59,7 @@ jobs:
           fetch-depth: 0
       - name: Set up Go
         uses: actions/setup-go@v4
+      - run: go generate ./cmd/stash-vr/
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
