@@ -11,10 +11,14 @@ builds:
       - windows_amd64
       - darwin_amd64
       - darwin_arm64
+checksum:
+  disable: true
+changelog:
+  skip: true
 archives:
   - format: tar.gz
     format_overrides:
       - goos: windows
         format: zip
 release:
-  mode: append
+  mode: keep-existing
