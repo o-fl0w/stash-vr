@@ -5,15 +5,16 @@ builds:
       - -X stash-vr/internal/build.Version={{.Version}} -X stash-vr/internal/build.SHA={{.Commit}}
     env:
       - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
+    targets:
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - darwin_amd64
+      - darwin_arm64
 archives:
   - format: tar.gz
     format_overrides:
       - goos: windows
         format: zip
+release:
+  mode: append

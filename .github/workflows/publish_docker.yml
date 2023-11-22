@@ -1,4 +1,4 @@
-name: Publish Builds
+name: Build and Publish Docker Images
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   push_to_registry:
-    name: Push to Docker Hub
+    name: Docker Hub
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,21 +50,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-  goreleaser:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up Go
-        uses: actions/setup-go@v4
-      - run: go generate ./cmd/stash-vr/
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
