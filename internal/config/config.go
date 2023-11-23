@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	envKeyListenAddress    = "LISTEN_ADDR"
+	envKeyListenAddress    = "LISTEN_ADDRESS"
 	envKeyStashGraphQLUrl  = "STASH_GRAPHQL_URL"
 	envKeyStashApiKey      = "STASH_API_KEY"
 	envKeyFavoriteTag      = "FAVORITE_TAG"

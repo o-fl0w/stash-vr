@@ -40,9 +40,16 @@ After installation open your endpoint (e.g. `http://localhost:9666`) in a regula
 docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
 ```
 
-Stash-VR listens on port `9666`, use docker port binding to change local port, e.g. `-p 9000:9666` to listen on port `9000` instead.
+Stash-VR listens on port `9666` by default. To change local port, use docker port binding, e.g. `-p 9000:9666`, or set env. `LISTEN_ADDRESS=:9000` to listen on port `9000` instead.
 
-#### Configuration
+### Binaries
+Download and extract a binary for your platform. Run `stash-vr -h` to display help.
+
+Example: Connect to Stash running on localhost:9999 with api key XXX and set Stash-VR to listen on port 9000:
+
+`stash-vr --STASH_GRAPHQL_URL=http://localhost:9999/graphql --STASH_API_KEY=XXX --LISTEN_ADDRESS=:9000`
+
+### Configuration
 * `STASH_GRAPHQL_URL`
   * **Required**
   * Url to your Stash graphql - something like `http://<stash.host>:<9999>/graphql`.
