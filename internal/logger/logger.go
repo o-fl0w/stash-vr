@@ -5,21 +5,19 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"os"
-	"stash-vr/internal/config"
 )
 
-func init() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{
-		Out:        os.Stderr,
-		TimeFormat: "Jan 02, 15:04:05",
-	}).With().Str("mod", "default").Logger().Level(zerolog.TraceLevel) //.With().Caller().Logger()
-
-	level, err := zerolog.ParseLevel(config.Get().LogLevel)
+func New(level string, disableColor bool) zerolog.Logger {
+	lvl, err := zerolog.ParseLevel(level)
 	if err != nil {
 		panic(fmt.Sprintf("error parsing log level: %v", err))
 	}
 
-	log.Logger = log.Logger.Level(level)
+	l := log.Output(zerolog.ConsoleWriter{
+		Out:        os.Stderr,
+		TimeFormat: "Jan 02, 15:04:05",
+		NoColor:    disableColor,
+	}).With().Str("mod", "default").Logger().Level(lvl) //.With().Caller().Logger()
 
-	zerolog.DefaultContextLogger = &log.Logger
+	return l
 }

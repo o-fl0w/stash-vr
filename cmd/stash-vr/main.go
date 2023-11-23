@@ -3,15 +3,13 @@
 package main
 
 import (
-	"github.com/rs/zerolog/log"
+	"log"
 	"stash-vr/cmd/stash-vr/internal"
-	_ "stash-vr/internal/logger"
+	"stash-vr/internal/interrupt"
 )
 
 func main() {
-	if err := internal.Run(); err != nil {
-		log.Warn().Err(err).Msg("Application EXIT with ERROR")
-	} else {
-		log.Info().Msg("Application EXIT without error")
+	if err := internal.Run(interrupt.Context()); err != nil {
+		log.Fatal("Application EXIT with ERROR", err)
 	}
 }

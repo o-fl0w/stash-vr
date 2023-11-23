@@ -23,7 +23,7 @@ func Listen(ctx context.Context, listenAddress string, stashClient graphql.Clien
 
 	g.Go(func() error {
 		log.Ctx(ctx).Info().Msg(fmt.Sprintf("Server listening at %s", listenAddress))
-		if err := server.ListenAndServe(); errors.Is(err, http.ErrServerClosed) {
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			return fmt.Errorf("listen: %w", err)
 		}
 		return nil

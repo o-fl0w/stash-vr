@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/build"
 	"stash-vr/internal/config"
-	"stash-vr/internal/interrupt"
+	"stash-vr/internal/logger"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/server"
 	"stash-vr/internal/stash"
@@ -15,10 +16,10 @@ import (
 	"stash-vr/internal/stimhub"
 )
 
-const listenAddress = ":9666"
-
-func Run() error {
-	ctx := interrupt.Context()
+func Run(ctx context.Context) error {
+	config.Init()
+	log.Logger = logger.New(config.Get().LogLevel, config.Get().DisableLogColor)
+	zerolog.DefaultContextLogger = &log.Logger
 
 	log.Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
 
@@ -32,7 +33,7 @@ func Run() error {
 
 	sections.Get(ctx, stashClient, stimhubClient)
 
-	err := server.Listen(ctx, listenAddress, stashClient, stimhubClient)
+	err := server.Listen(ctx, config.Get().ListenAddress, stashClient, stimhubClient)
 	if err != nil {
 		return fmt.Errorf("server: %w", err)
 	}
