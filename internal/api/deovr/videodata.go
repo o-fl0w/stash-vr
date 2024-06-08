@@ -25,6 +25,8 @@ type videoData struct {
 	VideoPreview   string `json:"videoPreview,omitempty"`
 	ThumbnailUrl   string `json:"thumbnailUrl"`
 
+	Subtitles  []subtitle `json:"subtitles"`
+
 	TimeStamps []timeStamp `json:"timeStamps,omitempty"`
 
 	Encodings []encoding `json:"encodings"`
@@ -33,6 +35,11 @@ type videoData struct {
 type timeStamp struct {
 	Ts   int    `json:"ts"`
 	Name string `json:"name"`
+}
+
+type subtitle struct {
+	Title    string `json:"title"`
+	Url      string `json:"url"`
 }
 
 type encoding struct {
@@ -81,10 +88,22 @@ func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, 
 	}
 
 	setStreamSources(ctx, s, &vd)
+	setSubtitles(s, &vd)
 	setMarkers(s, &vd)
 	set3DFormat(s, &vd)
 
 	return vd, nil
+}
+
+func setSubtitles(s gql.SceneFullParts, videoData *videoData) {
+	if s.Captions != nil {
+		for _, c := range s.Captions {
+			videoData.Subtitles = append(videoData.Subtitles, subtitle{
+				Title: fmt.Sprintf(".%s.%s", c.Language_code, c.Caption_type),
+				Url: stash.ApiKeyed(fmt.Sprintf("%s?lang=%s&type=%s", s.Paths.Caption, c.Language_code, c.Caption_type)),
+			})
+		}
+	}
 }
 
 func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {

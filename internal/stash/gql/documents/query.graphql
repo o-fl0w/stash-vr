@@ -149,13 +149,16 @@ fragment ScenePreviewParts on Scene{
 fragment SceneFullParts on Scene{
     ...SceneScanParts
     details,
-    paths{screenshot, preview},
+    paths{screenshot, preview, caption},
     ...ScriptParts
     ...StreamsParts
 }
 
 fragment SceneScanParts on Scene{
     id, title, rating100, created_at, date
+    captions{
+        caption_type, language_code
+    }
     files{
         basename, duration
     }

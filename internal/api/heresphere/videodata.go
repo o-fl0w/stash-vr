@@ -17,24 +17,25 @@ import (
 type videoData struct {
 	Access int `json:"access"`
 
-	Title          string   `json:"title"`
-	Description    string   `json:"description"`
-	ThumbnailImage string   `json:"thumbnailImage"`
-	ThumbnailVideo string   `json:"thumbnailVideo"`
-	DateReleased   string   `json:"dateReleased"`
-	DateAdded      string   `json:"dateAdded"`
-	Duration       float64  `json:"duration"`
-	Rating         float32  `json:"rating"`
-	Favorites      int      `json:"favorites"`
-	IsFavorite     bool     `json:"isFavorite"`
-	Projection     string   `json:"projection"`
-	Stereo         string   `json:"stereo"`
-	Fov            float32  `json:"fov"`
-	Lens           string   `json:"lens"`
-	EventServer    string   `json:"eventServer"`
-	Scripts        []script `json:"scripts"`
-	Tags           []tag    `json:"tags"`
-	Media          []media  `json:"media"`
+	Title          string     `json:"title"`
+	Description    string     `json:"description"`
+	ThumbnailImage string     `json:"thumbnailImage"`
+	ThumbnailVideo string     `json:"thumbnailVideo"`
+	DateReleased   string     `json:"dateReleased"`
+	DateAdded      string     `json:"dateAdded"`
+	Duration       float64    `json:"duration"`
+	Rating         float32    `json:"rating"`
+	Favorites      int        `json:"favorites"`
+	IsFavorite     bool       `json:"isFavorite"`
+	Projection     string     `json:"projection"`
+	Stereo         string     `json:"stereo"`
+	Fov            float32    `json:"fov"`
+	Lens           string     `json:"lens"`
+	EventServer    string     `json:"eventServer"`
+	Subtitles      []subtitle `json:"subtitles"`
+	Scripts        []script   `json:"scripts"`
+	Tags           []tag      `json:"tags"`
+	Media          []media    `json:"media"`
 
 	WriteFavorite bool `json:"writeFavorite"`
 	WriteRating   bool `json:"writeRating"`
@@ -52,6 +53,12 @@ type source struct {
 	Width      int    `json:"width"`
 	Size       int    `json:"size"`
 	Url        string `json:"url"`
+}
+
+type subtitle struct {
+	Name     string `json:"name"`
+	Language string `json:"language"`
+	Url      string `json:"url"`
 }
 
 type script struct {
@@ -111,6 +118,7 @@ func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClie
 	}
 
 	set3DFormat(s, &vd)
+	setSubtitles(s, &vd)
 	setScripts(s, &vd)
 
 	vd.Tags = getTags(s.SceneScanParts)
@@ -145,6 +153,18 @@ func getStimSceneTags(sc stimhub.StimScene) []tag {
 		}
 	}
 	return tags
+}
+
+func setSubtitles(s gql.SceneFullParts, videoData *videoData) {
+	if s.Captions != nil {
+		for _, c := range s.Captions {
+			videoData.Subtitles = append(videoData.Subtitles, subtitle{
+				Name: fmt.Sprintf(".%s.%s", c.Language_code, c.Caption_type),
+				Language: c.Language_code,
+				Url: stash.ApiKeyed(fmt.Sprintf("%s?lang=%s&type=%s", s.Paths.Caption, c.Language_code, c.Caption_type)),
+			})
+		}
+	}
 }
 
 func setScripts(s gql.SceneFullParts, videoData *videoData) {
