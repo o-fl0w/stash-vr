@@ -2,8 +2,11 @@ package heresphere
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
+	"os"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
@@ -14,13 +17,14 @@ import (
 type videoDataRequest struct {
 	Rating           *float32 `json:"rating,omitempty"`
 	IsFavorite       *bool    `json:"isFavorite,omitempty"`
+	HSP              *string  `json:"hsp,omitempty"`
 	Tags             *[]tag   `json:"tags,omitempty"`
 	DeleteFile       *bool    `json:"deleteFile,omitempty"`
 	NeedsMediaSource *bool    `json:"needsMediaSource,omitempty"`
 }
 
 func (v videoDataRequest) isUpdateRequest() bool {
-	return v.Rating != nil || v.IsFavorite != nil || v.Tags != nil
+	return v.Rating != nil || v.IsFavorite != nil || v.Tags != nil || v.HSP != nil
 }
 
 func (v videoDataRequest) isDeleteRequest() bool {
@@ -36,6 +40,10 @@ func update(ctx context.Context, client graphql.Client, sceneId string, updateRe
 
 	if updateReq.Rating != nil {
 		updateRating(ctx, client, sceneId, *updateReq.Rating)
+	}
+
+	if config.Get().HspDir != "" {
+		updateHSP(ctx, client, sceneId, config.Get().HspDir, *updateReq.HSP)
 	}
 
 	if updateReq.IsFavorite != nil {
@@ -129,6 +137,29 @@ func updateRating(ctx context.Context, client graphql.Client, sceneId string, ra
 	}
 
 	log.Ctx(ctx).Debug().Int("rating", newRating).Msg("Updated rating")
+}
+
+func updateHSP(ctx context.Context, client graphql.Client, sceneId string, hspDir string, hspBase64 string) {
+	hsp, err := base64.StdEncoding.DecodeString(hspBase64)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("base64 decode")
+		return
+	}
+
+	hspPath := fmt.Sprintf("%s/%s.hsp", hspDir, sceneId)
+	f, err := os.Create(hspPath)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("create hsp file")
+		return
+	}
+	defer f.Close()
+
+	if _, err := f.Write(hsp); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("write hsp file")
+		return
+	}
+	f.Sync()
+	log.Ctx(ctx).Debug().Msg("Updated HSP")
 }
 
 func updateFavorite(ctx context.Context, client graphql.Client, sceneId string, isFavoriteRequested bool) {

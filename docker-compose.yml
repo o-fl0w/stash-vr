@@ -2,12 +2,14 @@ version: "3.0"
 services:
   stash-vr:
     image: ofl0w/stash-vr:latest
+    #build: .
     container_name: stash-vr
     restart: unless-stopped
     ports:
       - "9666:9666"
     environment:
       STASH_GRAPHQL_URL: "http://localhost:9999/graphql"
+      HSP_DIR: /hsp/
       #STASH_API_KEY: "xxx"
       #FAVORITE_TAG: "FAVORITE"
 
@@ -25,3 +27,5 @@ services:
       #LOG_LEVEL: "debug"
 
       #FORCE_HTTPS: "true"
+    volumes:
+     - ./hsp:/hsp/

@@ -13,6 +13,7 @@ const (
 	envKeyStashApiKey      = "STASH_API_KEY"
 	envKeyFavoriteTag      = "FAVORITE_TAG"
 	envKeyFilters          = "FILTERS"
+	envKeyHspDir           = "HSP_DIR"
 	envKeyLogLevel         = "LOG_LEVEL"
 	envKeyDisableLogColor  = "DISABLE_LOG_COLOR"
 	envKeyDisableRedact    = "DISABLE_REDACT"
@@ -30,6 +31,7 @@ type Application struct {
 	StashApiKey          string
 	FavoriteTag          string
 	Filters              string
+	HspDir               string
 	IsSyncMarkersAllowed bool
 	LogLevel             string
 	DisableLogColor      bool
@@ -58,6 +60,9 @@ func Init() {
 
 	pflag.String(envKeyFilters, "", "Narrow the selection of filters to show. Either 'frontpage' or a comma seperated list of filter ids")
 	_ = viper.BindPFlag(envKeyFilters, pflag.Lookup(envKeyFilters))
+
+	pflag.String(envKeyHspDir, "", "Directory for Heresphere HSP files")
+	_ = viper.BindPFlag(envKeyHspDir, pflag.Lookup(envKeyHspDir))
 
 	pflag.Bool(envKeyAllowSyncMarkers, false, "Enable sync of Marker from HereSphere")
 	_ = viper.BindPFlag(envKeyAllowSyncMarkers, pflag.Lookup(envKeyAllowSyncMarkers))
@@ -103,6 +108,7 @@ func Init() {
 	cfg.StashApiKey = viper.GetString(envKeyStashApiKey)
 	cfg.FavoriteTag = viper.GetString(envKeyFavoriteTag)
 	cfg.Filters = viper.GetString(envKeyFilters)
+	cfg.HspDir = viper.GetString(envKeyHspDir)
 	cfg.IsSyncMarkersAllowed = viper.GetBool(envKeyAllowSyncMarkers)
 	cfg.LogLevel = strings.ToLower(viper.GetString(envKeyLogLevel))
 	cfg.DisableLogColor = viper.GetBool(envKeyDisableLogColor)

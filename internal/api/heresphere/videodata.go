@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"os"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
@@ -32,11 +33,13 @@ type videoData struct {
 	Fov            float32  `json:"fov"`
 	Lens           string   `json:"lens"`
 	EventServer    string   `json:"eventServer"`
+	HSP            string   `json:"hsp,omitempty"`
 	Scripts        []script `json:"scripts"`
 	Tags           []tag    `json:"tags"`
 	Media          []media  `json:"media"`
 
 	WriteFavorite bool `json:"writeFavorite"`
+	WriteHSP      bool `json:"writeHSP"`
 	WriteRating   bool `json:"writeRating"`
 	WriteTags     bool `json:"writeTags"`
 }
@@ -98,6 +101,7 @@ func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClie
 		Rating:         float32(s.Rating100) / 20,
 		Favorites:      s.O_counter,
 		WriteFavorite:  true,
+		WriteHSP:       config.Get().HspDir != "",
 		WriteRating:    true,
 		WriteTags:      true,
 	}
@@ -108,6 +112,12 @@ func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClie
 		setMediaSources(ctx, s, &vd)
 	} else {
 		vd.Media = []media{{Sources: []source{{}}}}
+	}
+
+	if config.Get().HspDir != "" {
+		if _, err := os.Stat(fmt.Sprintf("%s/%s.hsp", config.Get().HspDir, sceneId)); err == nil {
+			vd.HSP = getHspDataUrl(baseUrl, sceneId)
+		}
 	}
 
 	set3DFormat(s, &vd)

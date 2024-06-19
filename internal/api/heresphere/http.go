@@ -93,6 +93,16 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 	}
 }
 
+func (h *httpHandler) videoHspHandler(hspDir string) http.HandlerFunc {
+	filesDir := http.Dir(hspDir)
+	return func(w http.ResponseWriter, r *http.Request) {
+		sceneId := chi.URLParam(r, "videoId")
+		r.URL.Path = sceneId + ".hsp"
+		fs := http.FileServer(filesDir)
+		fs.ServeHTTP(w, r)
+	}
+}
+
 func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
