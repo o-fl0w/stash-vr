@@ -25,7 +25,7 @@ type videoData struct {
 	VideoPreview   string `json:"videoPreview,omitempty"`
 	ThumbnailUrl   string `json:"thumbnailUrl"`
 
-	Subtitles  []subtitle `json:"subtitles"`
+	Subtitles []subtitle `json:"subtitles"`
 
 	TimeStamps []timeStamp `json:"timeStamps,omitempty"`
 
@@ -38,8 +38,8 @@ type timeStamp struct {
 }
 
 type subtitle struct {
-	Title    string `json:"title"`
-	Url      string `json:"url"`
+	Title string `json:"title"`
+	Url   string `json:"url"`
 }
 
 type encoding struct {
@@ -100,7 +100,7 @@ func setSubtitles(s gql.SceneFullParts, videoData *videoData) {
 		for _, c := range s.Captions {
 			videoData.Subtitles = append(videoData.Subtitles, subtitle{
 				Title: fmt.Sprintf(".%s.%s", c.Language_code, c.Caption_type),
-				Url: stash.ApiKeyed(fmt.Sprintf("%s?lang=%s&type=%s", s.Paths.Caption, c.Language_code, c.Caption_type)),
+				Url:   stash.ApiKeyed(fmt.Sprintf("%s?lang=%s&type=%s", s.Paths.Caption, c.Language_code, c.Caption_type)),
 			})
 		}
 	}

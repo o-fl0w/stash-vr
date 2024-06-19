@@ -159,9 +159,9 @@ func setSubtitles(s gql.SceneFullParts, videoData *videoData) {
 	if s.Captions != nil {
 		for _, c := range s.Captions {
 			videoData.Subtitles = append(videoData.Subtitles, subtitle{
-				Name: fmt.Sprintf(".%s.%s", c.Language_code, c.Caption_type),
+				Name:     fmt.Sprintf(".%s.%s", c.Language_code, c.Caption_type),
 				Language: c.Language_code,
-				Url: stash.ApiKeyed(fmt.Sprintf("%s?lang=%s&type=%s", s.Paths.Caption, c.Language_code, c.Caption_type)),
+				Url:      stash.ApiKeyed(fmt.Sprintf("%s?lang=%s&type=%s", s.Paths.Caption, c.Language_code, c.Caption_type)),
 			})
 		}
 	}
