@@ -37,7 +37,7 @@ func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc boo
 	}
 
 	switch fsp.Files[0].Video_codec {
-	case "h264", "hevc", "h265", "mpeg4":
+	case "h264", "hevc", "h265", "mpeg4", "av1":
 		streams[0] = Stream{
 			Name:    "transcoding",
 			Sources: getSources(ctx, fsp, "MP4", "Direct stream", sortResolutionAsc),

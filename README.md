@@ -25,11 +25,15 @@ It's lightweight, optionally configurable and has support for two-way sync.
   * Generate categorized tags
   * Delete scenes
   * Funscript
+  * IVDB Script Tokens support (Add IVDB.io url to video, Only for HereSphere right now)
 * DeoVR
   * Markers
 
 ## Installation
-Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-vr/tags).
+~~Container images available at [docker hub](https://hub.docker.com/r/ofl0w/stash-vr/tags).~~
+You will need to build this custom version with docker by running `docker build . --tag stash-vr`
+
+
 
 For details or docker compose see [docker_compose.yml](docker-compose.yml).
 

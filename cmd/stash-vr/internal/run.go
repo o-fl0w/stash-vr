@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/build"
 	"stash-vr/internal/config"
+	"stash-vr/internal/ivdb"
 	"stash-vr/internal/logger"
 	"stash-vr/internal/sections"
 	"stash-vr/internal/server"
@@ -24,6 +25,10 @@ func Run(ctx context.Context) error {
 	log.Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
 
 	stashClient := stash.NewClient(config.Get().StashGraphQLUrl, config.Get().StashApiKey)
+	ivdbClient, err := ivdb.NewClient(ctx, stashClient)
+	if err != nil {
+		return fmt.Errorf("server: %w", err)
+	}
 	logVersions(ctx, stashClient)
 
 	var stimhubClient *stimhub.Client
@@ -33,7 +38,7 @@ func Run(ctx context.Context) error {
 
 	sections.Get(ctx, stashClient, stimhubClient)
 
-	err := server.Listen(ctx, config.Get().ListenAddress, stashClient, stimhubClient)
+	err = server.Listen(ctx, config.Get().ListenAddress, stashClient, stimhubClient, ivdbClient)
 	if err != nil {
 		return fmt.Errorf("server: %w", err)
 	}

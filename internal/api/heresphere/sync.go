@@ -170,7 +170,13 @@ func updateFavorite(ctx context.Context, client graphql.Client, sceneId string, 
 		log.Ctx(ctx).Warn().Err(err).Bool("isFavorite", isFavoriteRequested).Interface("newTagIds", newTagIds).Msg("Failed to update favorite: SceneUpdateTags")
 		return
 	}
+	oCountResponse, err := gql.SceneUpdateOCounter(ctx, client, sceneId)
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to update favorite: SceneUpdateTags")
+		return
+	}
 
+	log.Ctx(ctx).Debug().Int("O Counter", oCountResponse.SceneAddO.Count).Msg("O Counter Updated")
 	log.Ctx(ctx).Debug().Bool("isFavorite", isFavoriteRequested).Msg("Updated favorite")
 }
 

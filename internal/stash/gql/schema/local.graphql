@@ -557,6 +557,9 @@ type MarkerStringsResultType {
     id: ID!
     title: String!
 }
+type SceneAddOResultType{
+  count: Int!
+}
 
 type Movie {
     aliases: String
@@ -730,6 +733,7 @@ type Mutation {
     tagUpdate(input: TagUpdateInput!): Tag
     tagsDestroy(ids: [ID!]!): Boolean!
     tagsMerge(input: TagsMergeInput!): Tag
+    sceneAddO(id: ID!):SceneAddOResultType
 }
 
 type Performer {

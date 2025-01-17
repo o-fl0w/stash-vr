@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"net/url"
 	"stash-vr/internal/api/internal"
+	"stash-vr/internal/ivdb"
 )
 
-func Router(client graphql.Client) http.Handler {
-	httpHandler := httpHandler{StashClient: client}
+func Router(client graphql.Client, ivdb *ivdb.Client) http.Handler {
+	httpHandler := httpHandler{StashClient: client, IVDBClient: ivdb}
 	r := chi.NewRouter()
 	r.Use(middleware.SetHeader("HereSphere-JSON-Version", "1"))
 	r.Post("/", internal.LogRoute("index", httpHandler.indexHandler))

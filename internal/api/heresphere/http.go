@@ -9,12 +9,14 @@ import (
 	"net/url"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
+	"stash-vr/internal/ivdb"
 	"stash-vr/internal/stimhub"
 )
 
 type httpHandler struct {
 	StashClient   graphql.Client
 	StimhubClient *stimhub.Client
+	IVDBClient    *ivdb.Client
 }
 
 func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
@@ -82,7 +84,7 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 
 	var includeMediaSource = vdReq.NeedsMediaSource == nil || *vdReq.NeedsMediaSource
 
-	data, err := buildVideoData(ctx, h.StashClient, h.StimhubClient, baseUrl, videoId, includeMediaSource)
+	data, err := buildVideoData(ctx, h.StashClient, h.StimhubClient, h.IVDBClient, baseUrl, videoId, includeMediaSource)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("build")
 		w.WriteHeader(http.StatusInternalServerError)

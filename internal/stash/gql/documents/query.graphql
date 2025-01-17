@@ -7,6 +7,10 @@ query Version{
 query UIConfiguration{
     configuration{
         ui
+        interface {
+         handyKey
+        }
+
     }
 }
 
@@ -202,6 +206,7 @@ fragment StreamsParts on Scene{
 fragment ScriptParts on Scene{
     interactive
     interactive_speed
+    urls
     paths {
         funscript
         screenshot

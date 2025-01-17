@@ -8,15 +8,16 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 	"net/http"
+	"stash-vr/internal/ivdb"
 	"stash-vr/internal/router"
 	"stash-vr/internal/stimhub"
 	"time"
 )
 
-func Listen(ctx context.Context, listenAddress string, stashClient graphql.Client, stimhubClient *stimhub.Client) error {
+func Listen(ctx context.Context, listenAddress string, stashClient graphql.Client, stimhubClient *stimhub.Client, ivdbClient *ivdb.Client) error {
 	server := http.Server{
 		Addr:    listenAddress,
-		Handler: router.Build(stashClient, stimhubClient),
+		Handler: router.Build(stashClient, stimhubClient, ivdbClient),
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)

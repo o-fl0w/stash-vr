@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/Khan/genqlient/graphql"
+	"github.com/rs/zerolog/log"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
+	"stash-vr/internal/ivdb"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/stimhub"
 	"stash-vr/internal/util"
+	"strings"
 	"time"
 )
 
@@ -59,7 +62,7 @@ type script struct {
 	Url  string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client, baseUrl string, videoId string, includeMediaSource bool) (videoData, error) {
+func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client, ivdbClient *ivdb.Client, baseUrl string, videoId string, includeMediaSource bool) (videoData, error) {
 	sceneId, audioCrc32, isStimScene := stimhub.SplitStimSceneId(videoId)
 
 	if isStimScene && stimhubClient == nil {
@@ -111,7 +114,9 @@ func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClie
 	}
 
 	set3DFormat(s, &vd)
-	setScripts(s, &vd)
+	if !maybeSetHandyTokenScriptUrl(s, &vd, ivdbClient) {
+		setScripts(s, &vd)
+	}
 
 	vd.Tags = getTags(s.SceneScanParts)
 
@@ -131,6 +136,30 @@ func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClie
 	return vd, nil
 }
 
+func maybeSetHandyTokenScriptUrl(s gql.SceneFullParts, videoData *videoData, ivdbClient *ivdb.Client) bool {
+	url := ""
+	for _, v := range s.Urls {
+		if strings.Contains(v, "ivdb.io") {
+			url = v
+			break
+		}
+	}
+	if url == "" {
+		return false
+	}
+	tokenURL, err := ivdbClient.GetTokenUrlFromUrl(url)
+	if err != nil {
+		log.Ctx(ivdbClient.Ctx).Debug().Err(err).Msg("Couldn't fetch tokenURL")
+		return false
+	}
+
+	videoData.Scripts = append(videoData.Scripts, script{
+		Name: "Script-" + s.Title,
+		Url:  tokenURL,
+	})
+	log.Ctx(ivdbClient.Ctx).Debug().Str("tokenURL", tokenURL).Msg("Fetched IVDB TokenURL")
+	return true
+}
 func getStimSceneTags(sc stimhub.StimScene) []tag {
 	tags := make([]tag, 1+len(sc.FileNames))
 

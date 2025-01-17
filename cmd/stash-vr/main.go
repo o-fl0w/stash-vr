@@ -1,4 +1,5 @@
 //go:generate go run github.com/Khan/genqlient ../../internal/stash/gql/genqlient.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=oapi.yaml https://scripts01.handyfeeling.com/api/script/index/v0/spec
 
 package main
 

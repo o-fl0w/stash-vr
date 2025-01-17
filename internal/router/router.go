@@ -11,13 +11,14 @@ import (
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/api/web"
 	"stash-vr/internal/config"
+	"stash-vr/internal/ivdb"
 	"stash-vr/internal/stimhub"
 	"stash-vr/internal/util"
 	"strings"
 	"time"
 )
 
-func Build(stashClient graphql.Client, stimhubClient *stimhub.Client) *chi.Mux {
+func Build(stashClient graphql.Client, stimhubClient *stimhub.Client, ivdbClient *ivdb.Client) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Use(requestLogger)
@@ -26,7 +27,7 @@ func Build(stashClient graphql.Client, stimhubClient *stimhub.Client) *chi.Mux {
 
 	//router.Mount("/debug", middleware.Profiler())
 
-	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(stashClient)))
+	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(stashClient, ivdbClient)))
 	router.Mount("/deovr", logMod("deovr", deovr.Router(stashClient)))
 
 	router.Get("/", rootHandler(stashClient, stimhubClient))

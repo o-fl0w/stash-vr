@@ -33,6 +33,14 @@ mutation SceneUpdatePerformers($id: ID!, $performer_ids: [ID!]) {
     }){id}
 }
 
+mutation SceneUpdateOCounter($id: ID!){
+sceneAddO(id: $id) {
+    count
+  }
+
+
+}
+
 mutation TagCreate($name: String!){
     tagCreate(input: {name: $name}){id}
 }
