@@ -2,7 +2,6 @@ package heresphere
 
 import (
 	"fmt"
-	"slices"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/library"
@@ -30,23 +29,24 @@ func getTags(vd *library.VideoData) []tagDto {
 		tracks = append(tracks, stashTags)
 	}
 
+	glanceTags := make([]tagDto, 0, 1)
+	if studio := getStudio(vd); studio != nil {
+		glanceTags = append(glanceTags, *studio)
+	}
+	if groups := getGroups(vd); len(groups) > 0 {
+		glanceTags = append(glanceTags, groups...)
+	}
+	if meta := getFields(vd); len(meta) > 0 {
+		glanceTags = append(glanceTags, meta...)
+	}
+	if len(glanceTags) > 0 {
+		equallyDivideTagDurations(duration, glanceTags)
+		tracks = append(tracks, glanceTags)
+	}
+
 	if performers := getPerformers(vd); len(performers) > 0 {
 		equallyDivideTagDurations(duration, performers)
 		tracks = append(tracks, performers)
-	}
-
-	sceneData := getGroups(vd)
-	if studio := getStudio(vd); studio != nil {
-		sceneData = slices.Insert(sceneData, 0, *studio)
-	}
-	if len(sceneData) > 0 {
-		equallyDivideTagDurations(duration, sceneData)
-		tracks = append(tracks, sceneData)
-	}
-
-	if metaFields := getFields(vd); len(metaFields) > 0 {
-		equallyDivideTagDurations(duration, metaFields)
-		tracks = append(tracks, metaFields)
 	}
 
 	markers := getMarkers(vd)
@@ -99,7 +99,10 @@ func getStudio(vd *library.VideoData) *tagDto {
 
 func getFields(vd *library.VideoData) []tagDto {
 	tags := make([]tagDto, 0)
-	tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%v", internal.LegendMetaOrganized, seperator, vd.SceneParts.Organized)})
+
+	if vd.SceneParts.Organized {
+		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%strue", internal.LegendMetaOrganized, seperator)})
+	}
 
 	if vd.SceneParts.Play_count != nil {
 		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%d", internal.LegendMetaPlayCount, seperator, *vd.SceneParts.Play_count)})

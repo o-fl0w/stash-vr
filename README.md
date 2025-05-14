@@ -87,7 +87,7 @@ This will create the tag `MusicVideo` in Stash if not already present and apply 
 
 Studios, performers and groups from Stash are displayed (read only) in HereSphere as:
 
-- `$:`Studio
+- `Studio:`Studio
 - `@:`Performer
 - `%:`Group
 
