@@ -65,9 +65,6 @@ Example: Connect to Stash running on localhost:9999 with api key XXX and set Sta
 * `FAVORITE_TAG`
   * Default: `FAVORITE`
   * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
-* `DISABLE_HEATMAP`
-  * Default: `false`
-  * Disable display of funscript heatmaps. Shown by default if available, as a small bar on the preview thumbnail.
 * `HEATMAP_HEIGHT_PX`
   * Default: 0 (use height of heatmap)
   * Manually set height of all heatmaps. If not set, height of the heatmap retrieved from Stash will be used, currently 15 by default.
