@@ -4,7 +4,7 @@ var (
 	LegendTag       = "#"
 	LegendPerformer = "@"
 
-	LegendSceneStudio = "$"
+	LegendSceneStudio = "Studio"
 	LegendSceneGroup  = "%"
 
 	LegendMetaOCount    = "O-Count"
