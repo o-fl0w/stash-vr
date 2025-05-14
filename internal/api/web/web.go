@@ -43,7 +43,6 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 			Version:                 build.FullVersion(),
 			LogLevel:                config.Get().LogLevel,
 			ForceHTTPS:              config.Get().ForceHTTPS,
-			IsSyncMarkersAllowed:    config.Get().IsSyncMarkersAllowed,
 			StashGraphQLUrl:         config.Get().StashGraphQLUrl,
 			IsApiKeyProvided:        config.Get().StashApiKey != "",
 			StashConnectionResponse: fail,

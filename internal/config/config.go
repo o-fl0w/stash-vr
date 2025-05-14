@@ -18,23 +18,21 @@ const (
 	envKeyDisableRedact    = "DISABLE_REDACT"
 	envKeyForceHTTPS       = "FORCE_HTTPS"
 	envKeyHeatmapHeightPx  = "HEATMAP_HEIGHT_PX"
-	envKeyAllowSyncMarkers = "ALLOW_SYNC_MARKERS"
 	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
 )
 
 type Application struct {
-	ListenAddress        string
-	StashGraphQLUrl      string
-	StashApiKey          string
-	FavoriteTag          string
-	Filters              string
-	IsSyncMarkersAllowed bool
-	LogLevel             string
-	DisableLogColor      bool
-	IsRedactDisabled     bool
-	ForceHTTPS           bool
-	HeatmapHeightPx      int
-	IsPlayCountDisabled  bool
+	ListenAddress       string
+	StashGraphQLUrl     string
+	StashApiKey         string
+	FavoriteTag         string
+	Filters             string
+	LogLevel            string
+	DisableLogColor     bool
+	IsRedactDisabled    bool
+	ForceHTTPS          bool
+	HeatmapHeightPx     int
+	IsPlayCountDisabled bool
 }
 
 var cfg Application
@@ -54,9 +52,6 @@ func Init() {
 
 	pflag.String(envKeyFilters, "", "Narrow the selection of filters to show. Either 'frontpage' or a comma seperated list of filter ids")
 	_ = viper.BindPFlag(envKeyFilters, pflag.Lookup(envKeyFilters))
-
-	pflag.Bool(envKeyAllowSyncMarkers, false, "Enable sync of Marker from HereSphere")
-	_ = viper.BindPFlag(envKeyAllowSyncMarkers, pflag.Lookup(envKeyAllowSyncMarkers))
 
 	pflag.String(envKeyLogLevel, "info", "Set log level - trace, debug, warn, info or error")
 	_ = viper.BindPFlag(envKeyLogLevel, pflag.Lookup(envKeyLogLevel))
@@ -93,7 +88,6 @@ func Init() {
 	cfg.StashApiKey = viper.GetString(envKeyStashApiKey)
 	cfg.FavoriteTag = viper.GetString(envKeyFavoriteTag)
 	cfg.Filters = viper.GetString(envKeyFilters)
-	cfg.IsSyncMarkersAllowed = viper.GetBool(envKeyAllowSyncMarkers)
 	cfg.LogLevel = strings.ToLower(viper.GetString(envKeyLogLevel))
 	cfg.DisableLogColor = viper.GetBool(envKeyDisableLogColor)
 	cfg.IsRedactDisabled = viper.GetBool(envKeyDisableRedact)
