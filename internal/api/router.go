@@ -1,7 +1,6 @@
-package router
+package api
 
 import (
-	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
@@ -11,13 +10,13 @@ import (
 	"stash-vr/internal/api/heresphere"
 	"stash-vr/internal/api/web"
 	"stash-vr/internal/config"
-	"stash-vr/internal/stimhub"
+	"stash-vr/internal/library"
 	"stash-vr/internal/util"
 	"strings"
 	"time"
 )
 
-func Build(stashClient graphql.Client, stimhubClient *stimhub.Client) *chi.Mux {
+func Router(libraryService *library.Service) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Use(requestLogger)
@@ -26,30 +25,15 @@ func Build(stashClient graphql.Client, stimhubClient *stimhub.Client) *chi.Mux {
 
 	//router.Mount("/debug", middleware.Profiler())
 
-	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(stashClient)))
-	router.Mount("/deovr", logMod("deovr", deovr.Router(stashClient)))
+	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(libraryService)))
+	router.Mount("/deovr", logMod("deovr", deovr.Router(libraryService)))
 
-	router.Get("/", rootHandler(stashClient, stimhubClient))
+	router.Get("/", logMod("web", web.IndexHandler(libraryService)).ServeHTTP)
 	router.Get("/*", logMod("static", staticHandler()).ServeHTTP)
 
-	if !config.Get().IsHeatmapDisabled {
-		router.Get("/cover/{videoId}", logMod("heatmap", heatmap.CoverHandler(stashClient)).ServeHTTP)
-	}
+	router.Get("/cover/{videoId}", logMod("heatmap", heatmap.CoverHandler(libraryService)).ServeHTTP)
 
 	return router
-}
-
-func rootHandler(stashClient graphql.Client, stimhubClient *stimhub.Client) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userAgent := r.Header.Get("User-Agent")
-
-		if strings.Contains(userAgent, "HereSphere") {
-			log.Ctx(r.Context()).Trace().Msg("Redirecting to /heresphere")
-			http.Redirect(w, r, "/heresphere", 307)
-		} else {
-			logMod("web", web.IndexHandler(stashClient, stimhubClient)).ServeHTTP(w, r)
-		}
-	}
 }
 
 func logMod(value string, next http.Handler) http.Handler {
@@ -80,4 +64,14 @@ func requestLogger(next http.Handler) http.Handler {
 			Dur("ms", time.Since(start)).
 			Msg("Request handled")
 	})
+}
+
+func staticHandler() http.HandlerFunc {
+	filesDir := http.Dir("./web/static")
+	return func(w http.ResponseWriter, r *http.Request) {
+		rCtx := chi.RouteContext(r.Context())
+		pathPrefix := strings.TrimSuffix(rCtx.RoutePattern(), "/*")
+		fs := http.StripPrefix(pathPrefix, http.FileServer(filesDir))
+		fs.ServeHTTP(w, r)
+	}
 }

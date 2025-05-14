@@ -5,52 +5,66 @@ import (
 	"strings"
 )
 
-type errKeyNotFound struct {
-	keys []string
-	root map[string]any
-}
-
-func (e errKeyNotFound) Error() string {
-	return fmt.Sprintf("required key '%s' not found in '%v'", e.keys, e.root)
-}
-
-func getAsString(root map[string]any, keyPath string) (string, error) {
-	s, err := get[string](root, keyPath)
-	if err != nil {
-		a, err := get[any](root, keyPath)
-		if err != nil {
-			return "", err
-		}
-		s = fmt.Sprintf("%v", a)
+func Get[T any](m any, path string) *T {
+	m, ok := m.(map[string]interface{})
+	if !ok {
+		return nil
 	}
-	return s, nil
-}
+	parts := strings.Split(path, ".")
+	var current = m
 
-func get[T any](root map[string]any, keyPath string) (T, error) {
-	var t T
-	keys := strings.Split(keyPath, ".")
-	key := keys[0]
-	if len(keys) > 1 {
-		m, ok := root[key].(map[string]any)
+	for _, key := range parts {
+		node, ok := current.(map[string]interface{})
 		if !ok {
-			return t, errKeyNotFound{
-				keys: keys,
-				root: root,
-			}
+			return nil
 		}
-		restPath, _ := strings.CutPrefix(keyPath, key+".")
-		return get[T](m, restPath)
-	}
-	v, ok := root[key]
-	if !ok {
-		return t, errKeyNotFound{
-			keys: keys,
-			root: root,
+		val, exists := node[key]
+		if !exists {
+			return nil
 		}
+		current = val
 	}
-	r, ok := v.(T)
-	if !ok {
-		return t, fmt.Errorf("expected '%T' but found '%T' for path '%v' in '%v'", t, v, keyPath, root)
+
+	var zero T
+	switch any(zero).(type) {
+	case string:
+		var out string
+		if s, ok := current.(string); ok {
+			out = s
+		} else {
+			out = fmt.Sprintf("%v", current)
+		}
+		v := any(out).(T)
+		return &v
+
+	case int:
+		switch num := current.(type) {
+		case float64:
+			out := int(num)
+			r := any(out).(T)
+			return &r
+		case float32:
+			out := int(num)
+			r := any(out).(T)
+			return &r
+		case int:
+			r := any(num).(T)
+			return &r
+		default:
+			return nil
+		}
+
+	default:
+		if v, ok := current.(T); ok {
+			return &v
+		}
+		return nil
 	}
-	return r, nil
+}
+
+func GetOr[T any](m any, path string, def T) T {
+	if v := Get[T](m, path); v != nil {
+		return *v
+	}
+	return def
 }

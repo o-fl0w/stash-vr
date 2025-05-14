@@ -1,102 +1,91 @@
 package deovr
 
 import (
-	"context"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/api/heatmap"
-	"stash-vr/internal/config"
+	"stash-vr/internal/library"
 	"stash-vr/internal/stash"
-	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/util"
 	"strings"
 )
 
-type videoData struct {
-	Authorized     string `json:"authorized"`
-	FullAccess     bool   `json:"fullAccess"`
-	Title          string `json:"title"`
-	Id             string `json:"id"`
-	VideoLength    int    `json:"videoLength"`
-	Is3d           bool   `json:"is3d"`
-	ScreenType     string `json:"screenType"`
-	StereoMode     string `json:"stereoMode"`
-	SkipIntro      int    `json:"skipIntro"`
-	VideoThumbnail string `json:"videoThumbnail,omitempty"`
-	VideoPreview   string `json:"videoPreview,omitempty"`
-	ThumbnailUrl   string `json:"thumbnailUrl"`
+type videoDataDto struct {
+	Authorized     string  `json:"authorized"`
+	FullAccess     bool    `json:"fullAccess"`
+	Title          string  `json:"title"`
+	Id             string  `json:"id"`
+	VideoLength    int     `json:"videoLength"`
+	Is3d           bool    `json:"is3d"`
+	ScreenType     string  `json:"screenType"`
+	StereoMode     string  `json:"stereoMode"`
+	SkipIntro      int     `json:"skipIntro"`
+	VideoThumbnail *string `json:"videoThumbnail,omitempty"`
+	VideoPreview   *string `json:"videoPreview,omitempty"`
+	ThumbnailUrl   *string `json:"thumbnailUrl"`
 
-	TimeStamps []timeStamp `json:"timeStamps,omitempty"`
+	TimeStamps []timeStampDto `json:"timeStamps,omitempty"`
 
-	Encodings []encoding `json:"encodings"`
+	Encodings []encodingDto `json:"encodings"`
 }
 
-type timeStamp struct {
+type timeStampDto struct {
 	Ts   int    `json:"ts"`
 	Name string `json:"name"`
 }
 
-type encoding struct {
-	Name         string        `json:"name"`
-	VideoSources []videoSource `json:"videoSources"`
+type encodingDto struct {
+	Name         string           `json:"name"`
+	VideoSources []videoSourceDto `json:"videoSources"`
 }
 
-type videoSource struct {
+type videoSourceDto struct {
 	Resolution int    `json:"resolution"`
 	Url        string `json:"url"`
 }
 
-func buildVideoData(ctx context.Context, client graphql.Client, baseUrl string, sceneId string) (videoData, error) {
-	findSceneResponse, err := gql.FindSceneFull(ctx, client, sceneId)
-	if err != nil {
-		return videoData{}, fmt.Errorf("FindScene: %w", err)
-	}
-	if findSceneResponse.FindScene == nil {
-		return videoData{}, fmt.Errorf("FindScene: not found")
-	}
-	s := findSceneResponse.FindScene.SceneFullParts
-
-	if len(s.SceneScanParts.Files) == 0 {
-		return videoData{}, fmt.Errorf("scene %s has no files", sceneId)
+func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error) {
+	videoId := vd.Id()
+	if len(vd.SceneParts.Files) == 0 {
+		return nil, fmt.Errorf("scene %s has no files", videoId)
 	}
 
-	thumbnailUrl := stash.ApiKeyed(s.Paths.Screenshot)
-	if !config.Get().IsHeatmapDisabled && s.ScriptParts.Interactive && s.ScriptParts.Paths.Interactive_heatmap != "" {
-		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
+	dto := videoDataDto{
+		Authorized:  "1",
+		FullAccess:  true,
+		Title:       vd.Title(),
+		Id:          videoId,
+		VideoLength: int(vd.SceneParts.Files[0].Duration),
+		SkipIntro:   0,
 	}
 
-	title := s.Title
-	if title == "" {
-		title = s.SceneScanParts.Files[0].Basename
+	if vd.SceneParts.Paths.Screenshot != nil {
+		if vd.SceneParts.Interactive && vd.SceneParts.Paths.Interactive_heatmap != nil {
+			dto.ThumbnailUrl = util.Ptr(heatmap.GetCoverUrl(baseUrl, videoId))
+		} else {
+			dto.ThumbnailUrl = util.Ptr(stash.ApiKeyed(*vd.SceneParts.Paths.Screenshot))
+		}
 	}
 
-	vd := videoData{
-		Authorized:   "1",
-		FullAccess:   true,
-		Title:        title,
-		Id:           s.Id,
-		VideoLength:  int(s.SceneScanParts.Files[0].Duration),
-		SkipIntro:    0,
-		VideoPreview: stash.ApiKeyed(s.Paths.Preview),
-		ThumbnailUrl: thumbnailUrl,
+	if vd.SceneParts.Paths.Preview != nil {
+		dto.VideoPreview = util.Ptr(stash.ApiKeyed(*vd.SceneParts.Paths.Preview))
 	}
 
-	setStreamSources(ctx, s, &vd)
-	setMarkers(s, &vd)
-	set3DFormat(s, &vd)
+	setStreamSources(vd, &dto)
+	setMarkers(vd, &dto)
 
-	return vd, nil
+	return &dto, nil
 }
 
-func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {
-	streams := stash.GetStreams(ctx, s.StreamsParts, false)
-	videoData.Encodings = make([]encoding, len(streams))
+func setStreamSources(vd *library.VideoData, dto *videoDataDto) {
+	streams := stash.GetStreams(vd.SceneParts)
+	dto.Encodings = make([]encodingDto, len(streams))
 	for i, stream := range streams {
-		videoData.Encodings[i] = encoding{
+		dto.Encodings[i] = encodingDto{
 			Name:         stream.Name,
-			VideoSources: make([]videoSource, len(stream.Sources)),
+			VideoSources: make([]videoSourceDto, len(stream.Sources)),
 		}
 		for j, source := range stream.Sources {
-			videoData.Encodings[i].VideoSources[j] = videoSource{
+			dto.Encodings[i].VideoSources[j] = videoSourceDto{
 				Resolution: source.Resolution,
 				Url:        source.Url,
 			}
@@ -104,58 +93,18 @@ func setStreamSources(ctx context.Context, s gql.SceneFullParts, videoData *vide
 	}
 }
 
-func setMarkers(s gql.SceneFullParts, videoData *videoData) {
-	for _, sm := range s.Scene_markers {
+func setMarkers(vd *library.VideoData, dto *videoDataDto) {
+	for _, sm := range vd.SceneParts.Scene_markers {
 		sb := strings.Builder{}
 		sb.WriteString(sm.Primary_tag.Name)
 		if sm.Title != "" {
 			sb.WriteString(":")
 			sb.WriteString(sm.Title)
 		}
-		ts := timeStamp{
+		ts := timeStampDto{
 			Ts:   int(sm.Seconds),
 			Name: sb.String(),
 		}
-		videoData.TimeStamps = append(videoData.TimeStamps, ts)
-	}
-}
-
-func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
-	for _, tag := range s.Tags {
-		switch tag.Name {
-		case "DOME":
-			videoData.Is3d = true
-			videoData.ScreenType = "dome"
-			videoData.StereoMode = "sbs"
-			continue
-		case "SPHERE":
-			videoData.Is3d = true
-			videoData.ScreenType = "sphere"
-			videoData.StereoMode = "sbs"
-			continue
-		case "FISHEYE":
-			videoData.Is3d = true
-			videoData.ScreenType = "fisheye"
-			videoData.StereoMode = "sbs"
-			continue
-		case "MKX200":
-			videoData.Is3d = true
-			videoData.ScreenType = "mkx200"
-			videoData.StereoMode = "sbs"
-			continue
-		case "RF52":
-			videoData.Is3d = true
-			videoData.ScreenType = "rf52"
-			videoData.StereoMode = "sbs"
-			continue
-		case "SBS":
-			videoData.Is3d = true
-			videoData.StereoMode = "sbs"
-			continue
-		case "TB":
-			videoData.Is3d = true
-			videoData.StereoMode = "tb"
-			continue
-		}
+		dto.TimeStamps = append(dto.TimeStamps, ts)
 	}
 }

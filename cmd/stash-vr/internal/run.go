@@ -8,12 +8,11 @@ import (
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/build"
 	"stash-vr/internal/config"
+	"stash-vr/internal/library"
 	"stash-vr/internal/logger"
-	"stash-vr/internal/sections"
 	"stash-vr/internal/server"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
-	"stash-vr/internal/stimhub"
 )
 
 func Run(ctx context.Context) error {
@@ -26,14 +25,9 @@ func Run(ctx context.Context) error {
 	stashClient := stash.NewClient(config.Get().StashGraphQLUrl, config.Get().StashApiKey)
 	logVersions(ctx, stashClient)
 
-	var stimhubClient *stimhub.Client
-	if config.Get().StimhubUrl != "" {
-		stimhubClient = &stimhub.Client{Endpoint: config.Get().StimhubUrl}
-	}
+	libraryService := library.NewService(stashClient)
 
-	sections.Get(ctx, stashClient, stimhubClient)
-
-	err := server.Listen(ctx, config.Get().ListenAddress, stashClient, stimhubClient)
+	err := server.Listen(ctx, config.Get().ListenAddress, libraryService)
 	if err != nil {
 		return fmt.Errorf("server: %w", err)
 	}
@@ -47,6 +41,6 @@ func logVersions(ctx context.Context, client graphql.Client) {
 	if version, err := gql.Version(ctx, client); err != nil {
 		log.Warn().Err(err).Msg("Failed to retrieve stash version")
 	} else {
-		log.Info().Str("Stash version", version.Version.Version).Send()
+		log.Info().Str("Stash version", *version.Version.Version).Send()
 	}
 }

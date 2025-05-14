@@ -12,59 +12,31 @@ mutation SceneUpdateTags($id: ID!, $tag_ids: [ID!]) {
     }){id}
 }
 
-mutation SceneUpdateStudio($id: ID!, $studio_id: ID) {
-    sceneUpdate(input: {
-        id: $id,
-        studio_id: $studio_id,
-    }){id}
-}
-
-mutation SceneClearStudio($id: ID!) {
-    sceneUpdate(input: {
-        id: $id,
-        studio_id: null,
-    }){id}
-}
-
-mutation SceneUpdatePerformers($id: ID!, $performer_ids: [ID!]) {
-    sceneUpdate(input: {
-        id: $id,
-        performer_ids: $performer_ids
-    }){id}
-}
-
 mutation TagCreate($name: String!){
     tagCreate(input: {name: $name}){id}
 }
 
-mutation StudioCreate($name: String!){
-    studioCreate(input: {name: $name, details: "# created by stash-vr"}){id}
-}
-
-mutation PerformerCreate($name: String!){
-    performerCreate(input: {name: $name, details: "# created by stash-vr"}){id}
-}
 
 mutation SceneDestroy($id: ID!){
     sceneDestroy(input: {id: $id, delete_file: true, delete_generated: true})
 }
 
-mutation SceneMarkerDestroy($id: ID!){
-    sceneMarkerDestroy(id: $id)
+mutation SceneMarkersDestroy($ids: [ID!]!){
+    sceneMarkersDestroy(ids: $ids)
 }
 
-mutation SceneMarkerCreate($scene_id: ID!, $tag_id: ID!, $seconds: Float!, $title: String!){
-    sceneMarkerCreate(input: {scene_id: $scene_id, primary_tag_id: $tag_id, seconds: $seconds, title: $title}){id}
+mutation SceneMarkerCreate($scene_id: ID!, $tag_id: ID!, $seconds: Float!, $end_seconds: Float, $title: String!){
+    sceneMarkerCreate(input: {scene_id: $scene_id, primary_tag_id: $tag_id, seconds: $seconds, end_seconds: $end_seconds, title: $title}){id}
 }
 
-mutation SceneIncrementO($id: ID!){
-    sceneIncrementO(id: $id)
+mutation SceneMarkerUpdate($id: ID!, $tag_id: ID!, $seconds: Float!, $end_seconds: Float, $title: String!){
+    sceneMarkerUpdate(input:{id:$id primary_tag_id: $tag_id, seconds: $seconds, end_seconds: $end_seconds, title: $title}){id}
 }
 
-mutation SceneUpdateOrganized($id: ID!, $isOrganized: Boolean){
-    sceneUpdate(input: {id: $id, organized: $isOrganized}){id, organized}
+mutation SceneIncrementO($id: ID!, $timestamp: Timestamp!){
+    sceneAddO(id: $id, times: [$timestamp]){count}
 }
 
-mutation SceneIncrementPlayCount($id: ID!){
-    sceneIncrementPlayCount(id: $id)
+mutation SceneIncrementPlayCount($id: ID!, $timestamp: Timestamp!){
+    sceneAddPlay(id: $id, times: [$timestamp]){count}
 }

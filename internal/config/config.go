@@ -17,11 +17,9 @@ const (
 	envKeyDisableLogColor  = "DISABLE_LOG_COLOR"
 	envKeyDisableRedact    = "DISABLE_REDACT"
 	envKeyForceHTTPS       = "FORCE_HTTPS"
-	envKeyDisableHeatmap   = "DISABLE_HEATMAP"
 	envKeyHeatmapHeightPx  = "HEATMAP_HEIGHT_PX"
 	envKeyAllowSyncMarkers = "ALLOW_SYNC_MARKERS"
 	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
-	envKeyStimhubUrl       = "STIMHUB_URL"
 )
 
 type Application struct {
@@ -35,10 +33,8 @@ type Application struct {
 	DisableLogColor      bool
 	IsRedactDisabled     bool
 	ForceHTTPS           bool
-	IsHeatmapDisabled    bool
 	HeatmapHeightPx      int
 	IsPlayCountDisabled  bool
-	StimhubUrl           string
 }
 
 var cfg Application
@@ -74,17 +70,11 @@ func Init() {
 	pflag.Bool(envKeyForceHTTPS, false, "Force Stash-VR to use HTTPS")
 	_ = viper.BindPFlag(envKeyForceHTTPS, pflag.Lookup(envKeyForceHTTPS))
 
-	pflag.Bool(envKeyDisableHeatmap, false, "Disable display of funscript heatmaps")
-	_ = viper.BindPFlag(envKeyDisableHeatmap, pflag.Lookup(envKeyDisableHeatmap))
-
 	pflag.Int(envKeyHeatmapHeightPx, 0, "Height of heatmaps")
 	_ = viper.BindPFlag(envKeyHeatmapHeightPx, pflag.Lookup(envKeyHeatmapHeightPx))
 
 	pflag.Bool(envKeyDisablePlayCount, false, "Disable incrementing Stash play count for scenes")
 	_ = viper.BindPFlag(envKeyDisablePlayCount, pflag.Lookup(envKeyDisablePlayCount))
-
-	pflag.String(envKeyStimhubUrl, "", "")
-	_ = viper.BindPFlag(envKeyStimhubUrl, pflag.Lookup(envKeyStimhubUrl))
 
 	pflag.BoolP("help", "h", false, "Display usage information")
 	_ = viper.BindPFlag("help", pflag.Lookup("help"))
@@ -108,10 +98,8 @@ func Init() {
 	cfg.DisableLogColor = viper.GetBool(envKeyDisableLogColor)
 	cfg.IsRedactDisabled = viper.GetBool(envKeyDisableRedact)
 	cfg.ForceHTTPS = viper.GetBool(envKeyForceHTTPS)
-	cfg.IsHeatmapDisabled = viper.GetBool(envKeyDisableHeatmap)
 	cfg.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
 	cfg.IsPlayCountDisabled = viper.GetBool(envKeyDisablePlayCount)
-	cfg.StimhubUrl = viper.GetString(envKeyStimhubUrl)
 
 }
 

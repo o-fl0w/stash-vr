@@ -1,224 +1,159 @@
 package heresphere
 
 import (
-	"context"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
 	"stash-vr/internal/api/heatmap"
-	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
+	"stash-vr/internal/library"
 	"stash-vr/internal/stash"
-	"stash-vr/internal/stash/gql"
-	"stash-vr/internal/stimhub"
 	"stash-vr/internal/util"
 	"time"
 )
 
-type videoData struct {
+type videoDataDto struct {
 	Access int `json:"access"`
 
-	Title          string   `json:"title"`
-	Description    string   `json:"description"`
-	ThumbnailImage string   `json:"thumbnailImage"`
-	ThumbnailVideo string   `json:"thumbnailVideo"`
-	DateReleased   string   `json:"dateReleased"`
-	DateAdded      string   `json:"dateAdded"`
-	Duration       float64  `json:"duration"`
-	Rating         float32  `json:"rating"`
-	Favorites      int      `json:"favorites"`
-	IsFavorite     bool     `json:"isFavorite"`
-	Projection     string   `json:"projection"`
-	Stereo         string   `json:"stereo"`
-	Fov            float32  `json:"fov"`
-	Lens           string   `json:"lens"`
-	EventServer    string   `json:"eventServer"`
-	Scripts        []script `json:"scripts"`
-	Tags           []tag    `json:"tags"`
-	Media          []media  `json:"media"`
+	Title string `json:"title"`
+	//Description    string      `json:"description,omitempty"`
+	ThumbnailImage *string       `json:"thumbnailImage,omitempty"`
+	ThumbnailVideo *string       `json:"thumbnailVideo,omitempty"`
+	DateReleased   *string       `json:"dateReleased,omitempty"`
+	DateAdded      string        `json:"dateAdded,omitempty"`
+	Duration       float64       `json:"duration,omitempty"`
+	Rating         *float32      `json:"rating,omitempty"`
+	Favorites      *int          `json:"favorites,omitempty"`
+	IsFavorite     *bool         `json:"isFavorite,omitempty"`
+	EventServer    *string       `json:"eventServer,omitempty"`
+	Scripts        []scriptDto   `json:"scripts,omitempty"`
+	Tags           []tagDto      `json:"tags,omitempty"`
+	Media          []mediaDto    `json:"media,omitempty"`
+	Subtitles      []subtitleDto `json:"subtitles,omitempty"`
 
-	WriteFavorite bool `json:"writeFavorite"`
-	WriteRating   bool `json:"writeRating"`
-	WriteTags     bool `json:"writeTags"`
+	WriteFavorite *bool `json:"writeFavorite,omitempty"`
+	WriteRating   *bool `json:"writeRating,omitempty"`
+	WriteTags     *bool `json:"writeTags,omitempty"`
 }
 
-type media struct {
-	Name    string   `json:"name,omitempty"`
-	Sources []source `json:"sources"`
+type mediaDto struct {
+	Name    string      `json:"name,omitempty"`
+	Sources []sourceDto `json:"sources,omitempty"`
 }
 
-type source struct {
-	Resolution int    `json:"resolution"`
-	Height     int    `json:"height"`
-	Width      int    `json:"width"`
-	Size       int    `json:"size"`
-	Url        string `json:"url"`
+type sourceDto struct {
+	Resolution int    `json:"resolution,omitempty"`
+	Url        string `json:"url,omitempty"`
 }
 
-type script struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
+type scriptDto struct {
+	Name string `json:"name,omitempty"`
+	Url  string `json:"url,omitempty"`
 }
 
-func buildVideoData(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client, baseUrl string, videoId string, includeMediaSource bool) (videoData, error) {
-	sceneId, audioCrc32, isStimScene := stimhub.SplitStimSceneId(videoId)
-
-	if isStimScene && stimhubClient == nil {
-		return videoData{}, fmt.Errorf("StimScene found but Stimhub client not configured")
-	}
-
-	findSceneResponse, err := gql.FindSceneFull(ctx, stashClient, sceneId)
-	if err != nil {
-		return videoData{}, fmt.Errorf("FindSceneFull: %w", err)
-	}
-	if findSceneResponse.FindScene == nil {
-		return videoData{}, fmt.Errorf("FindSceneFull: not found")
-	}
-	s := findSceneResponse.FindScene.SceneFullParts
-
-	if len(s.SceneScanParts.Files) == 0 {
-		return videoData{}, fmt.Errorf("scene %s has no files", sceneId)
-	}
-
-	thumbnailUrl := stash.ApiKeyed(s.Paths.Screenshot)
-	if !config.Get().IsHeatmapDisabled && s.ScriptParts.Interactive && s.ScriptParts.Paths.Interactive_heatmap != "" {
-		thumbnailUrl = heatmap.GetCoverUrl(baseUrl, sceneId)
-	}
-
-	title := util.FirstNonEmpty(s.Title, s.GetFiles()[0].Basename)
-
-	vd := videoData{
-		Access:         1,
-		Title:          title,
-		Description:    s.Details,
-		ThumbnailImage: thumbnailUrl,
-		ThumbnailVideo: stash.ApiKeyed(s.Paths.Preview),
-		DateReleased:   s.Date,
-		DateAdded:      s.Created_at.Format(time.DateOnly),
-		Duration:       s.SceneScanParts.Files[0].Duration * 1000,
-		Rating:         float32(s.Rating100) / 20,
-		Favorites:      s.O_counter,
-		WriteFavorite:  true,
-		WriteRating:    true,
-		WriteTags:      true,
-	}
-
-	vd.IsFavorite = ContainsFavoriteTag(s.TagPartsArray)
-
-	if includeMediaSource {
-		setMediaSources(ctx, s, &vd)
-	} else {
-		vd.Media = []media{{Sources: []source{{}}}}
-	}
-
-	set3DFormat(s, &vd)
-	setScripts(s, &vd)
-
-	vd.Tags = getTags(s.SceneScanParts)
-
-	if isStimScene {
-		stimScene := stimhub.Get(sceneId, audioCrc32)
-		vd.EventServer = stimhubClient.EventServerUrl()
-
-		if err != nil {
-			return videoData{}, fmt.Errorf("failed to retrieve data for EScene: %w", err)
-		}
-		vd.Title = stimScene.Title
-		vd.DateAdded = stimScene.DateAdded.Format(time.DateOnly)
-		vd.ThumbnailImage = stimhubClient.ThumbnailUrl(audioCrc32)
-		vd.Tags = append(vd.Tags, getStimSceneTags(*stimScene)...)
-	}
-
-	return vd, nil
+type subtitleDto struct {
+	Name     string `json:"name,omitempty"`
+	Language string `json:"language,omitempty"`
+	Url      string `json:"url,omitempty"`
 }
 
-func getStimSceneTags(sc stimhub.StimScene) []tag {
-	tags := make([]tag, 1+len(sc.FileNames))
-
-	tags[0] = tag{
-		Name: internal.LegendEStudio.Short + seperator + sc.Artist,
-		End:  sc.Duration.Seconds(),
+func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error) {
+	videoId := vd.Id()
+	if len(vd.SceneParts.Files) == 0 {
+		return nil, fmt.Errorf("scene %s has no files", videoId)
 	}
 
-	for i := range sc.FileNames {
-		tags[i+1] = tag{
-			Name: internal.LegendEFile.Short + seperator + sc.FileNames[i],
+	dto := videoDataDto{
+		Access:        1,
+		Title:         vd.Title(),
+		DateAdded:     vd.SceneParts.Created_at.Format(time.DateOnly),
+		Duration:      vd.SceneParts.Files[0].Duration * 1000,
+		WriteFavorite: util.Ptr(true),
+		WriteRating:   util.Ptr(true),
+		WriteTags:     util.Ptr(true),
+	}
+
+	if vd.SceneParts.Paths.Screenshot != nil {
+		if vd.SceneParts.Interactive && vd.SceneParts.Paths.Interactive_heatmap != nil {
+			dto.ThumbnailImage = util.Ptr(heatmap.GetCoverUrl(baseUrl, videoId))
+		} else {
+			dto.ThumbnailImage = util.Ptr(stash.ApiKeyed(*vd.SceneParts.Paths.Screenshot))
 		}
 	}
-	return tags
+
+	if vd.SceneParts.Paths.Preview != nil {
+		dto.ThumbnailVideo = util.Ptr(stash.ApiKeyed(*vd.SceneParts.Paths.Preview))
+	}
+
+	if vd.SceneParts.Date != nil {
+		dto.DateReleased = vd.SceneParts.Date
+	}
+
+	if vd.SceneParts.Rating100 != nil {
+		dto.Rating = util.Ptr(float32(*vd.SceneParts.Rating100) / 20)
+	}
+
+	if vd.SceneParts.O_counter != nil {
+		dto.Favorites = vd.SceneParts.O_counter
+	}
+
+	if isFavorite(vd) {
+		dto.IsFavorite = util.Ptr(true)
+	}
+
+	setMediaSources(vd, &dto)
+
+	setScripts(vd, &dto)
+
+	setSubtitles(vd, &dto)
+
+	dto.Tags = getTags(vd)
+
+	return &dto, nil
 }
 
-func setScripts(s gql.SceneFullParts, videoData *videoData) {
-	if s.ScriptParts.Interactive {
-		videoData.Scripts = append(videoData.Scripts, script{
-			Name: "Script-" + s.Title,
-			Url:  stash.ApiKeyed(s.ScriptParts.Paths.Funscript),
+func setSubtitles(vd *library.VideoData, dto *videoDataDto) {
+	if vd.SceneParts.Captions == nil {
+		return
+	}
+	for _, c := range vd.SceneParts.Captions {
+		dto.Subtitles = append(dto.Subtitles, subtitleDto{
+			Name:     c.Caption_type,
+			Language: c.Language_code,
+			Url:      stash.ApiKeyed(fmt.Sprintf("%s?lang=%s&type=%s", *vd.SceneParts.Paths.Caption, c.Language_code, c.Caption_type)),
 		})
 	}
 }
 
-func set3DFormat(s gql.SceneFullParts, videoData *videoData) {
-	for _, t := range s.Tags {
-		switch t.Name {
-		case "DOME":
-			videoData.Projection = "equirectangular"
-			videoData.Stereo = "sbs"
-			continue
-		case "SPHERE":
-			videoData.Projection = "equirectangular360"
-			videoData.Stereo = "sbs"
-			continue
-		case "FISHEYE":
-			videoData.Projection = "fisheye"
-			videoData.Stereo = "sbs"
-			continue
-		case "MKX200":
-			videoData.Projection = "fisheye"
-			videoData.Stereo = "sbs"
-			videoData.Lens = "MKX200"
-			videoData.Fov = 200.0
-			continue
-		case "RF52":
-			videoData.Projection = "fisheye"
-			videoData.Stereo = "sbs"
-			videoData.Fov = 190.0
-			continue
-		case "CUBEMAP":
-			videoData.Projection = "cubemap"
-			videoData.Stereo = "sbs"
-		case "EAC":
-			videoData.Projection = "equiangularCubemap"
-			videoData.Stereo = "sbs"
-		case "SBS":
-			videoData.Stereo = "sbs"
-			continue
-		case "TB":
-			videoData.Stereo = "tb"
-			continue
-		}
-	}
-}
-
-func setMediaSources(ctx context.Context, s gql.SceneFullParts, videoData *videoData) {
-	for _, stream := range stash.GetStreams(ctx, s.StreamsParts, true) {
-		e := media{
-			Name: stream.Name,
-		}
-		for _, s := range stream.Sources {
-			vs := source{
-				Resolution: s.Resolution,
-				Url:        s.Url,
-			}
-			e.Sources = append(e.Sources, vs)
-		}
-		videoData.Media = append(videoData.Media, e)
-	}
-}
-
-func ContainsFavoriteTag(ts gql.TagPartsArray) bool {
-	for _, t := range ts.Tags {
+func isFavorite(vd *library.VideoData) bool {
+	for _, t := range vd.SceneParts.Tags {
 		if t.Name == config.Get().FavoriteTag {
 			return true
 		}
 	}
 	return false
+}
+
+func setScripts(vd *library.VideoData, dto *videoDataDto) {
+	if !vd.SceneParts.Interactive {
+		return
+	}
+	dto.Scripts = append(dto.Scripts, scriptDto{
+		Name: "Script-" + vd.Title(),
+		Url:  stash.ApiKeyed(*vd.SceneParts.Paths.Funscript),
+	})
+}
+
+func setMediaSources(vd *library.VideoData, dto *videoDataDto) {
+	for _, stream := range stash.GetStreams(vd.SceneParts) {
+		e := mediaDto{
+			Name: stream.Name,
+		}
+		for _, s := range stream.Sources {
+			vs := sourceDto{
+				Resolution: s.Resolution,
+				Url:        s.Url,
+			}
+			e.Sources = append(e.Sources, vs)
+		}
+		dto.Media = append(dto.Media, e)
+	}
 }

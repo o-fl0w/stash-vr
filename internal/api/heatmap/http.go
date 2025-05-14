@@ -2,34 +2,29 @@ package heatmap
 
 import (
 	"errors"
-	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"image/jpeg"
 	"net/http"
 	"stash-vr/internal/api/internal"
+	"stash-vr/internal/library"
 	"stash-vr/internal/stash"
-	"stash-vr/internal/stash/gql"
 )
 
-func CoverHandler(client graphql.Client) http.HandlerFunc {
+func CoverHandler(libraryService *library.Service) http.HandlerFunc {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		sceneId := chi.URLParam(r, "videoId")
 
-		response, err := gql.FindScriptDataBySceneId(ctx, client, sceneId)
+		vd, err := libraryService.GetScene(ctx, sceneId, false)
 		if err != nil {
-			log.Ctx(ctx).Err(err).Msg("FindScriptDataBySceneId")
-			w.WriteHeader(http.StatusBadGateway)
-			return
-		}
-		if response.FindScene == nil {
 			log.Ctx(ctx).Debug().Msg("Scene not found")
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		p := response.FindScene.Paths
-		cover, err := buildHeatmapCover(ctx, stash.ApiKeyed(p.Screenshot), stash.ApiKeyed(p.Interactive_heatmap))
+
+		p := vd.SceneParts.Paths
+		cover, err := buildHeatmapCover(ctx, stash.ApiKeyed(*p.Screenshot), stash.ApiKeyed(*p.Interactive_heatmap))
 		if err != nil {
 			log.Ctx(ctx).Err(err).Msg("buildHeatmapCover")
 			if errors.Is(err, errImageNotFound) {

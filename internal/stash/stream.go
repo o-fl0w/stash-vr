@@ -1,13 +1,9 @@
 package stash
 
 import (
-	"context"
 	"fmt"
-	"github.com/rs/zerolog/log"
-	"path/filepath"
 	"regexp"
 	"sort"
-	"stash-vr/internal/config"
 	"stash-vr/internal/stash/gql"
 	"strconv"
 	"strings"
@@ -25,47 +21,41 @@ type Source struct {
 
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
-func GetStreams(ctx context.Context, fsp gql.StreamsParts, sortResolutionAsc bool) []Stream {
-	streams := make([]Stream, 2)
+func GetStreams(sp *gql.SceneParts) []Stream {
+	sourcesByName := make(map[string][]Source)
+	for _, stream := range sp.SceneStreams {
+		if *stream.Label == "Direct stream" || !strings.HasPrefix(*stream.Mime_type, "video/mp4") {
+			continue
+		}
 
-	directStream := Stream{
-		Name: "direct",
-		Sources: []Source{{
-			Resolution: fsp.Files[0].Height,
-			Url:        fsp.Paths.Stream,
-		}},
+		resolution, err := parseResolutionFromLabel(*stream.Label)
+		if err != nil {
+			resolution = sp.Files[0].Height
+		}
+		sourcesByName[*stream.Mime_type] = append(sourcesByName[*stream.Mime_type], Source{
+			Resolution: resolution,
+			Url:        stream.Url,
+		})
 	}
 
-	switch fsp.Files[0].Video_codec {
-	case "h264", "hevc", "h265", "mpeg4":
-		streams[0] = Stream{
-			Name:    "transcoding",
-			Sources: getSources(ctx, fsp, "MP4", "Direct stream", sortResolutionAsc),
-		}
-		streams[1] = directStream
-	case "vp8", "vp9":
-		streams[0] = Stream{
-			Name:    "transcoding",
-			Sources: getSources(ctx, fsp, "WEBM", "Direct stream", sortResolutionAsc),
-		}
-		streams[1] = directStream
-	default:
-		log.Ctx(ctx).Warn().Str("codec", fsp.Files[0].Video_codec).Str("file ext", filepath.Ext(fsp.Files[0].Path)).Msg("Codec not supported? Selecting transcoding sources.")
-		streams[0] = Stream{
-			Name: "transcoding",
-			//transcode unsupported codecs to webm by default - or should we do mp4?
-			Sources: getSources(ctx, fsp, "WEBM", "webm", sortResolutionAsc),
-		}
+	streams := make([]Stream, 0)
+	for name, sources := range sourcesByName {
+		sort.Slice(sources, func(i, j int) bool { return sources[i].Resolution > sources[j].Resolution })
+		streams = append(streams, Stream{
+			Name:    name,
+			Sources: sources,
+		})
 	}
 
-	// stash adds query parameter 'apikey' for direct stream but not for transcoding streams - add it
-	if config.Get().StashApiKey != "" {
-		for i, stream := range streams {
-			for j, source := range stream.Sources {
-				streams[i].Sources[j].Url = ApiKeyed(source.Url)
-			}
-		}
+	directStream := Source{
+		Resolution: sp.Files[0].Height,
+		Url:        *sp.Paths.Stream,
 	}
+
+	streams = append(streams, Stream{
+		Name:    "direct",
+		Sources: []Source{directStream},
+	})
 
 	return streams
 }
@@ -80,46 +70,4 @@ func parseResolutionFromLabel(label string) (int, error) {
 		return 0, fmt.Errorf("atoi: %w", err)
 	}
 	return res, nil
-}
-
-func getSources(ctx context.Context, sps gql.StreamsParts, format string, defaultSourceLabel string, sortResolutionAsc bool) []Source {
-	sourceMap := make(map[int]Source)
-
-	for _, s := range sps.SceneStreams {
-		if strings.Contains(s.Label, format) {
-			resolution, err := parseResolutionFromLabel(s.Label)
-			if err != nil {
-				log.Ctx(ctx).Warn().Err(err).Str("label", s.Label).Msg("Failed to parse resolution from label")
-				continue
-			}
-
-			if _, ok := sourceMap[resolution]; ok {
-				continue
-			}
-
-			sourceMap[resolution] = Source{
-				Resolution: resolution,
-				Url:        s.Url,
-			}
-		} else if s.Label == defaultSourceLabel {
-			sourceMap[sps.Files[0].Height] = Source{
-				Resolution: sps.Files[0].Height,
-				Url:        s.Url,
-			}
-		}
-	}
-	sources := make([]Source, 0, len(sourceMap))
-	for _, v := range sourceMap {
-		sources = append(sources, v)
-	}
-	sortSourcesByResolution(sources, sortResolutionAsc)
-	return sources
-}
-
-func sortSourcesByResolution(sources []Source, asc bool) {
-	if asc {
-		sort.Slice(sources, func(i, j int) bool { return sources[i].Resolution < sources[j].Resolution })
-	} else {
-		sort.Slice(sources, func(i, j int) bool { return sources[i].Resolution > sources[j].Resolution })
-	}
 }

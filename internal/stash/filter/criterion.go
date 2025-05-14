@@ -3,21 +3,19 @@ package filter
 import (
 	"stash-vr/internal/stash/gql"
 	"strconv"
+	"strings"
 )
 
-func decodeSimple[T string | bool](c interface{}, dst *T) error {
+func decodeSimple[T string | bool](c interface{}, dst **T) {
 	m := c.(map[string]interface{})
 	x := m["value"].(string)
 	switch any(*dst).(type) {
-	case string:
-		d := any(dst).(*string)
-		*d = x
-	case bool:
+	case *string:
+		*dst = any(&x).(*T)
+	case *bool:
 		b, _ := strconv.ParseBool(x)
-		d := any(dst).(*bool)
-		*d = b
+		*dst = any(&b).(*T)
 	}
-	return nil
 }
 
 func modifier(c map[string]any) gql.CriterionModifier {
@@ -25,40 +23,33 @@ func modifier(c map[string]any) gql.CriterionModifier {
 }
 
 func parseIntCriterionInput(c map[string]any) *gql.IntCriterionInput {
-	out := gql.IntCriterionInput{
+	return &gql.IntCriterionInput{
+		Value:    GetOr[int](c, "value.value", 0),
+		Value2:   Get[int](c, "value.value2"),
 		Modifier: modifier(c),
 	}
-
-	v1, _ := get[float64](c, "value.value")
-	out.Value = int(v1)
-
-	v2, err := get[float64](c, "value.value2")
-	if err == nil {
-		out.Value2 = int(v2)
-	}
-
-	return &out
 }
 
 func parseHierarchicalMultiCriterionInput(c map[string]any) *gql.HierarchicalMultiCriterionInput {
 	out := gql.HierarchicalMultiCriterionInput{
 		Modifier: modifier(c),
+		Depth:    Get[int](c, "value.depth"),
 	}
 
-	depth, _ := get[float64](c, "value.depth")
-	out.Depth = int(depth)
-
-	items, _ := get[[]any](c, "value.items")
-	out.Value = make([]string, len(items))
-
-	for i := range items {
-		out.Value[i], _ = getAsString(items[i].(map[string]any), "id")
+	items := Get[[]any](c, "value.items")
+	if items != nil {
+		out.Value = make([]string, len(*items))
+		for i, o := range *items {
+			out.Value[i] = *Get[string](o, "id")
+		}
 	}
 
-	excluded, _ := get[[]any](c, "value.excluded")
-	out.Excludes = make([]string, len(excluded))
-	for i := range excluded {
-		out.Excludes[i], _ = getAsString(excluded[i].(map[string]any), "id")
+	excluded := Get[[]any](c, "value.excluded")
+	if excluded != nil {
+		out.Excludes = make([]string, len(*excluded))
+		for i, o := range *excluded {
+			out.Excludes[i] = *Get[string](o, "id")
+		}
 	}
 	return &out
 }
@@ -68,22 +59,26 @@ func parseMultiCriterionInput(c map[string]any) *gql.MultiCriterionInput {
 		Modifier: modifier(c),
 	}
 
-	excluded, _ := get[[]any](c, "value.excluded")
-	out.Excludes = make([]string, len(excluded))
-	for i := range excluded {
-		out.Excludes[i], _ = getAsString(excluded[i].(map[string]any), "id")
+	excluded := Get[[]any](c, "value.excluded")
+	if excluded != nil {
+		out.Excludes = make([]string, len(*excluded))
+		for i, o := range *excluded {
+			out.Excludes[i] = *Get[string](o, "id")
+		}
 	}
 
-	items, err := get[[]any](c, "value.items")
-	if err != nil {
-		items, err = get[[]any](c, "value")
-	}
-	if err == nil {
-		out.Value = make([]string, len(items))
-		for i := range items {
-			out.Value[i], _ = getAsString(items[i].(map[string]any), "id")
+	items := Get[[]any](c, "value.items")
+	if items != nil {
+		out.Value = make([]string, len(*items))
+		for i, o := range *items {
+			out.Value[i] = *Get[string](o, "id")
 		}
-		return &out
+	} else {
+		values := Get[[]any](c, "value")
+		out.Value = make([]string, len(*values))
+		for i, o := range *values {
+			out.Value[i] = *Get[string](o, "id")
+		}
 	}
 
 	return &out
@@ -92,38 +87,27 @@ func parseMultiCriterionInput(c map[string]any) *gql.MultiCriterionInput {
 func parseTimestampCriterionInput(c map[string]any) *gql.TimestampCriterionInput {
 	out := gql.TimestampCriterionInput{
 		Modifier: modifier(c),
+		Value:    *Get[string](c, "value.value"),
+		Value2:   Get[string](c, "value.value2"),
 	}
-
-	out.Value, _ = get[string](c, "value.value")
-	value2, err := get[string](c, "value.value2")
-	if err == nil {
-		out.Value2 = value2
-	}
-
 	return &out
 }
 
 func parseDateCriterionInput(c map[string]any) *gql.DateCriterionInput {
 	out := gql.DateCriterionInput{
 		Modifier: modifier(c),
+		Value:    *Get[string](c, "value.value"),
+		Value2:   Get[string](c, "value.value2"),
 	}
-
-	out.Value, _ = get[string](c, "value.value")
-	value2, err := get[string](c, "value.value2")
-	if err == nil {
-		out.Value2 = value2
-	}
-
 	return &out
 }
 
 func parsePhashDistanceCriterionInput(c map[string]any) *gql.PhashDistanceCriterionInput {
 	out := gql.PhashDistanceCriterionInput{
 		Modifier: modifier(c),
+		Value:    *Get[string](c, "value.value"),
+		Distance: Get[int](c, "value.distance"),
 	}
-	distance, _ := get[float64](c, "value.distance")
-	out.Distance = int(distance)
-	out.Value, _ = get[string](c, "value.value")
 	return &out
 }
 
@@ -132,8 +116,7 @@ func parseResolutionCriterionInput(c map[string]any) *gql.ResolutionCriterionInp
 		Modifier: modifier(c),
 	}
 
-	value, _ := get[string](c, "value")
-	switch value {
+	switch *Get[string](c, "value") {
 	case "144p":
 		out.Value = gql.ResolutionEnumVeryLow
 	case "240p":
@@ -170,17 +153,20 @@ func parseResolutionCriterionInput(c map[string]any) *gql.ResolutionCriterionInp
 func parseStashIDCriterionInput(c map[string]any) *gql.StashIDCriterionInput {
 	out := gql.StashIDCriterionInput{
 		Modifier: modifier(c),
+		Endpoint: Get[string](c, "value.endpoint"),
+		Stash_id: Get[string](c, "value.stashID"),
 	}
-	out.Endpoint, _ = get[string](c, "value.endpoint")
-	out.Stash_id, _ = get[string](c, "value.stashID")
 	return &out
 }
 
 func parsePHashDuplicationCriterionInput(c map[string]any) *gql.PHashDuplicationCriterionInput {
 	out := gql.PHashDuplicationCriterionInput{}
 
-	duplicated, _ := get[string](c, "value")
-	out.Duplicated, _ = strconv.ParseBool(duplicated)
+	duplicated := Get[string](c, "value")
+	if duplicated != nil {
+		d, _ := strconv.ParseBool(*duplicated)
+		out.Duplicated = &d
+	}
 
 	return &out
 }
@@ -188,7 +174,49 @@ func parsePHashDuplicationCriterionInput(c map[string]any) *gql.PHashDuplication
 func parseStringCriterionInput(c map[string]any) *gql.StringCriterionInput {
 	out := gql.StringCriterionInput{
 		Modifier: modifier(c),
+		Value:    *Get[string](c, "value"),
 	}
-	out.Value, _ = get[string](c, "value")
+	return &out
+}
+
+func parseCaptionCriterionInput(c map[string]any) *gql.StringCriterionInput {
+	out := gql.StringCriterionInput{
+		Modifier: modifier(c),
+	}
+	switch *Get[string](c, "value") {
+	case "Deutsche":
+		out.Value = "de"
+	case "English":
+		out.Value = "en"
+	case "Español":
+		out.Value = "es"
+	case "Français":
+		out.Value = "fr"
+	case "Italiano":
+		out.Value = "it"
+	case "日本":
+		out.Value = "ja"
+	case "한국인":
+		out.Value = "ko"
+	case "Holandés":
+		out.Value = "nl"
+	case "Português":
+		out.Value = "pt"
+	case "Русский":
+		out.Value = "ru"
+	case "Unknown":
+		out.Value = "00"
+	}
+	return &out
+}
+
+func parseOrientationCriterionInput(c map[string]any) *gql.OrientationCriterionInput {
+	out := gql.OrientationCriterionInput{}
+
+	values := Get[[]any](c, "value")
+	out.Value = make([]gql.OrientationEnum, len(*values))
+	for i, v := range *values {
+		out.Value[i] = gql.OrientationEnum(strings.ToUpper(v.(string)))
+	}
 	return &out
 }

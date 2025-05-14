@@ -6,11 +6,16 @@ operations:
 generated: generated.go
 package: gql
 use_struct_references: true
+optional: pointer
 
 bindings:
   Time:
+    type: time.Time
+  Timestamp:
     type: time.Time
   Map:
     type: map[string]interface{}
   Int64:
     type: int64
+  Any:
+    type: any

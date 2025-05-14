@@ -4,19 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 	"net/http"
-	"stash-vr/internal/router"
-	"stash-vr/internal/stimhub"
+	"stash-vr/internal/api"
+	"stash-vr/internal/library"
 	"time"
 )
 
-func Listen(ctx context.Context, listenAddress string, stashClient graphql.Client, stimhubClient *stimhub.Client) error {
+func Listen(ctx context.Context, listenAddress string, libraryService *library.Service) error {
 	server := http.Server{
 		Addr:    listenAddress,
-		Handler: router.Build(stashClient, stimhubClient),
+		Handler: api.Router(libraryService),
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)

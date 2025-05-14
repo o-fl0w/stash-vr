@@ -1,65 +1,52 @@
 package deovr
 
 import (
-	"context"
-	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/sections"
-	"stash-vr/internal/sections/section"
+	"stash-vr/internal/library"
 	"stash-vr/internal/stash"
-	"stash-vr/internal/stimhub"
 	"stash-vr/internal/util"
 )
 
-type index struct {
-	Authorized string  `json:"authorized"`
-	Scenes     []scene `json:"scenes"`
+type indexDto struct {
+	Authorized string     `json:"authorized"`
+	Scenes     []sceneDto `json:"scenes"`
 }
 
-type scene struct {
-	Name string        `json:"name"`
-	List []previewData `json:"list"`
+type sceneDto struct {
+	Name string           `json:"name"`
+	List []previewDataDto `json:"list"`
 }
 
-type previewData struct {
-	Id           string `json:"id"`
-	ThumbnailUrl string `json:"thumbnailUrl"`
-	Title        string `json:"title"`
-	VideoLength  int    `json:"videoLength"`
-	VideoUrl     string `json:"video_url"`
+type previewDataDto struct {
+	Id           string  `json:"id"`
+	ThumbnailUrl *string `json:"thumbnailUrl"`
+	Title        string  `json:"title"`
+	VideoLength  int     `json:"videoLength"`
+	VideoUrl     string  `json:"video_url"`
 }
 
-func buildIndex(ctx context.Context, client graphql.Client, baseUrl string) index {
-	ss := sections.Get(ctx, client, nil)
+func buildIndex(sections []library.Section, vds map[string]*library.VideoData, baseUrl string) (indexDto, error) {
+	index := indexDto{Authorized: "1", Scenes: make([]sceneDto, len(sections))}
 
-	scenes := fromSections(baseUrl, ss)
-
-	index := index{Authorized: "1", Scenes: scenes}
-
-	return index
-}
-
-func fromSections(baseUrl string, sections []section.Section) []scene {
-	return util.Transform[section.Section, scene](func(section section.Section) (scene, error) {
-		if section.FilterId == stimhub.FilterId {
-			return scene{}, nil
+	for i, section := range sections {
+		s := sceneDto{
+			Name: section.Name,
+			List: make([]previewDataDto, len(section.Ids)),
 		}
-		return fromSection(baseUrl, section), nil
-	}).Ordered(sections)
-}
+		index.Scenes[i] = s
 
-func fromSection(baseUrl string, section section.Section) scene {
-	s := scene{
-		Name: section.Name,
-		List: make([]previewData, len(section.Scenes)),
-	}
-	for i, p := range section.Scenes {
-		s.List[i] = previewData{
-			Id:           p.Id(),
-			ThumbnailUrl: stash.ApiKeyed(p.Paths.Screenshot),
-			Title:        p.ScenePreviewParts.Title,
-			VideoLength:  int(p.Files[0].Duration),
-			VideoUrl:     getVideoDataUrl(baseUrl, p.Id()),
+		for j, sectionSceneId := range section.Ids {
+			vd := vds[sectionSceneId]
+			s.List[j] = previewDataDto{
+				Id:          vd.SceneParts.Id,
+				Title:       vd.Title(),
+				VideoLength: int(vd.SceneParts.Files[0].Duration),
+				VideoUrl:    getVideoDataUrl(baseUrl, vd.Id()),
+			}
+			if vd.SceneParts.Paths.Screenshot != nil {
+				s.List[j].ThumbnailUrl = util.Ptr(stash.ApiKeyed(*vd.SceneParts.Paths.Screenshot))
+			}
 		}
 	}
-	return s
+
+	return index, nil
 }

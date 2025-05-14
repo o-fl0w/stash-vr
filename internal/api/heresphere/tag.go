@@ -2,175 +2,158 @@ package heresphere
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
-	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/library"
 	"stash-vr/internal/util"
+	"strconv"
 )
 
-type tag struct {
-	Name   string  `json:"name"`
-	Start  float64 `json:"start"`
-	End    float64 `json:"end"`
-	Track  *int    `json:"track,omitempty"`
-	Rating float32 `json:"rating"`
+type tagDto struct {
+	Name   string   `json:"name"`
+	Start  float64  `json:"start,omitempty"`
+	End    *float64 `json:"end,omitempty"`
+	Track  *int     `json:"track,omitempty"`
+	Rating *float32 `json:"rating,omitempty"`
 }
 
 const seperator = ":"
-const isGlanceMarkersEnabled = true
 
-func getTags(s gql.SceneScanParts) []tag {
-	var tagTracks [][]tag
+func getTags(vd *library.VideoData) []tagDto {
+	var tracks = make([][]tagDto, 0, 6)
 
-	markers := getMarkers(s)
-	performers := getPerformers(s)
-	fields := getFields(s)
+	duration := vd.SceneParts.Files[0].Duration * 1000
 
-	studio := getStudio(s)
-	stashTags := getStashTags(s)
-	movies := getMovies(s)
-
-	meta := make([]tag, 0, len(studio)+len(stashTags)+len(movies))
-	meta = append(meta, studio...)
-	meta = append(meta, stashTags...)
-	meta = append(meta, movies...)
-
-	if len(studio) == 0 {
-		fields = append(fields, tag{Name: internal.LegendStudio.Full + seperator})
-	}
-	if len(stashTags) == 0 {
-		fields = append(fields, tag{Name: internal.LegendTag.Short + seperator})
-	}
-	if len(movies) == 0 {
-		fields = append(fields, tag{Name: internal.LegendMovie.Full + seperator})
+	if stashTags := getStashTags(vd); len(stashTags) > 0 {
+		equallyDivideTagDurations(duration, stashTags)
+		tracks = append(tracks, stashTags)
 	}
 
-	fillTagDurations(markers)
-	duration := s.Files[0].Duration * 1000
-	equallyDivideTagDurations(duration, performers)
-	equallyDivideTagDurations(duration, fields)
-	equallyDivideTagDurations(duration, meta)
-
-	if isGlanceMarkersEnabled {
-		tagTracks = append(tagTracks, markers)
-		tagTracks = append(tagTracks, meta)
-	} else {
-		tagTracks = append(tagTracks, meta)
-		tagTracks = append(tagTracks, markers)
+	if performers := getPerformers(vd); len(performers) > 0 {
+		equallyDivideTagDurations(duration, performers)
+		tracks = append(tracks, performers)
 	}
-	tagTracks = append(tagTracks, performers)
-	tagTracks = append(tagTracks, fields)
 
-	track := 0
-	tags := make([]tag, 0, len(tagTracks))
-	for i := range tagTracks {
-		if len(tagTracks[i]) == 0 {
-			continue
+	sceneData := getGroups(vd)
+	if studio := getStudio(vd); studio != nil {
+		sceneData = slices.Insert(sceneData, 0, *studio)
+	}
+	if len(sceneData) > 0 {
+		equallyDivideTagDurations(duration, sceneData)
+		tracks = append(tracks, sceneData)
+	}
+
+	if metaFields := getFields(vd); len(metaFields) > 0 {
+		equallyDivideTagDurations(duration, metaFields)
+		tracks = append(tracks, metaFields)
+	}
+
+	markers := getMarkers(vd)
+	for _, marker := range markers {
+		tracks = append(tracks, []tagDto{marker})
+	}
+
+	tags := make([]tagDto, 0, len(tracks))
+	for i := range tracks {
+		for j := range tracks[i] {
+			track := i
+			tag := tracks[i][j]
+			tag.Track = &track
+			tags = append(tags, tag)
 		}
-		for j := range tagTracks[i] {
-			tagTracks[i][j].Track = util.Ptr(track)
-			tags = append(tags, tagTracks[i][j])
-		}
-		track++
 	}
+
 	return tags
 }
 
-func getPerformers(s gql.SceneScanParts) []tag {
-	tags := make([]tag, len(s.Performers))
-	for i, p := range s.Performers {
-		tags[i] = tag{
-			Name:   internal.LegendPerformer.Full + seperator + p.Name,
-			Rating: float32(p.Rating100),
+func getPerformers(vd *library.VideoData) []tagDto {
+	tags := make([]tagDto, len(vd.SceneParts.Performers))
+	for i, p := range vd.SceneParts.Performers {
+		tags[i] = tagDto{
+			Name: fmt.Sprintf("%s%s%s", internal.LegendPerformer, seperator, p.Name),
 		}
 	}
 	return tags
 }
 
-func getMovies(s gql.SceneScanParts) []tag {
-	if s.Movies == nil {
+func getGroups(vd *library.VideoData) []tagDto {
+	if vd.SceneParts.Groups == nil {
 		return nil
 	}
-	tags := make([]tag, len(s.Movies))
-	for i, m := range s.Movies {
-		tags[i] = tag{
-			Name: internal.LegendMovie.Full + seperator + m.Movie.Name,
+	tags := make([]tagDto, len(vd.SceneParts.Groups))
+	for i, m := range vd.SceneParts.Groups {
+		tags[i] = tagDto{
+			Name: fmt.Sprintf("%s%s%s", internal.LegendSceneGroup, seperator, m.Group.Name),
 		}
 	}
 	return tags
 }
 
-func getStudio(s gql.SceneScanParts) []tag {
-	if s.Studio == nil {
+func getStudio(vd *library.VideoData) *tagDto {
+	if vd.SceneParts.Studio == nil {
 		return nil
 	}
-	return []tag{studioTag(s.Studio.Name, float32(s.Studio.Rating100))}
+	return &tagDto{Name: fmt.Sprintf("%s%s%s", internal.LegendSceneStudio, seperator, vd.SceneParts.Studio.Name)}
 }
 
-func studioTag(s string, rating float32) tag {
-	return tag{
-		Name:   internal.LegendStudio.Full + seperator + s,
-		Rating: rating,
+func getFields(vd *library.VideoData) []tagDto {
+	tags := make([]tagDto, 0)
+	tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%v", internal.LegendMetaOrganized, seperator, vd.SceneParts.Organized)})
+
+	if vd.SceneParts.Play_count != nil {
+		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%d", internal.LegendMetaPlayCount, seperator, *vd.SceneParts.Play_count)})
 	}
-}
-
-func getFields(s gql.SceneScanParts) []tag {
-	tags := []tag{
-		{Name: fmt.Sprintf("%s:%d", internal.LegendPlayCount.Short, s.Play_count)},
-		{Name: fmt.Sprintf("%s:%d", internal.LegendOCount.Short, s.O_counter)},
-		{Name: fmt.Sprintf("%s:%v", internal.LegendOrganized.Short, s.Organized)}}
+	if vd.SceneParts.O_counter != nil {
+		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%d", internal.LegendMetaOCount, seperator, *vd.SceneParts.O_counter)})
+	}
 
 	return tags
 }
 
-func getStashTags(s gql.SceneScanParts) []tag {
-	tags := make([]tag, 0, len(s.Tags))
-	for _, t := range s.Tags {
+func getStashTags(vd *library.VideoData) []tagDto {
+	tags := make([]tagDto, 0, len(vd.SceneParts.Tags))
+	for _, t := range vd.SceneParts.Tags {
 		if t.Name == config.Get().FavoriteTag {
 			continue
 		}
-		t := tag{
-			Name: internal.LegendTag.Short + seperator + t.Name,
+		t := tagDto{
+			Name: fmt.Sprintf("%s%s%s", internal.LegendTag, seperator, t.Name),
 		}
 		tags = append(tags, t)
 	}
 	return tags
 }
 
-func getMarkers(s gql.SceneScanParts) []tag {
-	tags := make([]tag, len(s.Scene_markers))
-	for i, sm := range s.Scene_markers {
+func getMarkers(vd *library.VideoData) []tagDto {
+	tags := make([]tagDto, len(vd.SceneParts.Scene_markers))
+	for i, sm := range vd.SceneParts.Scene_markers {
 		tagName := sm.Primary_tag.Name
 		if sm.Title != "" {
 			tagName += seperator + sm.Title
 		}
-		t := tag{
-			Name:  tagName,
-			Start: sm.Seconds * 1000,
+		var endSeconds *float64
+		if sm.End_seconds != nil {
+			endSeconds = util.Ptr(*sm.End_seconds * 1000)
+		}
+
+		markerId, _ := strconv.ParseFloat(sm.Id, 32)
+
+		t := tagDto{
+			Name:   tagName,
+			Start:  sm.Seconds * 1000,
+			End:    endSeconds,
+			Rating: util.Ptr(float32(markerId)),
 		}
 		tags[i] = t
 	}
 	return tags
 }
 
-func equallyDivideTagDurations(totalDuration float64, tags []tag) {
-	durationPerItem := totalDuration / float64(len(tags))
+func equallyDivideTagDurations(totalDuration float64, tags []tagDto) {
+	durationPerItem := (totalDuration - 1) / float64(len(tags)) //-1 because HS doesn't display single full-length tags
 	for i := range tags {
-		tags[i].Start = float64(i) * durationPerItem
-		tags[i].End = float64(i+1) * durationPerItem
-	}
-}
-
-func fillTagDurations(tags []tag) {
-	sort.Slice(tags, func(i, j int) bool { return tags[i].Start < tags[j].Start })
-	for i := range tags {
-		if i == len(tags)-1 {
-			tags[i].End = 0
-		} else if tags[i+1].Start == 0 {
-			tags[i].End = tags[i].Start + 20000
-		} else {
-			tags[i].End = tags[i+1].Start
-		}
+		tags[i].Start = 1 + float64(i)*durationPerItem
+		tags[i].End = util.Ptr(float64(i+1) * durationPerItem)
 	}
 }

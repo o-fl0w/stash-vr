@@ -9,25 +9,6 @@ import (
 	"strconv"
 )
 
-func FindFiltersById(ctx context.Context, client graphql.Client, filterIds []string) []gql.SavedFilterParts {
-	filters := make([]gql.SavedFilterParts, 0, len(filterIds))
-
-	for _, filterId := range filterIds {
-		savedFilterResponse, err := gql.FindSavedFilter(ctx, client, filterId)
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(fmt.Errorf("FindFiltersById: FindSavedFilter: %w", err)).Str("filterId", filterId).Msg("Skipped filter")
-			continue
-		}
-		if savedFilterResponse.FindSavedFilter == nil {
-			log.Ctx(ctx).Warn().Err(fmt.Errorf("FindFiltersById: FindSavedFilter: Filter not found")).Str("filterId", filterId).Msg("Skipped filter")
-			continue
-		}
-		filters = append(filters, savedFilterResponse.FindSavedFilter.SavedFilterParts)
-	}
-
-	return filters
-}
-
 func FindSavedFilterIdsByFrontPage(ctx context.Context, client graphql.Client) ([]string, error) {
 	configurationResponse, err := gql.UIConfiguration(ctx, client)
 	if err != nil {
@@ -46,7 +27,7 @@ func FindSavedFilterIdsByFrontPage(ctx context.Context, client graphql.Client) (
 		filter := _filter.(map[string]interface{})
 		typeName := filter["__typename"].(string)
 		if typeName != "SavedFilter" {
-			log.Ctx(ctx).Debug().Str("type", typeName).Msg("Filter skipped: Unsupported filter type on front page: Only user created saved scene filters are supported.")
+			log.Ctx(ctx).Debug().Str("type", typeName).Msg("Filter skipped: Unsupported filter type on front page: Only user created SCENE filters are supported.")
 			continue
 		}
 		fid := filter["savedFilterId"]

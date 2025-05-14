@@ -1,42 +1,32 @@
 package heresphere
 
 import (
-	"context"
-	"github.com/Khan/genqlient/graphql"
-	"stash-vr/internal/sections"
-	"stash-vr/internal/sections/section"
-	"stash-vr/internal/stimhub"
-	"stash-vr/internal/util"
+	"stash-vr/internal/library"
 )
 
-type index struct {
-	Access  int       `json:"access"`
-	Library []library `json:"library"`
+type indexDto struct {
+	Access  int          `json:"access"`
+	Library []libraryDto `json:"library"`
 }
 
-type library struct {
+type libraryDto struct {
 	Name string   `json:"name"`
 	List []string `json:"list"`
 }
 
-func buildIndex(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client, baseUrl string) index {
-	ss := sections.Get(ctx, stashClient, stimhubClient)
+func buildIndex(sections []library.Section, baseUrl string) (indexDto, error) {
+	index := indexDto{Access: 1, Library: make([]libraryDto, 0, len(sections))}
 
-	index := index{Access: 1, Library: fromSections(baseUrl, ss)}
-
-	return index
-}
-
-func fromSections(baseUrl string, sections []section.Section) []library {
-	return util.Transform[section.Section, library](func(section section.Section) (library, error) {
-		return fromSection(baseUrl, section), nil
-	}).Ordered(sections)
-}
-
-func fromSection(baseUrl string, section section.Section) library {
-	o := library{Name: section.Name, List: make([]string, len(section.Scenes))}
-	for i, p := range section.Scenes {
-		o.List[i] = getVideoDataUrl(baseUrl, p.Id())
+	for _, section := range sections {
+		l := libraryDto{
+			Name: section.Name,
+			List: make([]string, len(section.Ids)),
+		}
+		index.Library = append(index.Library, l)
+		for i, sceneId := range section.Ids {
+			l.List[i] = getVideoDataUrl(baseUrl, sceneId)
+		}
 	}
-	return o
+
+	return index, nil
 }

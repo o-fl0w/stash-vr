@@ -2,101 +2,57 @@ package heresphere
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
-	"stash-vr/internal/sections"
-	"stash-vr/internal/sections/section"
-	"stash-vr/internal/stash/gql"
-	"stash-vr/internal/stimhub"
+	"stash-vr/internal/library"
 	"stash-vr/internal/util"
-	"strconv"
 	"time"
 )
 
-type scanDoc struct {
-	ScanData []scanData `json:"scanData"`
+type scanDocDto struct {
+	ScanData []scanDataDto `json:"scanData"`
 }
 
-type scanData struct {
+type scanDataDto struct {
 	id           string
-	Link         string  `json:"link"`
-	Title        string  `json:"title"`
-	DateReleased string  `json:"dateReleased"`
-	DateAdded    string  `json:"dateAdded"`
-	Duration     float64 `json:"duration"`
-	Rating       float32 `json:"rating"`
-	Favorites    int     `json:"favorites"`
-	IsFavorite   bool    `json:"isFavorite"`
-	Tags         []tag   `json:"tags"`
+	Link         string   `json:"link"`
+	Title        string   `json:"title"`
+	DateReleased *string  `json:"dateReleased,omitempty"`
+	DateAdded    string   `json:"dateAdded,omitempty"`
+	Duration     float64  `json:"duration,omitempty"`
+	Rating       *float32 `json:"rating,omitempty"`
+	Favorites    *int     `json:"favorites,omitempty"`
+	IsFavorite   *bool    `json:"isFavorite,omitempty"`
+	Tags         []tagDto `json:"tags,omitempty"`
 }
 
-func buildScan(ctx context.Context, stashClient graphql.Client, stimhubClient *stimhub.Client, baseUrl string) (scanDoc, error) {
-	ss := sections.Get(ctx, stashClient, stimhubClient)
-	sceneIdMap := make(map[int]any)
-
-	var stimSection *section.Section
-
-	for _, s := range ss {
-		if s.FilterId == stimhub.FilterId {
-			stimSection = &s
+func buildScan(ctx context.Context, vds map[string]*library.VideoData, baseUrl string) (*scanDocDto, error) {
+	scanDoc := scanDocDto{ScanData: make([]scanDataDto, 0, len(vds))}
+	for _, vd := range vds {
+		id := vd.Id()
+		scanData := scanDataDto{
+			id:        id,
+			Link:      getVideoDataUrl(baseUrl, id),
+			Title:     vd.Title(),
+			DateAdded: vd.SceneParts.Created_at.Format(time.DateOnly),
+			Duration:  vd.SceneParts.Files[0].Duration,
+			Tags:      getTags(vd),
 		}
-		for _, preview := range s.Scenes {
-			sid, _ := strconv.Atoi(preview.ScenePreviewParts.Id)
-			sceneIdMap[sid] = struct{}{}
+		if vd.SceneParts.Date != nil {
+			scanData.DateReleased = vd.SceneParts.Date
 		}
-	}
-	sceneIds := make([]int, 0, len(sceneIdMap))
-	for sceneId := range sceneIdMap {
-		sceneIds = append(sceneIds, sceneId)
-	}
-	response, err := gql.FindSceneScansByIds(ctx, stashClient, sceneIds)
-	if err != nil {
-		return scanDoc{}, fmt.Errorf("FindSceneScansByIds: %w", err)
+		if vd.SceneParts.Rating100 != nil {
+			scanData.Rating = util.Ptr(float32(*vd.SceneParts.Rating100) / 20)
+		}
+		if vd.SceneParts.O_counter != nil {
+			scanData.Favorites = vd.SceneParts.O_counter
+		}
+		if isFavorite(vd) {
+			scanData.IsFavorite = util.Ptr(true)
+		}
+
+		scanDoc.ScanData = append(scanDoc.ScanData, scanData)
 	}
 
-	sceneScans := util.Transform[*gql.FindSceneScansByIdsFindScenesFindScenesResultTypeScenesScene, scanData](
-		func(scene *gql.FindSceneScansByIdsFindScenesFindScenesResultTypeScenesScene) (scanData, error) {
-			return mkScanData(scene.SceneScanParts, baseUrl), nil
-		}).Ordered(response.FindScenes.Scenes)
-
-	if stimSection != nil {
-		eSceneScans := util.Transform[section.ScenePreview, scanData](
-			func(p section.ScenePreview) (scanData, error) {
-				for _, el := range sceneScans {
-					if p.ScenePreviewParts.Id == el.id {
-						stimScene := stimhub.Get(p.StimAudioCrc32, p.GetId())
-						eel := el
-						eel.Title = stimScene.Title
-						eel.DateAdded = stimScene.DateAdded.Format(time.DateOnly)
-						eel.Link = getVideoDataUrl(baseUrl, stimhub.MakeStimSceneId(p.GetId(), p.StimAudioCrc32))
-						eel.Tags = make([]tag, len(el.Tags))
-						copy(eel.Tags, el.Tags)
-						eel.Tags = append(eel.Tags, getStimSceneTags(*stimScene)...)
-						return eel, nil
-					}
-				}
-				return scanData{}, errors.New("scandataelement not found")
-			}).Ordered(stimSection.Scenes)
-		sceneScans = append(sceneScans, eSceneScans...)
-	}
-
-	log.Ctx(ctx).Trace().Int("count", len(sceneScans)).Msg("/scan")
-	return scanDoc{ScanData: sceneScans}, nil
-}
-
-func mkScanData(sp gql.SceneScanParts, baseUrl string) scanData {
-	return scanData{
-		id:           sp.Id,
-		Link:         getVideoDataUrl(baseUrl, sp.Id),
-		Title:        util.FirstNonEmpty(sp.Title, sp.GetFiles()[0].Basename),
-		DateReleased: sp.Date,
-		DateAdded:    sp.Created_at.Format(time.DateOnly),
-		Duration:     sp.Files[0].Duration,
-		Rating:       float32(sp.Rating100) / 20,
-		Favorites:    sp.O_counter,
-		IsFavorite:   ContainsFavoriteTag(sp.TagPartsArray),
-		Tags:         getTags(sp),
-	}
+	log.Ctx(ctx).Trace().Int("scenes", len(scanDoc.ScanData)).Msg("/scan")
+	return &scanDoc, nil
 }

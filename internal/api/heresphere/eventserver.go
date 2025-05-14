@@ -3,21 +3,21 @@ package heresphere
 type event int
 
 const (
-	open event = iota
-	play
-	pause
-	close
+	evOpen event = iota
+	evPlay
+	evPause
+	evClose
 )
 
 func (e event) String() string {
 	switch e {
-	case open:
+	case evOpen:
 		return "open"
-	case play:
+	case evPlay:
 		return "play"
-	case pause:
+	case evPause:
 		return "pause"
-	case close:
+	case evClose:
 		return "close"
 	}
 	return "unknown event"

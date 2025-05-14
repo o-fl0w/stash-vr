@@ -2,15 +2,12 @@ package web
 
 import (
 	_ "embed"
-	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/zerolog/log"
 	"html/template"
 	"net/http"
 	"stash-vr/internal/build"
 	"stash-vr/internal/config"
-	"stash-vr/internal/sections"
-	"stash-vr/internal/stash/gql"
-	"stash-vr/internal/stimhub"
+	"stash-vr/internal/library"
 	"strings"
 )
 
@@ -39,7 +36,7 @@ type indexData struct {
 	SceneCount              int
 }
 
-func IndexHandler(stashClient graphql.Client, stimhubClient *stimhub.Client) http.HandlerFunc {
+func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := indexData{
 			Redact:                  config.Redacted,
@@ -52,19 +49,22 @@ func IndexHandler(stashClient graphql.Client, stimhubClient *stimhub.Client) htt
 			StashConnectionResponse: fail,
 		}
 
-		if version, err := gql.Version(r.Context(), stashClient); err == nil {
-			data.StashConnectionResponse = ok
-			data.StashVersion = version.Version.Version
-			ss := sections.Get(r.Context(), stashClient, stimhubClient)
-			data.SectionCount = len(ss)
-			count := sections.Count(ss)
-			data.LinkCount = count.Links
-			data.SceneCount = count.Scenes
-		} else {
+		if version, err := libraryService.GetClientVersions(r.Context()); err != nil {
 			if strings.HasSuffix(err.Error(), "unauthorized") {
 				data.StashConnectionResponse = unauthorized
 			}
 			log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve stash version")
+		} else {
+			data.StashVersion = version["stash"]
+			if sections, err := libraryService.GetSections(r.Context()); err != nil {
+				log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve sections")
+			} else {
+				data.StashConnectionResponse = ok
+				data.SectionCount = len(sections)
+				count := library.Count(sections)
+				data.LinkCount = count.Links
+				data.SceneCount = count.Scenes
+			}
 		}
 		if err := tmpl.Execute(w, data); err != nil {
 			log.Ctx(r.Context()).Err(err).Msg("index: execute template")

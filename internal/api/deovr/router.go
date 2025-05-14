@@ -1,14 +1,14 @@
 package deovr
 
 import (
-	"github.com/Khan/genqlient/graphql"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"stash-vr/internal/api/internal"
+	"stash-vr/internal/library"
 )
 
-func Router(client graphql.Client) http.Handler {
-	httpHandler := httpHandler{Client: client}
+func Router(libraryService *library.Service) http.Handler {
+	httpHandler := httpHandler{libraryService}
 	r := chi.NewRouter()
 
 	r.Get("/", internal.LogRoute("index", httpHandler.indexHandler))
