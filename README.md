@@ -59,9 +59,6 @@ Example: Connect to Stash running on localhost:9999 with api key XXX and set Sta
 <details>
 <summary>More (click to expand)</summary>
 
-* `ALLOW_SYNC_MARKERS`
-  * Default: `false`
-  * Enable sync of Marker from HereSphere [NOTE](#heresphere-sync-of-markers)
 * `FAVORITE_TAG`
   * Default: `FAVORITE`
   * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
@@ -101,8 +98,6 @@ The naming format is:
 * `<tag>` will create a Marker in Stash with primary tag `<tag>` and no title.
 
 Set the start and end time using HereSphere controls.
-
-Enable sync of markers by setting `ALLOW_SYNC_MARKERS=true`
 
 #### Favorites
 When the favorite-feature of HereSphere is first used Stash-VR will create a tag in Stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your scene.
