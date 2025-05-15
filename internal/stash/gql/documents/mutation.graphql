@@ -40,3 +40,7 @@ mutation SceneIncrementO($id: ID!, $timestamp: Timestamp!){
 mutation SceneIncrementPlayCount($id: ID!, $timestamp: Timestamp!){
     sceneAddPlay(id: $id, times: [$timestamp]){count}
 }
+
+mutation SceneUpdateOrganized($id: ID!, $isOrganized: Boolean){
+    sceneUpdate(input: {id: $id, organized: $isOrganized}){id, organized}
+}
