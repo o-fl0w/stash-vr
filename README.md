@@ -140,3 +140,9 @@ DeoVR won't show images served through HTTP - seems they only allow HTTPS. See h
 
 ### Missing thumbnail images in HereSphere
 HereSphere doesn't support WEBP images, which is sometimes fetched when scraping from Stash. A workaround is to manually regenerate a cover using Stash for those scenes.
+
+## Troubleshooting
+- If your Stash requires an api key, make sure you provide it to Stash-VR
+- Make sure Stash-VR has network access to Stash
+- Make sure your VR-headset has network access to both Stash and Stash-VR
+  - Try explicitly setting `LISTEN_ADDRESS` to the external (accessible by headset) ip:port of Stash-VR
