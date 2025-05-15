@@ -134,3 +134,9 @@ DeoVR/HereSphere both seem to have limits and struggle/crash when too many video
   * For HereSphere the limit seems to be around 10k unique scenes.
     * Fixed in HereSphere v0.7.3?
   * Tip: If you have a VERY LARGE library and your player is struggling to load them all, try explicitly setting env. var. `FILTERS` with a list of filter ids such that the total amount of videos are lowered to a "reasonable" amount.
+
+### Missing thumbnail images in DeoVR
+DeoVR won't show images served through HTTP - seems they only allow HTTPS. See https://github.com/xbapps/xbvr/issues/1705
+
+### Missing thumbnail images in HereSphere
+HereSphere doesn't support WEBP images, which is sometimes fetched when scraping from Stash. A workaround is to manually regenerate a cover using Stash for those scenes.
