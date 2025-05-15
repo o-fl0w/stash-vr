@@ -117,9 +117,6 @@ Play count in Stash is incremented when video is played in HereSphere.
 
 To disable set `DISABLE_PLAY_COUNT=true`
 
-#### Organized
-Current state is shown as `Organized:<true/false>`
-
 ## Known issues/Missing features
 
 ### Unsupported filter types
