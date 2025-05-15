@@ -119,39 +119,58 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 			newMarkers := make([]library.MarkerDto, 0)
 
 			for _, t := range *vdReq.Tags {
-				values := strings.Split(t.Name, ":")
-				switch values[0] {
-				case internal.LegendPerformer, internal.LegendSceneStudio, internal.LegendSceneGroup, internal.LegendMetaOCount,
+				key, arg, _ := strings.Cut(t.Name, ":")
+
+				if key == "" {
+					continue
+				}
+
+				switch key {
+				case internal.LegendPerformer, internal.LegendSceneStudio,
+					internal.LegendSceneGroup, internal.LegendMetaOCount,
 					internal.LegendMetaOrganized, internal.LegendMetaPlayCount:
 					continue
-				case "!O", "!o":
+				case internal.LegendTag:
+					if arg != "" {
+						newTags = append(newTags, arg)
+					}
+					continue
+				}
+
+				if strings.EqualFold(key, internal.CommandIncrementO) {
 					if err = h.libraryService.IncrementO(ctx, videoId); err != nil {
 						log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment O")
 					}
-				case internal.LegendTag:
-					if len(values) > 1 && values[1] != "" {
-						newTags = append(newTags, values[1])
-					}
-				default:
-					if values[0] == "" {
-						continue
-					}
-					m := library.MarkerDto{
-						PrimaryTagName: values[0],
-						StartSecond:    t.Start / 1000,
-						MarkerId:       fmt.Sprintf("%.0f", *t.Rating),
-					}
-					if len(values) > 1 {
-						m.Title = values[1]
-					}
-					if t.End != nil {
-						m.EndSecond = util.Ptr(*t.End / 1000)
-					}
-					log.Ctx(ctx).Debug().Str("marker", fmt.Sprintf("%+v", m)).Msg("Incoming marker")
-					newMarkers = append(newMarkers, m)
+					continue
 				}
+				if strings.EqualFold(key, internal.CommandSetOrganizedTrue) {
+					if err = h.libraryService.SetOrganized(ctx, videoId, true); err != nil {
+						log.Ctx(ctx).Warn().Err(err).Msg("Failed to set organized=true")
+					}
+					continue
+				}
+				if strings.EqualFold(key, internal.CommandSetOrganizedFalse) {
+					if err = h.libraryService.SetOrganized(ctx, videoId, false); err != nil {
+						log.Ctx(ctx).Warn().Err(err).Msg("Failed to set organized=false")
+					}
+					continue
+				}
+
+				m := library.MarkerDto{
+					PrimaryTagName: key,
+					StartSecond:    t.Start / 1000,
+					MarkerId:       fmt.Sprintf("%.0f", *t.Rating),
+				}
+				if arg != "" {
+					m.Title = arg
+				}
+				if t.End != nil {
+					m.EndSecond = util.Ptr(*t.End / 1000)
+				}
+				log.Ctx(ctx).Debug().Str("marker", fmt.Sprintf("%+v", m)).Msg("Incoming marker")
+				newMarkers = append(newMarkers, m)
 			}
-			log.Ctx(ctx).Debug().Bool("nilTags", newTags == nil).Int("tags", len(newTags)).Msg("About to update tags")
+
 			if err = h.libraryService.UpdateTags(ctx, videoId, newTags); err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to update tags")
 			}

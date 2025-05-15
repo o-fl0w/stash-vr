@@ -208,3 +208,11 @@ func (service *Service) IncrementPlayCount(ctx context.Context, id string) error
 	}
 	return nil
 }
+
+func (service *Service) SetOrganized(ctx context.Context, id string, newState bool) error {
+	_, err := gql.SceneUpdateOrganized(ctx, service.stashClient, id, &newState)
+	if err != nil {
+		return fmt.Errorf("SceneUpdateOrganized: %w", err)
+	}
+	return nil
+}

@@ -79,25 +79,37 @@ Browse to `http://<host>:9666` using a supported video player. You'll be present
 ##### Two-way sync
 To enable two-way sync with Stash the relevant toggles (`Overwrite tags` etc.) in the cogwheel at the bottom right of preview view in HereSphere needs to be on.
 #### Manage metadata
-Scene metadata is handled using `Video Tags` in HereSphere.
+Scene metadata is handled using `Video Tags` in HereSphere. Both for presentation and making changes.
 
-To tag a scene open it in HereSphere and click `Video Tags` above the seekbar.
-On any track insert a new tag and prefix it with `#:` i.e. `#:MusicVideo`.
-This will create the tag `MusicVideo` in Stash if not already present and apply it to your scene. Removing a tag in HereSphere will untag the scene in Stash.
+* Stash tags
+  * `#:<Name>`
+  * Adding or removing tags in this #:format in HereSphere will sync changes to Stash
+    * Tag in Stash is created if necessary.
+* Studio
+  * `Studio:<Name>`
+* Performers
+  * `@:<Name>`
+* Groups
+  * `%:<Name>`
+* Play count
+  * `Played:<Count>`
+  * Automatically incremented
+    * To disable, set `DISABLE_PLAY_COUNT=true`
+* O-Count
+  * `O-Count:<Count>`
+  * To increment, add a tag `/o`
+* Organized
+  * `Organized:true`
+  * To set organized, add a tag `/org`
+  * To unset organized, add a tag `/org-`
+* Markers
+  * Everything else is treated as a marker
+  * `<Primary Tag Name>` (empty title)
+  * `<Primary Tag Name>:<Title>`
+  * Set the start and end time using HereSphere controls.
+  * Changes in HereSphere will sync to Stash
 
-Studios, performers and groups from Stash are displayed (read only) in HereSphere as:
-
-- `Studio:`Studio
-- `@:`Performer
-- `%:`Group
-
-#### Markers
-To create a marker using HereSphere play the target scene and create a "tag" on any track using `Video Tags`.
-The naming format is:
-* `<tag>:<title>` will create a Marker in Stash titled `<title>` with the primary tag `<tag>`
-* `<tag>` will create a Marker in Stash with primary tag `<tag>` and no title.
-
-Set the start and end time using HereSphere controls.
+Changes reflect in HereSphere when videos are re-opened.
 
 #### Favorites
 When the favorite-feature of HereSphere is first used Stash-VR will create a tag in Stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your scene.
@@ -107,25 +119,15 @@ When the favorite-feature of HereSphere is first used Stash-VR will create a tag
 #### Rating
 Ratings set in HereSphere will be converted to its equivalent in Stash (4.5 stars => 90).
 
-#### O-counter
-Increment o-count by adding a tag named `!O` (case-insensitive) in `Video Tags`.
-
-Current o-count is shown as `O-Count:<count>`. It is also visible in the preview list on the thumbnail by the lower right heart.
-
-#### Play count
-Play count in Stash is incremented when video is played in HereSphere.
-
-To disable set `DISABLE_PLAY_COUNT=true`
-
 ## Known issues/Missing features
 
 ### Unsupported filter types
-* Premade Filters (i.e. Recently Released Scenes etc.) from Stash front page are not supported.
+* Premade Filters (i.e., Recently Released Scenes etc.) from Stash front page are not supported.
   * Tip: If you really want such filters to show they can easily be recreated and saved using regular filters in Stash.
 
-### HereSphere sync of Markers
-When using `Video Tags` in HereSphere to edit Markers Stash-VR will no longer delete and (re)create them on updates.
-We use the seemingly unused rating field to transport marker id for correlating the markers (tags) in HereSphere to a marker in Stash, hacky.
+### HereSphere sync of markers
+When using `Video Tags` in HereSphere to edit markers Stash-VR will no longer delete and (re)create them on updates.
+We use the rating field of a marker in HereSphere to transport the id for correlating the markers in HereSphere to a marker in Stash, hacky.
 
 ### Scene count limits (More than 10.000 links generated)
 DeoVR/HereSphere both seem to have limits and struggle/crash when too many videos are provided than they can handle.

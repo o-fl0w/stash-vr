@@ -100,15 +100,15 @@ func getStudio(vd *library.VideoData) *tagDto {
 func getFields(vd *library.VideoData) []tagDto {
 	tags := make([]tagDto, 0)
 
-	if vd.SceneParts.Organized {
-		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%strue", internal.LegendMetaOrganized, seperator)})
-	}
-
 	if vd.SceneParts.Play_count != nil {
 		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%d", internal.LegendMetaPlayCount, seperator, *vd.SceneParts.Play_count)})
 	}
 	if vd.SceneParts.O_counter != nil {
 		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%d", internal.LegendMetaOCount, seperator, *vd.SceneParts.O_counter)})
+	}
+
+	if vd.SceneParts.Organized {
+		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%strue", internal.LegendMetaOrganized, seperator)})
 	}
 
 	return tags
