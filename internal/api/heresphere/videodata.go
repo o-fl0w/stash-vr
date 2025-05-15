@@ -116,7 +116,7 @@ func setSubtitles(vd *library.VideoData, dto *videoDataDto) {
 	}
 	for _, c := range vd.SceneParts.Captions {
 		dto.Subtitles = append(dto.Subtitles, subtitleDto{
-			Name:     c.Caption_type,
+			Name:     fmt.Sprintf("%s.%s", c.Language_code, c.Caption_type),
 			Language: c.Language_code,
 			Url:      stash.ApiKeyed(fmt.Sprintf("%s?lang=%s&type=%s", *vd.SceneParts.Paths.Caption, c.Language_code, c.Caption_type)),
 		})
