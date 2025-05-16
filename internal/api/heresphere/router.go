@@ -16,10 +16,14 @@ func Router(libraryService *library.Service) http.Handler {
 	r.Post("/", internal.LogRoute("index", httpHandler.indexHandler))
 	r.Post("/scan", internal.LogRoute("scan", httpHandler.scanHandler))
 	r.Handle("/{videoId}", internal.LogRoute("videoData", internal.LogVideoId(httpHandler.videoDataHandler)))
-	r.Post("/events", internal.LogRoute("events", httpHandler.eventsHandler))
+	r.Post("/events/{videoId}", internal.LogRoute("events", httpHandler.eventsHandler))
 	return r
 }
 
 func getVideoDataUrl(baseUrl string, id string) string {
 	return baseUrl + "/heresphere/" + url.QueryEscape(id)
+}
+
+func getEventsUrl(baseUrl string, id string) string {
+	return baseUrl + "/heresphere/events" + "/" + url.QueryEscape(id)
 }

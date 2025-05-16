@@ -9,19 +9,23 @@ import (
 	"net/url"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/library"
+	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 	"strings"
+	"time"
 )
 
 type httpHandler struct {
 	libraryService *library.Service
-	vrTagId        string
+	ps             playbackState
 }
 
 func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 	log.Ctx(req.Context()).Debug().Msg("INDEX")
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
+
+	h.ps.minPlayFraction = stash.GetMinPlayPercent(ctx, h.libraryService.StashClient) / 100
 
 	sections, err := h.libraryService.GetSections(ctx)
 	if err != nil {
@@ -89,8 +93,6 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 	vdReq, err := internal.UnmarshalBody[videoDataRequestDto](req)
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("Failed to parse request body")
-		//w.WriteHeader(http.StatusBadRequest)
-		//return
 	}
 
 	if vdReq.DeleteFile != nil && *vdReq.DeleteFile {
@@ -179,11 +181,6 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to update markers")
 			}
 		}
-		if vdReq.NeedsMediaSource != nil && *vdReq.NeedsMediaSource {
-			if err = h.libraryService.IncrementPlayCount(ctx, videoId); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment play count")
-			}
-		}
 
 		_, err := h.libraryService.GetScene(ctx, videoId, true)
 		if err != nil {
@@ -212,14 +209,85 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	event, err := internal.UnmarshalBody[playbackEvent](req)
+	ev, err := internal.UnmarshalBody[playbackEvent](req)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to parse request body")
+		log.Ctx(ctx).Error().Err(err).Msg("failed to parse event body")
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	log.Ctx(ctx).Trace().Str("event", fmt.Sprintf("%v", event)).Send()
-	return
+	parts := strings.Split(ev.Id, "/")
+	videoId := parts[len(parts)-1]
+	vd, err := h.libraryService.GetScene(ctx, videoId, false)
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to get scene from event")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	switch ev.Event {
+	case evPlay:
+		if h.ps.currentlyOpenVideoId != videoId {
+			h.onPlayNew(ctx, vd)
+		} else {
+			h.onResume()
+		}
+	case evPause, evClose:
+		h.onPause(ctx)
+	default:
+	}
+}
+
+func (h *httpHandler) onPlayNew(ctx context.Context, vd *library.VideoData) {
+	now := time.Now()
+	if h.ps.currentlyOpenVideoId != "" && h.ps.isPlaying {
+		h.ps.accumulatedPlayTime += now.Sub(h.ps.lastPlayTime)
+		h.maybeIncrementPlayCount(ctx)
+	}
+	h.ps.currentlyOpenVideoId = vd.Id()
+	h.ps.videoDuration = vd.SceneParts.Files[0].Duration
+	h.ps.accumulatedPlayTime = 0
+	h.ps.thresholdReached = false
+	h.ps.lastPlayTime = now
+	h.ps.isPlaying = true
+}
+
+func (h *httpHandler) onResume() {
+	if !h.ps.isPlaying {
+		h.ps.lastPlayTime = time.Now()
+	}
+
+	h.ps.isPlaying = true
+}
+
+func (h *httpHandler) onPause(ctx context.Context) {
+	if h.ps.isPlaying {
+		h.ps.accumulatedPlayTime += time.Now().Sub(h.ps.lastPlayTime)
+		h.maybeIncrementPlayCount(ctx)
+	}
+
+	h.ps.isPlaying = false
+}
+
+func (h *httpHandler) maybeIncrementPlayCount(ctx context.Context) {
+	if !h.ps.thresholdReached && h.ps.accumulatedPlayTime.Seconds() >= h.ps.videoDuration*h.ps.minPlayFraction {
+		if err := h.libraryService.IncrementPlayCount(ctx, h.ps.currentlyOpenVideoId); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment play count")
+		}
+		h.ps.thresholdReached = true
+	}
+}
+
+type playbackState struct {
+	minPlayFraction float64
+
+	currentlyOpenVideoId string
+	videoDuration        float64
+
+	accumulatedPlayTime time.Duration
+	thresholdReached    bool
+	lastPlayTime        time.Time
+	isPlaying           bool
 }
 
 type videoDataRequestDto struct {

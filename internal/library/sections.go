@@ -19,7 +19,7 @@ type Section struct {
 }
 
 func (service *Service) getFilters(ctx context.Context) ([]gql.SavedFilterParts, error) {
-	savedFilters, err := gql.FindSavedFilters(ctx, service.stashClient)
+	savedFilters, err := gql.FindSavedFilters(ctx, service.StashClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find saved filters: %w", err)
 	}
@@ -39,7 +39,7 @@ func (service *Service) getFilters(ctx context.Context) ([]gql.SavedFilterParts,
 
 	switch {
 	case config.Get().Filters == "frontpage":
-		fpIds, err := stash.FindSavedFilterIdsByFrontPage(ctx, service.stashClient)
+		fpIds, err := stash.FindSavedFilterIdsByFrontPage(ctx, service.StashClient)
 		if err != nil {
 			return nil, fmt.Errorf("failed to find frontpage filters: %w", err)
 		}
@@ -50,7 +50,7 @@ func (service *Service) getFilters(ctx context.Context) ([]gql.SavedFilterParts,
 		return filterByIDs(ids), nil
 
 	default:
-		fpIds, err := stash.FindSavedFilterIdsByFrontPage(ctx, service.stashClient)
+		fpIds, err := stash.FindSavedFilterIdsByFrontPage(ctx, service.StashClient)
 		if err != nil {
 			return nil, fmt.Errorf("failed to find frontpage filter IDs: %w", err)
 		}
@@ -92,7 +92,7 @@ func (service *Service) GetSections(ctx context.Context) ([]Section, error) {
 					flog.Warn().Err(err).Msg("Failed to convert filter, skipping")
 					return
 				}
-				resp, err := gql.FindSceneIdsByFilter(ctx, service.stashClient, &sceneFilter.SceneFilter, &sceneFilter.FilterOpts)
+				resp, err := gql.FindSceneIdsByFilter(ctx, service.StashClient, &sceneFilter.SceneFilter, &sceneFilter.FilterOpts)
 				if err != nil {
 					flog.Err(err).Msg("Failed to find scenes by filter, skipping")
 					return

@@ -23,7 +23,7 @@ func (service *Service) GetScenes(ctx context.Context) (map[string]*VideoData, e
 		service.mu.RUnlock()
 
 		if len(toFetch) > 0 {
-			resp, err := gql.FindScenes(ctx, service.stashClient, toFetch)
+			resp, err := gql.FindScenes(ctx, service.StashClient, toFetch)
 			if err != nil {
 				return nil, fmt.Errorf("FindScenes: %w", err)
 			}
@@ -70,7 +70,7 @@ func (service *Service) GetScene(ctx context.Context, id string, forceFetch bool
 func (service *Service) fetchVideoData(ctx context.Context, id string) (*VideoData, error) {
 	iid, _ := strconv.Atoi(id)
 	sceneIds := []int{iid}
-	resp, err := gql.FindScenes(ctx, service.stashClient, sceneIds)
+	resp, err := gql.FindScenes(ctx, service.StashClient, sceneIds)
 	if err != nil {
 		return nil, fmt.Errorf("FindScenes: %w", err)
 	}
