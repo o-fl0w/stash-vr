@@ -12,20 +12,20 @@ import (
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 	"strings"
-	"time"
 )
 
 type httpHandler struct {
 	libraryService *library.Service
-	ps             playbackState
+	ps             *playbackState
 }
 
+var minPlayFraction float64
+
 func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
-	log.Ctx(req.Context()).Debug().Msg("INDEX")
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
 
-	h.ps.minPlayFraction = stash.GetMinPlayPercent(ctx, h.libraryService.StashClient) / 100
+	minPlayFraction = stash.GetMinPlayPercent(ctx, h.libraryService.StashClient) / 100
 
 	sections, err := h.libraryService.GetSections(ctx)
 	if err != nil {
@@ -55,7 +55,6 @@ func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (h *httpHandler) scanHandler(w http.ResponseWriter, req *http.Request) {
-	log.Ctx(req.Context()).Debug().Msg("SCAN")
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
 
@@ -169,7 +168,6 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 				if t.End != nil {
 					m.EndSecond = util.Ptr(*t.End / 1000)
 				}
-				log.Ctx(ctx).Debug().Str("marker", fmt.Sprintf("%+v", m)).Msg("Incoming marker")
 				newMarkers = append(newMarkers, m)
 			}
 
@@ -225,69 +223,22 @@ func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	log.Ctx(ctx).Debug().Str("id", ev.Id).Interface("event", ev.Event).Send()
+
 	switch ev.Event {
 	case evPlay:
-		if h.ps.currentlyOpenVideoId != videoId {
-			h.onPlayNew(ctx, vd)
+		if h.ps == nil {
+			h.ps = newPlayback(vd, minPlayFraction)
+		} else if h.ps.videoId != videoId {
+			h.ps.handleStop(ctx, h.libraryService)
+			h.ps = newPlayback(vd, minPlayFraction)
 		} else {
-			h.onResume()
+			h.ps.handleResume()
 		}
 	case evPause, evClose:
-		h.onPause(ctx)
+		h.ps.handleStop(ctx, h.libraryService)
 	default:
 	}
-}
-
-func (h *httpHandler) onPlayNew(ctx context.Context, vd *library.VideoData) {
-	now := time.Now()
-	if h.ps.currentlyOpenVideoId != "" && h.ps.isPlaying {
-		h.ps.accumulatedPlayTime += now.Sub(h.ps.lastPlayTime)
-		h.maybeIncrementPlayCount(ctx)
-	}
-	h.ps.currentlyOpenVideoId = vd.Id()
-	h.ps.videoDuration = vd.SceneParts.Files[0].Duration
-	h.ps.accumulatedPlayTime = 0
-	h.ps.thresholdReached = false
-	h.ps.lastPlayTime = now
-	h.ps.isPlaying = true
-}
-
-func (h *httpHandler) onResume() {
-	if !h.ps.isPlaying {
-		h.ps.lastPlayTime = time.Now()
-	}
-
-	h.ps.isPlaying = true
-}
-
-func (h *httpHandler) onPause(ctx context.Context) {
-	if h.ps.isPlaying {
-		h.ps.accumulatedPlayTime += time.Now().Sub(h.ps.lastPlayTime)
-		h.maybeIncrementPlayCount(ctx)
-	}
-
-	h.ps.isPlaying = false
-}
-
-func (h *httpHandler) maybeIncrementPlayCount(ctx context.Context) {
-	if !h.ps.thresholdReached && h.ps.accumulatedPlayTime.Seconds() >= h.ps.videoDuration*h.ps.minPlayFraction {
-		if err := h.libraryService.IncrementPlayCount(ctx, h.ps.currentlyOpenVideoId); err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment play count")
-		}
-		h.ps.thresholdReached = true
-	}
-}
-
-type playbackState struct {
-	minPlayFraction float64
-
-	currentlyOpenVideoId string
-	videoDuration        float64
-
-	accumulatedPlayTime time.Duration
-	thresholdReached    bool
-	lastPlayTime        time.Time
-	isPlaying           bool
 }
 
 type videoDataRequestDto struct {

@@ -75,7 +75,6 @@ func (service *Service) UpdateTags(ctx context.Context, id string, tags []string
 	if _, err := gql.SceneUpdateTags(ctx, service.StashClient, id, tagIds); err != nil {
 		return fmt.Errorf("SceneUpdateTags: %w", err)
 	}
-	log.Ctx(ctx).Debug().Interface("tagIds", tagIds).Msg("Updated tags")
 	return nil
 }
 
@@ -189,7 +188,6 @@ func (service *Service) Delete(ctx context.Context, id string) error {
 	if _, err := gql.SceneDestroy(ctx, service.StashClient, id); err != nil {
 		return fmt.Errorf("SceneDestroy: %w", err)
 	}
-	log.Ctx(ctx).Debug().Str("id", id).Msg("Destroy scene request sent to Stash")
 	return nil
 }
 
