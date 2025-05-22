@@ -58,6 +58,7 @@ Example: Connect to Stash running on stash-host:9999 with api key XXX and set St
 
 <details>
 <summary>More (click to expand)</summary>
+ 
 * `FILTERS`
   * Default: Empty (show all saved filters)
   * Narrow the selection of filters to show by setting one of below values:
