@@ -127,9 +127,9 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 				}
 
 				switch key {
-				case internal.LegendPerformer, internal.LegendSceneStudio,
-					internal.LegendSceneGroup, internal.LegendMetaOCount,
-					internal.LegendMetaOrganized, internal.LegendMetaPlayCount:
+				case internal.LegendPerformer, internal.LegendSceneStudio, internal.LegendSceneGroup,
+					internal.LegendMetaOCount, internal.LegendMetaOrganized, internal.LegendMetaPlayCount,
+					internal.LegendMetaResolution:
 					continue
 				case internal.LegendTag:
 					if arg != "" {
