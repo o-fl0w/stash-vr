@@ -37,7 +37,7 @@ After installation open your endpoint (e.g. `http://localhost:9666`) in a regula
 
 ### Docker
 ```
-docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://localhost:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
+docker run --name=stash-vr -e STASH_GRAPHQL_URL=http://stash-host:9999/graphql -e STASH_API_KEY=XXX -p 9666:9666 ofl0w/stash-vr:latest
 ```
 
 Stash-VR listens on port `9666` by default. To change local port, use docker port binding, e.g. `-p 9000:9666`, or set env. `LISTEN_ADDRESS=:9000` to listen on port `9000` instead.
@@ -45,9 +45,9 @@ Stash-VR listens on port `9666` by default. To change local port, use docker por
 ### Binaries
 Download and extract a binary for your platform. Run `stash-vr -h` to display help.
 
-Example: Connect to Stash running on localhost:9999 with api key XXX and set Stash-VR to listen on port 9000:
+Example: Connect to Stash running on stash-host:9999 with api key XXX and set Stash-VR to listen on port 9000:
 
-`stash-vr --STASH_GRAPHQL_URL=http://localhost:9999/graphql --STASH_API_KEY=XXX --LISTEN_ADDRESS=:9000`
+`stash-vr --STASH_GRAPHQL_URL=http://stash-host:9999/graphql --STASH_API_KEY=XXX --LISTEN_ADDRESS=:9000`
 
 ### Configuration
 * `STASH_GRAPHQL_URL`
@@ -58,7 +58,16 @@ Example: Connect to Stash running on localhost:9999 with api key XXX and set Sta
 
 <details>
 <summary>More (click to expand)</summary>
-
+* `FILTERS`
+  * Default: Empty (show all saved filters)
+  * Narrow the selection of filters to show by setting one of below values:
+    * `frontpage`
+      * Show only filters found on Stash front page.
+    * Comma separated list of filter ids, e.g. `1,5,12`
+      * To find ids of your saved filter you can run the following graphql query in Stash playground (http://stash-host:9999/playground
+       * `{findSavedFilters(mode: SCENES) {id name}}`
+    * Empty
+      * Show all saved filters.
 * `FAVORITE_TAG`
   * Default: `FAVORITE`
   * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
