@@ -144,7 +144,8 @@ func setScripts(vd *library.VideoData, dto *videoDataDto) {
 }
 
 func setMediaSources(vd *library.VideoData, dto *videoDataDto) {
-	for _, stream := range stash.GetStreams(vd.SceneParts) {
+	streams := []stash.Stream{stash.GetDirectStream(vd.SceneParts), stash.GetTranscodingStream(vd.SceneParts)}
+	for _, stream := range streams {
 		e := mediaDto{
 			Name: stream.Name,
 		}
