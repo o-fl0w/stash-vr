@@ -59,6 +59,13 @@ query FindSceneIdsByFilter(
         }}
 }
 
+query FindAllSceneIds{
+    findScenes(filter: {per_page: -1}){
+        scenes {
+            id
+        }}
+}
+
 query FindScenes($scene_ids: [Int!]){
     findScenes(scene_ids: $scene_ids){
         scenes {
