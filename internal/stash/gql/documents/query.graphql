@@ -18,7 +18,7 @@ query FindCredentials{
     }
 }
 
-query FindSavedFilters{
+query FindSavedSceneFilters{
     findSavedFilters(mode: SCENES){
         ...SavedFilterParts
     }

@@ -13,7 +13,7 @@ veeXFGDGWo6SUFH1sNUijSC3whTRzf17f0ulFkRH9zOInXCi8tCVKf60FHSkpTxDgMtcEDPcf4TY
 7CNKs2tBqKaekV2MsgihnHr2XMcZscSOpnJHbNZwNlSAyp2u5+sqSRudhkq39d5Zbq6Kvup3iaKS
 fKUlgFY1QKnzcRvOSoqwo/ttdsRGEVZZSJXmglBwUqdjp6VdkPt5XoWOKGY6Xz3PVwxnkeWelfAO
 F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
-/DyRqAHqNQD350bBBvlzRSAFuS1FAAAAAAAAAAAAAABb/ADP/f1z77EnFAAAAABJRU5ErkJggg==" rel="icon" type="image/png" />
+/DyRqAHqNQD350bBBvlzRSAFuS1FAAAAAAAAAAAAAABb/ADP/f1z77EnFAAAAABJRU5ErkJggg==" rel="icon" type="image/png"/>
 </head>
 <body>
 <h1>Stash-VR</h1>
@@ -34,10 +34,14 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
         <tr>
             <td>Stash GraphQL</td>
             <td>
+                {{if eq .Redact nil}}
+                {{.StashGraphQLUrl}}
+                {{else}}
                 <details>
                     <summary>{{call .Redact .StashGraphQLUrl}}</summary>
                     {{.StashGraphQLUrl}}
                 </details>
+                {{end}}
             </td>
         </tr>
         <tr>
@@ -48,11 +52,32 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
             <td>Stash connection</td>
             <td><b>{{.StashConnectionResponse}}</b></td>
         </tr>
-        {{if eq .StashConnectionResponse "OK"}}
+        {{if not (eq .StashData nil)}}
         <tr>
             <td>Stash version</td>
-            <td>{{.StashVersion}}</td>
+            <td>{{.StashData.Version}}</td>
         </tr>
+        <tr>
+            <td>Scene Filters</td>
+            <td>
+                <details>
+                    <summary>{{len .StashData.FilterData}} found</summary>
+                    <table>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                        </tr>
+                        {{range $filter := .StashData.FilterData}}
+                        <tr>
+                            <td>{{$filter.Id}}</td>
+                            <td>{{$filter.Name}}</td>
+                        </tr>
+                        {{end}}
+                    </table>
+                </details>
+            </td>
+        </tr>
+        {{end}}
         <tr>
             <td>Generated sections</td>
             <td>{{.SectionCount}}</td>
@@ -65,7 +90,6 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
             <td>Distinct scenes</td>
             <td>{{.SceneCount}}</td>
         </tr>
-        {{end}}
     </table>
 </samp>
 <main>
@@ -74,22 +98,20 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
         <mark style="background-color: #00ff00">All OK!</mark>
     </p>
     <p>Open this endpoint in your favorite supported VR video player to browse your library.</p>
+    {{else if eq .StashConnectionResponse "UNAUTHORIZED"}}
+    <p>
+        <mark style="background-color: #ffaa00">Failed authorization. <b>Verify that correct API Key is provided</b>
+        </mark>
+    </p>
     {{else}}
-    <p>Stash-VR could not connect to Stash.</p>
-
-    {{if eq .StashConnectionResponse "UNAUTHORIZED"}}
-    <p>Failed authorization. <b>Verify that correct API Key is provided</b></p>
-    {{else}}
-    <p>Verify that:</p>
-    <ul>
-        <li>Provided Stash GraphQL url is correct and can be reached from Stash-VR</li>
-        <li>API Key is correctly provided if your Stash instance requires authentication</li>
-        <li>Stash version is >= 0.17.1</li>
-    </ul>
+    <p>
+        <mark style="background-color: #ff0000">Stash-VR could not connect to Stash.</mark>
+    </p>
+    <p>Verify that provided Stash GraphQL url is correct and can be reached from Stash-VR
+    <p>
     <p>For further troubleshooting <b>review the log output</b></p>
     {{if not (or (eq .LogLevel "debug") (eq .LogLevel "trace")) }}
     <p>Log level is set to "{{.LogLevel}}". For even further details <b>rerun Stash-VR with log level "debug"</b></p>
-    {{end}}
     {{end}}
     {{end}}
 </main>

@@ -19,7 +19,7 @@ type Section struct {
 }
 
 func (service *Service) getFilters(ctx context.Context) ([]gql.SavedFilterParts, error) {
-	savedFilters, err := gql.FindSavedFilters(ctx, service.StashClient)
+	savedFilters, err := gql.FindSavedSceneFilters(ctx, service.StashClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find saved filters: %w", err)
 	}
@@ -47,6 +47,9 @@ func (service *Service) getFilters(ctx context.Context) ([]gql.SavedFilterParts,
 
 	case config.Get().Filters != "":
 		ids := strings.Split(config.Get().Filters, ",")
+		for i := range ids {
+			ids[i] = strings.Trim(ids[i], " \"'")
+		}
 		return filterByIDs(ids), nil
 
 	default:
