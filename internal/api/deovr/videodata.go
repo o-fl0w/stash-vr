@@ -77,7 +77,7 @@ func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error
 }
 
 func setStreamSources(vd *library.VideoData, dto *videoDataDto) {
-	streams := stash.GetStreams(vd.SceneParts)
+	streams := []stash.Stream{stash.GetTranscodingStream(vd.SceneParts), stash.GetDirectStream(vd.SceneParts)}
 	dto.Encodings = make([]encodingDto, len(streams))
 	for i, stream := range streams {
 		dto.Encodings[i] = encodingDto{

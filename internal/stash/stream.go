@@ -3,7 +3,7 @@ package stash
 import (
 	"fmt"
 	"regexp"
-	"sort"
+	"slices"
 	"stash-vr/internal/stash/gql"
 	"strconv"
 	"strings"
@@ -21,43 +21,37 @@ type Source struct {
 
 var rgxResolution = regexp.MustCompile(`\((\d+)p\)`)
 
-func GetStreams(sp *gql.SceneParts) []Stream {
-	sourcesByName := make(map[string][]Source)
-	for _, stream := range sp.SceneStreams {
-		if *stream.Label == "Direct stream" || !strings.HasPrefix(*stream.Mime_type, "video/mp4") {
-			continue
-		}
-
-		resolution, err := parseResolutionFromLabel(*stream.Label)
-		if err != nil {
-			resolution = sp.Files[0].Height
-		}
-		sourcesByName[*stream.Mime_type] = append(sourcesByName[*stream.Mime_type], Source{
-			Resolution: resolution,
-			Url:        stream.Url,
-		})
-	}
-
-	streams := make([]Stream, 0)
-	for name, sources := range sourcesByName {
-		sort.Slice(sources, func(i, j int) bool { return sources[i].Resolution > sources[j].Resolution })
-		streams = append(streams, Stream{
-			Name:    name,
-			Sources: sources,
-		})
-	}
-
+func GetDirectStream(sp *gql.SceneParts) Stream {
 	directStream := Source{
 		Resolution: sp.Files[0].Height,
 		Url:        *sp.Paths.Stream,
 	}
 
-	streams = append(streams, Stream{
+	return Stream{
 		Name:    "direct",
 		Sources: []Source{directStream},
-	})
+	}
+}
+func GetTranscodingStream(sp *gql.SceneParts) Stream {
+	mp4Sources := make([]Source, 0)
+	for _, stream := range sp.SceneStreams {
+		if strings.HasPrefix(*stream.Mime_type, "video/mp4") && *stream.Label != "Direct stream" {
+			resolution, err := parseResolutionFromLabel(*stream.Label)
+			if err != nil {
+				resolution = sp.Files[0].Height
+			}
+			mp4Sources = append(mp4Sources, Source{
+				Resolution: resolution,
+				Url:        stream.Url,
+			})
+		}
+	}
+	slices.SortFunc(mp4Sources, func(a, b Source) int { return b.Resolution - a.Resolution })
 
-	return streams
+	return Stream{
+		Name:    "transcoding",
+		Sources: mp4Sources,
+	}
 }
 
 func parseResolutionFromLabel(label string) (int, error) {
