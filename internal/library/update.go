@@ -15,7 +15,7 @@ import (
 func (service *Service) UpdateRating(ctx context.Context, id string, rating float32) error {
 	newRating := int(rating * 20)
 
-	_, err := gql.SceneUpdateRating100(ctx, service.stashClient, id, &newRating)
+	_, err := gql.SceneUpdateRating100(ctx, service.StashClient, id, &newRating)
 	if err != nil {
 		return fmt.Errorf("SceneUpdateRating100: %w", err)
 	}
@@ -30,12 +30,12 @@ func (service *Service) UpdateFavorite(ctx context.Context, id string, isFavorit
 		return nil
 	}
 
-	favoriteTagId, err := stash.FindOrCreateTag(ctx, service.stashClient, favoriteTagName)
+	favoriteTagId, err := stash.FindOrCreateTag(ctx, service.StashClient, favoriteTagName)
 	if err != nil {
 		return err
 	}
 
-	response, err := gql.FindSceneTags(ctx, service.stashClient, id)
+	response, err := gql.FindSceneTags(ctx, service.StashClient, id)
 	if err != nil {
 		return fmt.Errorf("FindSceneTags: %w", err)
 	}
@@ -56,7 +56,7 @@ func (service *Service) UpdateFavorite(ctx context.Context, id string, isFavorit
 		newTagIds = append(newTagIds, favoriteTagId)
 	}
 
-	if _, err := gql.SceneUpdateTags(ctx, service.stashClient, id, newTagIds); err != nil {
+	if _, err := gql.SceneUpdateTags(ctx, service.StashClient, id, newTagIds); err != nil {
 		return fmt.Errorf("SceneUpdateTags: %w", err)
 	}
 
@@ -66,16 +66,15 @@ func (service *Service) UpdateFavorite(ctx context.Context, id string, isFavorit
 func (service *Service) UpdateTags(ctx context.Context, id string, tags []string) error {
 	tagIds := make([]string, len(tags))
 	for i, tag := range tags {
-		tagId, err := stash.FindOrCreateTag(ctx, service.stashClient, tag)
+		tagId, err := stash.FindOrCreateTag(ctx, service.StashClient, tag)
 		if err != nil {
 			return err
 		}
 		tagIds[i] = tagId
 	}
-	if _, err := gql.SceneUpdateTags(ctx, service.stashClient, id, tagIds); err != nil {
+	if _, err := gql.SceneUpdateTags(ctx, service.StashClient, id, tagIds); err != nil {
 		return fmt.Errorf("SceneUpdateTags: %w", err)
 	}
-	log.Ctx(ctx).Debug().Interface("tagIds", tagIds).Msg("Updated tags")
 	return nil
 }
 
@@ -116,27 +115,27 @@ func (service *Service) UpdateMarkers(ctx context.Context, id string, incomingMa
 	}
 
 	for _, m := range markersToUpdate {
-		tagId, err := stash.FindOrCreateTag(ctx, service.stashClient, m.PrimaryTagName)
+		tagId, err := stash.FindOrCreateTag(ctx, service.StashClient, m.PrimaryTagName)
 		if err != nil {
 			return fmt.Errorf("failed to find or create primary tag for marker: %w", err)
 		}
-		_, err = gql.SceneMarkerUpdate(ctx, service.stashClient, m.MarkerId, tagId, m.StartSecond, m.EndSecond, m.Title)
+		_, err = gql.SceneMarkerUpdate(ctx, service.StashClient, m.MarkerId, tagId, m.StartSecond, m.EndSecond, m.Title)
 		if err != nil {
 			return fmt.Errorf("SceneMarkerCreate: %w", err)
 		}
 	}
 	for _, m := range markersToCreate {
-		tagId, err := stash.FindOrCreateTag(ctx, service.stashClient, m.PrimaryTagName)
+		tagId, err := stash.FindOrCreateTag(ctx, service.StashClient, m.PrimaryTagName)
 		if err != nil {
 			return fmt.Errorf("failed to find or create primary tag for marker: %w", err)
 		}
-		_, err = gql.SceneMarkerCreate(ctx, service.stashClient, id, tagId, m.StartSecond, m.EndSecond, m.Title)
+		_, err = gql.SceneMarkerCreate(ctx, service.StashClient, id, tagId, m.StartSecond, m.EndSecond, m.Title)
 		if err != nil {
 			return fmt.Errorf("SceneMarkerCreate: %w", err)
 		}
 	}
 
-	_, err = gql.SceneMarkersDestroy(ctx, service.stashClient, markersToDestroy)
+	_, err = gql.SceneMarkersDestroy(ctx, service.StashClient, markersToDestroy)
 	if err != nil {
 		return fmt.Errorf("SceneMarkersDestroy: %w", err)
 	}
@@ -145,7 +144,7 @@ func (service *Service) UpdateMarkers(ctx context.Context, id string, incomingMa
 }
 
 func (service *Service) ClearAndCreateMarkers(ctx context.Context, id string, markers []MarkerDto) error {
-	resp, err := gql.FindSceneMarkers(ctx, service.stashClient, id)
+	resp, err := gql.FindSceneMarkers(ctx, service.StashClient, id)
 	if err != nil {
 		return fmt.Errorf("FindSceneMarkers: %w", err)
 	}
@@ -167,17 +166,17 @@ func (service *Service) ClearAndCreateMarkers(ctx context.Context, id string, ma
 	for i, sm := range resp.FindSceneMarkers.Scene_markers {
 		markersToDestroy[i] = sm.Id
 	}
-	_, err = gql.SceneMarkersDestroy(ctx, service.stashClient, markersToDestroy)
+	_, err = gql.SceneMarkersDestroy(ctx, service.StashClient, markersToDestroy)
 	if err != nil {
 		return fmt.Errorf("SceneMarkersDestroy: %w", err)
 	}
 
 	for _, m := range markers {
-		tagId, err := stash.FindOrCreateTag(ctx, service.stashClient, m.PrimaryTagName)
+		tagId, err := stash.FindOrCreateTag(ctx, service.StashClient, m.PrimaryTagName)
 		if err != nil {
 			return fmt.Errorf("failed to find or create primary tag for marker: %w", err)
 		}
-		_, err = gql.SceneMarkerCreate(ctx, service.stashClient, id, tagId, m.StartSecond, m.EndSecond, m.Title)
+		_, err = gql.SceneMarkerCreate(ctx, service.StashClient, id, tagId, m.StartSecond, m.EndSecond, m.Title)
 		if err != nil {
 			return fmt.Errorf("SceneMarkerCreate: %w", err)
 		}
@@ -186,15 +185,14 @@ func (service *Service) ClearAndCreateMarkers(ctx context.Context, id string, ma
 }
 
 func (service *Service) Delete(ctx context.Context, id string) error {
-	if _, err := gql.SceneDestroy(ctx, service.stashClient, id); err != nil {
+	if _, err := gql.SceneDestroy(ctx, service.StashClient, id); err != nil {
 		return fmt.Errorf("SceneDestroy: %w", err)
 	}
-	log.Ctx(ctx).Debug().Str("id", id).Msg("Destroy scene request sent to Stash")
 	return nil
 }
 
 func (service *Service) IncrementO(ctx context.Context, id string) error {
-	_, err := gql.SceneIncrementO(ctx, service.stashClient, id, time.Now())
+	_, err := gql.SceneIncrementO(ctx, service.StashClient, id, time.Now())
 	if err != nil {
 		return fmt.Errorf("SceneIncrementO: %w", err)
 	}
@@ -202,7 +200,7 @@ func (service *Service) IncrementO(ctx context.Context, id string) error {
 }
 
 func (service *Service) IncrementPlayCount(ctx context.Context, id string) error {
-	_, err := gql.SceneIncrementPlayCount(ctx, service.stashClient, id, time.Now())
+	_, err := gql.SceneIncrementPlayCount(ctx, service.StashClient, id, time.Now())
 	if err != nil {
 		return fmt.Errorf("SceneIncrementPlayCount: %w", err)
 	}
@@ -210,7 +208,7 @@ func (service *Service) IncrementPlayCount(ctx context.Context, id string) error
 }
 
 func (service *Service) SetOrganized(ctx context.Context, id string, newState bool) error {
-	_, err := gql.SceneUpdateOrganized(ctx, service.stashClient, id, &newState)
+	_, err := gql.SceneUpdateOrganized(ctx, service.StashClient, id, &newState)
 	if err != nil {
 		return fmt.Errorf("SceneUpdateOrganized: %w", err)
 	}

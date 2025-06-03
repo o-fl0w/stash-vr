@@ -7,9 +7,10 @@ var (
 	LegendSceneStudio = "Studio"
 	LegendSceneGroup  = "%"
 
-	LegendMetaOCount    = "O-Count"
-	LegendMetaOrganized = "Organized"
-	LegendMetaPlayCount = "Played"
+	LegendMetaOCount     = "O-Count"
+	LegendMetaOrganized  = "Organized"
+	LegendMetaPlayCount  = "Played"
+	LegendMetaResolution = "Resolution"
 
 	CommandIncrementO        = "/o"
 	CommandSetOrganizedTrue  = "/org"

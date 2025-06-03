@@ -18,7 +18,7 @@ query FindCredentials{
     }
 }
 
-query FindSavedFilters{
+query FindSavedSceneFilters{
     findSavedFilters(mode: SCENES){
         ...SavedFilterParts
     }
@@ -54,6 +54,13 @@ query FindPerformerByName($name: String!){
 query FindSceneIdsByFilter(
     $scene_filter: SceneFilterType, $filterOpts: FindFilterType){
     findScenes(scene_filter: $scene_filter, filter: $filterOpts){
+        scenes {
+            id
+        }}
+}
+
+query FindAllSceneIds{
+    findScenes(filter: {per_page: -1}){
         scenes {
             id
         }}

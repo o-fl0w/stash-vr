@@ -69,6 +69,7 @@ func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error
 		WriteFavorite: util.Ptr(true),
 		WriteRating:   util.Ptr(true),
 		WriteTags:     util.Ptr(true),
+		EventServer:   util.Ptr(getEventsUrl(baseUrl, videoId)),
 	}
 
 	if vd.SceneParts.Paths.Screenshot != nil {

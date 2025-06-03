@@ -9,19 +9,23 @@ import (
 	"net/url"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/library"
+	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 	"strings"
 )
 
 type httpHandler struct {
 	libraryService *library.Service
-	vrTagId        string
+	ps             *playbackState
 }
 
+var minPlayFraction float64
+
 func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
-	log.Ctx(req.Context()).Debug().Msg("INDEX")
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
+
+	minPlayFraction = stash.GetMinPlayPercent(ctx, h.libraryService.StashClient) / 100
 
 	sections, err := h.libraryService.GetSections(ctx)
 	if err != nil {
@@ -51,7 +55,6 @@ func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (h *httpHandler) scanHandler(w http.ResponseWriter, req *http.Request) {
-	log.Ctx(req.Context()).Debug().Msg("SCAN")
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
 
@@ -89,8 +92,6 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 	vdReq, err := internal.UnmarshalBody[videoDataRequestDto](req)
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("Failed to parse request body")
-		//w.WriteHeader(http.StatusBadRequest)
-		//return
 	}
 
 	if vdReq.DeleteFile != nil && *vdReq.DeleteFile {
@@ -126,9 +127,9 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 				}
 
 				switch key {
-				case internal.LegendPerformer, internal.LegendSceneStudio,
-					internal.LegendSceneGroup, internal.LegendMetaOCount,
-					internal.LegendMetaOrganized, internal.LegendMetaPlayCount:
+				case internal.LegendPerformer, internal.LegendSceneStudio, internal.LegendSceneGroup,
+					internal.LegendMetaOCount, internal.LegendMetaOrganized, internal.LegendMetaPlayCount,
+					internal.LegendMetaResolution:
 					continue
 				case internal.LegendTag:
 					if arg != "" {
@@ -167,7 +168,6 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 				if t.End != nil {
 					m.EndSecond = util.Ptr(*t.End / 1000)
 				}
-				log.Ctx(ctx).Debug().Str("marker", fmt.Sprintf("%+v", m)).Msg("Incoming marker")
 				newMarkers = append(newMarkers, m)
 			}
 
@@ -177,11 +177,6 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 
 			if err = h.libraryService.UpdateMarkers(ctx, videoId, newMarkers); err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to update markers")
-			}
-		}
-		if vdReq.NeedsMediaSource != nil && *vdReq.NeedsMediaSource {
-			if err = h.libraryService.IncrementPlayCount(ctx, videoId); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment play count")
 			}
 		}
 
@@ -212,14 +207,38 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	event, err := internal.UnmarshalBody[playbackEvent](req)
+	ev, err := internal.UnmarshalBody[playbackEvent](req)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to parse request body")
+		log.Ctx(ctx).Error().Err(err).Msg("failed to parse event body")
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
-	log.Ctx(ctx).Trace().Str("event", fmt.Sprintf("%v", event)).Send()
-	return
+	parts := strings.Split(ev.Id, "/")
+	videoId := parts[len(parts)-1]
+	vd, err := h.libraryService.GetScene(ctx, videoId, false)
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to get scene from event")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	log.Ctx(ctx).Debug().Str("id", ev.Id).Interface("event", ev.Event).Send()
+
+	switch ev.Event {
+	case evPlay:
+		if h.ps == nil {
+			h.ps = newPlayback(vd, minPlayFraction)
+		} else if h.ps.videoId != videoId {
+			h.ps.handleStop(ctx, h.libraryService)
+			h.ps = newPlayback(vd, minPlayFraction)
+		} else {
+			h.ps.handleResume()
+		}
+	case evPause, evClose:
+		h.ps.handleStop(ctx, h.libraryService)
+	default:
+	}
 }
 
 type videoDataRequestDto struct {

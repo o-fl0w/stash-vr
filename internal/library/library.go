@@ -10,7 +10,7 @@ import (
 )
 
 type Service struct {
-	stashClient graphql.Client
+	StashClient graphql.Client
 	vdCache     map[string]*VideoData
 	mu          sync.RWMutex
 	single      singleflight.Group
@@ -24,13 +24,13 @@ func (service *Service) snapshot() map[string]*VideoData {
 
 func NewService(client graphql.Client) *Service {
 	return &Service{
-		stashClient: client,
+		StashClient: client,
 		vdCache:     make(map[string]*VideoData),
 	}
 }
 
 func (service *Service) GetClientVersions(ctx context.Context) (map[string]string, error) {
-	version, err := gql.Version(ctx, service.stashClient)
+	version, err := gql.Version(ctx, service.StashClient)
 	if err != nil {
 		return nil, err
 	}
