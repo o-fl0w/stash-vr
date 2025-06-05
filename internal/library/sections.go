@@ -86,16 +86,17 @@ func (service *Service) getSectionsByFilters(ctx context.Context, filters []gql.
 	for i, f := range filters {
 		go func(i int, f gql.SavedFilterParts) {
 			defer wg.Done()
-			flog := log.Ctx(ctx).With().Str("id", f.Id).Str("name", f.Name).Logger()
+			flog := log.Ctx(ctx).With().Str("filterId", f.Id).Str("name", f.Name).Logger()
 
 			sceneFilter, err := filter.SavedFilterToSceneFilter(ctx, f)
 			if err != nil {
-				flog.Warn().Err(err).Msg("Failed to convert filter, skipping")
+				flog.Warn().Err(err).Interface("savedFilter", f).Msg("Failed to convert filter, skipping")
 				return
 			}
+
 			resp, err := gql.FindSceneIdsByFilter(ctx, service.StashClient, &sceneFilter.SceneFilter, &sceneFilter.FilterOpts)
 			if err != nil {
-				flog.Err(err).Msg("Failed to find scenes by filter, skipping")
+				flog.Err(err).Interface("savedFilter", f).Interface("sceneFilter", sceneFilter).Msg("Failed to find scenes by filter, skipping")
 				return
 			}
 
