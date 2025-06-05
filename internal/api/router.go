@@ -28,12 +28,25 @@ func Router(libraryService *library.Service) *chi.Mux {
 	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(libraryService)))
 	router.Mount("/deovr", logMod("deovr", deovr.Router(libraryService)))
 
-	router.Get("/", logMod("web", web.IndexHandler(libraryService)).ServeHTTP)
+	router.Get("/", rootHandler(libraryService))
 	router.Get("/*", logMod("static", staticHandler()).ServeHTTP)
 
 	router.Get("/cover/{videoId}", logMod("heatmap", heatmap.CoverHandler(libraryService)).ServeHTTP)
 
 	return router
+}
+
+func rootHandler(libraryService *library.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userAgent := r.Header.Get("User-Agent")
+
+		if strings.Contains(userAgent, "HereSphere") {
+			log.Ctx(r.Context()).Trace().Msg("Redirecting to /heresphere")
+			http.Redirect(w, r, "/heresphere", 307)
+		} else {
+			logMod("web", web.IndexHandler(libraryService)).ServeHTTP(w, r)
+		}
+	}
 }
 
 func logMod(value string, next http.Handler) http.Handler {
