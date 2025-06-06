@@ -98,93 +98,11 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 		if err = h.libraryService.Delete(ctx, videoId); err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to delete scene")
 			w.WriteHeader(http.StatusInternalServerError)
-			return
 		}
 		return
 	}
 
-	go func() {
-		ctx := context.Background()
-		if vdReq.Rating != nil {
-			if err = h.libraryService.UpdateRating(ctx, videoId, *vdReq.Rating); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Float32("rating", *vdReq.Rating).Msg("Failed to update rating")
-			}
-		}
-		if vdReq.IsFavorite != nil {
-			if err = h.libraryService.UpdateFavorite(ctx, videoId, *vdReq.IsFavorite); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Bool("isFavorite", *vdReq.IsFavorite).Msg("Failed to update favorite")
-			}
-		}
-		if vdReq.Tags != nil {
-			newTags := make([]string, 0)
-			newMarkers := make([]library.MarkerDto, 0)
-
-			for _, t := range *vdReq.Tags {
-				key, arg, _ := strings.Cut(t.Name, ":")
-
-				if key == "" {
-					continue
-				}
-
-				switch key {
-				case internal.LegendPerformer, internal.LegendSceneStudio, internal.LegendSceneGroup,
-					internal.LegendMetaOCount, internal.LegendMetaOrganized, internal.LegendMetaPlayCount,
-					internal.LegendMetaResolution:
-					continue
-				case internal.LegendTag:
-					if arg != "" {
-						newTags = append(newTags, arg)
-					}
-					continue
-				}
-
-				if strings.EqualFold(key, internal.CommandIncrementO) {
-					if err = h.libraryService.IncrementO(ctx, videoId); err != nil {
-						log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment O")
-					}
-					continue
-				}
-				if strings.EqualFold(key, internal.CommandSetOrganizedTrue) {
-					if err = h.libraryService.SetOrganized(ctx, videoId, true); err != nil {
-						log.Ctx(ctx).Warn().Err(err).Msg("Failed to set organized=true")
-					}
-					continue
-				}
-				if strings.EqualFold(key, internal.CommandSetOrganizedFalse) {
-					if err = h.libraryService.SetOrganized(ctx, videoId, false); err != nil {
-						log.Ctx(ctx).Warn().Err(err).Msg("Failed to set organized=false")
-					}
-					continue
-				}
-
-				m := library.MarkerDto{
-					PrimaryTagName: key,
-					StartSecond:    t.Start / 1000,
-					MarkerId:       fmt.Sprintf("%.0f", *t.Rating),
-				}
-				if arg != "" {
-					m.Title = arg
-				}
-				if t.End != nil {
-					m.EndSecond = util.Ptr(*t.End / 1000)
-				}
-				newMarkers = append(newMarkers, m)
-			}
-
-			if err = h.libraryService.UpdateTags(ctx, videoId, newTags); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to update tags")
-			}
-
-			if err = h.libraryService.UpdateMarkers(ctx, videoId, newMarkers); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to update markers")
-			}
-		}
-
-		_, err := h.libraryService.GetScene(ctx, videoId, true)
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to refetch scene")
-		}
-	}()
+	go h.processUpdates(videoId, vdReq)
 
 	vd, err := h.libraryService.GetScene(ctx, videoId, false)
 	if err != nil {
@@ -201,6 +119,98 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 
 	if err := internal.WriteJson(ctx, w, dto); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("write")
+	}
+}
+
+func (h *httpHandler) processUpdates(videoId string, vdReq videoDataRequestDto) {
+	ctx := context.Background()
+	needsRefetch := false
+	if vdReq.Rating != nil {
+		if err := h.libraryService.UpdateRating(ctx, videoId, *vdReq.Rating); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Float32("rating", *vdReq.Rating).Msg("Failed to update rating")
+		}
+		needsRefetch = true
+	}
+	if vdReq.IsFavorite != nil {
+		if err := h.libraryService.UpdateFavorite(ctx, videoId, *vdReq.IsFavorite); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Bool("isFavorite", *vdReq.IsFavorite).Msg("Failed to update favorite")
+		}
+		needsRefetch = true
+	}
+	if vdReq.Tags != nil {
+		h.processIncomingTags(ctx, videoId, vdReq)
+		needsRefetch = true
+	}
+	if needsRefetch {
+		_, err := h.libraryService.GetScene(ctx, videoId, true)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to refetch scene")
+		}
+	}
+}
+
+func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, vdReq videoDataRequestDto) {
+	newTags := make([]string, 0)
+	newMarkers := make([]library.MarkerDto, 0)
+
+	for _, t := range *vdReq.Tags {
+		key, arg, _ := strings.Cut(t.Name, ":")
+
+		if key == "" {
+			continue
+		}
+
+		switch key {
+		case internal.LegendPerformer, internal.LegendSceneStudio, internal.LegendSceneGroup,
+			internal.LegendMetaOCount, internal.LegendMetaOrganized, internal.LegendMetaPlayCount,
+			internal.LegendMetaResolution:
+			continue
+		case internal.LegendTag:
+			if arg != "" {
+				newTags = append(newTags, arg)
+			}
+			continue
+		}
+
+		if strings.EqualFold(key, internal.CommandIncrementO) {
+			if err := h.libraryService.IncrementO(ctx, videoId); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment O")
+			}
+			continue
+		}
+		if strings.EqualFold(key, internal.CommandSetOrganizedTrue) {
+			if err := h.libraryService.SetOrganized(ctx, videoId, true); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Failed to set organized=true")
+			}
+			continue
+		}
+		if strings.EqualFold(key, internal.CommandSetOrganizedFalse) {
+			if err := h.libraryService.SetOrganized(ctx, videoId, false); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Failed to set organized=false")
+			}
+			continue
+		}
+
+		m := library.MarkerDto{
+			PrimaryTagName: key,
+			StartSecond:    t.Start / 1000,
+			MarkerId:       fmt.Sprintf("%.0f", *t.Rating),
+		}
+		if arg != "" {
+			m.Title = arg
+		}
+		if t.End != nil {
+			m.EndSecond = util.Ptr(*t.End / 1000)
+		}
+		newMarkers = append(newMarkers, m)
+	}
+
+	if err := h.libraryService.UpdateTags(ctx, videoId, newTags); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to update tags")
+	}
+
+	if err := h.libraryService.UpdateMarkers(ctx, videoId, newMarkers); err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to update markers")
 	}
 }
 
