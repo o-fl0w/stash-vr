@@ -10,6 +10,7 @@ import (
 	"stash-vr/internal/build"
 	"stash-vr/internal/config"
 	"stash-vr/internal/library"
+	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"sync"
 )
@@ -70,7 +71,7 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if version, err := libraryService.GetClientVersions(r.Context()); err != nil {
+			if version, err := stash.GetVersion(r.Context(), libraryService.StashClient); err != nil {
 				var gqlErr *graphql.HTTPError
 				if errors.As(err, &gqlErr) {
 					if gqlErr.StatusCode == 401 {
@@ -80,7 +81,7 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 				log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve stash version")
 			} else {
 				data.StashConnectionResponse = ok
-				data.StashData = &stashData{Version: version["stash"]}
+				data.StashData = &stashData{Version: version}
 				resp, err := gql.FindSavedSceneFilters(r.Context(), libraryService.StashClient)
 				if err == nil {
 					for _, sf := range resp.FindSavedFilters {

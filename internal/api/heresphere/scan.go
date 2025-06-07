@@ -28,14 +28,14 @@ type scanDataDto struct {
 func buildScan(ctx context.Context, vds map[string]*library.VideoData, baseUrl string) (*scanDocDto, error) {
 	scanDoc := scanDocDto{ScanData: make([]scanDataDto, 0, len(vds))}
 	for _, vd := range vds {
-		scanData := videoDataToScanDocDto(vd, baseUrl)
+		scanData := videoDataToScanDataDto(vd, baseUrl)
 		scanDoc.ScanData = append(scanDoc.ScanData, scanData)
 	}
 	log.Ctx(ctx).Trace().Int("scenes", len(scanDoc.ScanData)).Msg("/scan")
 	return &scanDoc, nil
 }
 
-func videoDataToScanDocDto(vd *library.VideoData, baseUrl string) scanDataDto {
+func videoDataToScanDataDto(vd *library.VideoData, baseUrl string) scanDataDto {
 	id := vd.Id()
 	scanData := scanDataDto{
 		id:        id,
