@@ -12,7 +12,6 @@ import (
 	"stash-vr/internal/logger"
 	"stash-vr/internal/server"
 	"stash-vr/internal/stash"
-	"stash-vr/internal/stash/gql"
 )
 
 func Run(ctx context.Context) error {
@@ -38,9 +37,9 @@ func Run(ctx context.Context) error {
 func logVersions(ctx context.Context, client graphql.Client) {
 	log.Info().Str("Stash-VR version", build.FullVersion()).Send()
 
-	if version, err := gql.Version(ctx, client); err != nil {
+	if version, err := stash.GetVersion(ctx, client); err != nil {
 		log.Warn().Err(err).Msg("Failed to retrieve stash version")
 	} else {
-		log.Info().Str("Stash version", *version.Version.Version).Send()
+		log.Info().Str("Stash version", version).Send()
 	}
 }

@@ -1,9 +1,11 @@
 package stash
 
 import (
+	"context"
 	"crypto/tls"
 	"github.com/Khan/genqlient/graphql"
 	"net/http"
+	"stash-vr/internal/stash/gql"
 )
 
 type authTransport struct {
@@ -37,4 +39,12 @@ func NewClient(graphqlUrl string, apiKey string) graphql.Client {
 	}
 
 	return graphql.NewClient(graphqlUrl, htc)
+}
+
+func GetVersion(ctx context.Context, client graphql.Client) (string, error) {
+	version, err := gql.Version(ctx, client)
+	if err != nil {
+		return "", nil
+	}
+	return *version.Version.Version, nil
 }

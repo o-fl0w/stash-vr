@@ -10,7 +10,9 @@ import (
 	"stash-vr/internal/build"
 	"stash-vr/internal/config"
 	"stash-vr/internal/library"
+	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
+	"sync"
 )
 
 //go:embed "index.html"
@@ -64,35 +66,47 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 			StashConnectionResponse: fail,
 		}
 
-		if version, err := libraryService.GetClientVersions(r.Context()); err != nil {
-			var gqlErr *graphql.HTTPError
-			if errors.As(err, &gqlErr) {
-				if gqlErr.StatusCode == 401 {
-					data.StashConnectionResponse = unauthorized
+		wg := sync.WaitGroup{}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if version, err := stash.GetVersion(r.Context(), libraryService.StashClient); err != nil {
+				var gqlErr *graphql.HTTPError
+				if errors.As(err, &gqlErr) {
+					if gqlErr.StatusCode == 401 {
+						data.StashConnectionResponse = unauthorized
+					}
+				}
+				log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve stash version")
+			} else {
+				data.StashConnectionResponse = ok
+				data.StashData = &stashData{Version: version}
+				resp, err := gql.FindSavedSceneFilters(r.Context(), libraryService.StashClient)
+				if err == nil {
+					for _, sf := range resp.FindSavedFilters {
+						data.StashData.FilterData = append(data.StashData.FilterData, filterData{
+							Id:   sf.Id,
+							Name: sf.Name,
+						})
+					}
 				}
 			}
-			log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve stash version")
-		} else {
-			data.StashConnectionResponse = ok
-			data.StashData = &stashData{Version: version["stash"]}
-			resp, err := gql.FindSavedSceneFilters(r.Context(), libraryService.StashClient)
-			if err == nil {
-				for _, sf := range resp.FindSavedFilters {
-					data.StashData.FilterData = append(data.StashData.FilterData, filterData{
-						Id:   sf.Id,
-						Name: sf.Name,
-					})
-				}
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if sections, err := libraryService.GetSections(r.Context()); err != nil {
+				log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve sections")
+			} else {
+				data.SectionCount = len(sections)
+				data.LinkCount = libraryService.Stats.Links
+				data.SceneCount = libraryService.Stats.Scenes
 			}
-		}
-		if sections, err := libraryService.GetSections(r.Context()); err != nil {
-			log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve sections")
-		} else {
-			data.SectionCount = len(sections)
-			count := library.Count(sections)
-			data.LinkCount = count.Links
-			data.SceneCount = count.Scenes
-		}
+		}()
+
+		wg.Wait()
 
 		if err := tmpl.Execute(w, data); err != nil {
 			log.Ctx(r.Context()).Err(err).Msg("index: execute template")

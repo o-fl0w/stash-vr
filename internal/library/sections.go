@@ -36,22 +36,23 @@ func (service *Service) GetSections(ctx context.Context) ([]Section, error) {
 			return nil, err
 		}
 
-		linkCount := 0
 		service.mu.Lock()
 		for k := range service.vdCache {
 			delete(service.vdCache, k)
 		}
 
+		service.Stats.Links = 0
 		for _, v := range sections {
-			linkCount += len(v.Ids)
+			service.Stats.Links += len(v.Ids)
 			for _, id := range v.Ids {
 				service.vdCache[id] = nil
 			}
 		}
+		service.Stats.Scenes = len(service.vdCache)
 		service.mu.Unlock()
 
-		log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", linkCount).
-			Int("scenes", len(service.vdCache)).
+		log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", service.Stats.Links).
+			Int("scenes", service.Stats.Scenes).
 			Msg("Index built")
 
 		return sections, nil
