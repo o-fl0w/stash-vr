@@ -12,6 +12,7 @@ type Service struct {
 	vdCache     map[string]*VideoData
 	mu          sync.RWMutex
 	single      singleflight.Group
+	Stats       Stats
 }
 
 func (service *Service) snapshot() map[string]*VideoData {
@@ -25,4 +26,9 @@ func NewService(client graphql.Client) *Service {
 		StashClient: client,
 		vdCache:     make(map[string]*VideoData),
 	}
+}
+
+type Stats struct {
+	Links  int
+	Scenes int
 }

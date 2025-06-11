@@ -101,9 +101,8 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 				log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve sections")
 			} else {
 				data.SectionCount = len(sections)
-				count := library.Count(sections)
-				data.LinkCount = count.Links
-				data.SceneCount = count.Scenes
+				data.LinkCount = libraryService.Stats.Links
+				data.SceneCount = libraryService.Stats.Scenes
 			}
 		}()
 
