@@ -126,7 +126,7 @@ func setSubtitles(vd *library.VideoData, dto *videoDataDto) {
 
 func isFavorite(vd *library.VideoData) bool {
 	for _, t := range vd.SceneParts.Tags {
-		if t.Name == config.Get().FavoriteTag {
+		if t.Name == config.Application().FavoriteTag {
 			return true
 		}
 	}

@@ -10,14 +10,16 @@ import (
 type Service struct {
 	StashClient graphql.Client
 	vdCache     map[string]*VideoData
-	mu          sync.RWMutex
+	muVdCache   sync.RWMutex
 	single      singleflight.Group
 	Stats       Stats
+
+	tags map[string]*Tag
 }
 
 func (service *Service) snapshot() map[string]*VideoData {
-	service.mu.RLock()
-	defer service.mu.RUnlock()
+	service.muVdCache.RLock()
+	defer service.muVdCache.RUnlock()
 	return maps.Clone(service.vdCache)
 }
 

@@ -94,6 +94,12 @@ query IsSceneOrganized($id: ID){
     }
 }
 
+query FindAllTags{
+    findTags(filter:{per_page:-1}){tags {
+        ...TagParts
+    }}
+}
+
 fragment SavedFilterParts on SavedFilter{
     id, name, mode, find_filter {sort, direction}, object_filter
 }
@@ -142,5 +148,7 @@ fragment TagPartsArray on Scene{
 }
 
 fragment TagParts on Tag{
-    id,name
+    id,name, sort_name parents {
+        id name sort_name
+    }
 }

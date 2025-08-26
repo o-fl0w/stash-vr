@@ -9,7 +9,6 @@ import (
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
-	"time"
 )
 
 func (service *Service) UpdateRating(ctx context.Context, id string, rating float32) error {
@@ -23,7 +22,7 @@ func (service *Service) UpdateRating(ctx context.Context, id string, rating floa
 }
 
 func (service *Service) UpdateFavorite(ctx context.Context, id string, isFavoriteRequested bool) error {
-	favoriteTagName := config.Get().FavoriteTag
+	favoriteTagName := config.Application().FavoriteTag
 
 	if favoriteTagName == "" {
 		log.Ctx(ctx).Info().Msg("Sync favorite requested but FAVORITE_TAG is empty, ignoring request")
@@ -192,17 +191,33 @@ func (service *Service) Delete(ctx context.Context, id string) error {
 }
 
 func (service *Service) IncrementO(ctx context.Context, id string) error {
-	_, err := gql.SceneIncrementO(ctx, service.StashClient, id, time.Now())
+	_, err := gql.SceneIncrementO(ctx, service.StashClient, id)
 	if err != nil {
 		return fmt.Errorf("SceneIncrementO: %w", err)
 	}
 	return nil
 }
 
+func (service *Service) DecrementO(ctx context.Context, id string) error {
+	_, err := gql.SceneDecrementO(ctx, service.StashClient, id)
+	if err != nil {
+		return fmt.Errorf("SceneDecrementO: %w", err)
+	}
+	return nil
+}
+
 func (service *Service) IncrementPlayCount(ctx context.Context, id string) error {
-	_, err := gql.SceneIncrementPlayCount(ctx, service.StashClient, id, time.Now())
+	_, err := gql.SceneIncrementPlayCount(ctx, service.StashClient, id)
 	if err != nil {
 		return fmt.Errorf("SceneIncrementPlayCount: %w", err)
+	}
+	return nil
+}
+
+func (service *Service) DecrementPlayCount(ctx context.Context, id string) error {
+	_, err := gql.SceneDecrementPlayCount(ctx, service.StashClient, id)
+	if err != nil {
+		return fmt.Errorf("SceneDecrementPlayCount: %w", err)
 	}
 	return nil
 }

@@ -6,10 +6,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"slices"
 	"stash-vr/internal/config"
-	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/filter"
 	"stash-vr/internal/stash/gql"
-	"strings"
 	"sync"
 )
 
@@ -36,7 +34,7 @@ func (service *Service) GetSections(ctx context.Context) ([]Section, error) {
 			return nil, err
 		}
 
-		service.mu.Lock()
+		service.muVdCache.Lock()
 		for k := range service.vdCache {
 			delete(service.vdCache, k)
 		}
@@ -49,11 +47,13 @@ func (service *Service) GetSections(ctx context.Context) ([]Section, error) {
 			}
 		}
 		service.Stats.Scenes = len(service.vdCache)
-		service.mu.Unlock()
+		service.muVdCache.Unlock()
 
 		log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", service.Stats.Links).
 			Int("scenes", service.Stats.Scenes).
 			Msg("Index built")
+
+		_ = service.LoadTags(ctx)
 
 		return sections, nil
 	})
@@ -130,51 +130,51 @@ func (service *Service) getFilters(ctx context.Context) ([]gql.SavedFilterParts,
 		return nil, fmt.Errorf("failed to find saved filters: %w", err)
 	}
 
-	filterByIDs := func(ids []string) []gql.SavedFilterParts {
-		var out []gql.SavedFilterParts
-		for _, id := range ids {
-			for _, f := range savedFilters.FindSavedFilters {
-				if f.Id == id {
-					out = append(out, f.SavedFilterParts)
-					break
-				}
-			}
+	userConfigFilters := config.User(ctx).Filters
+	out := buildActiveFilters(savedFilters.FindSavedFilters, userConfigFilters)
+	return out, nil
+}
+
+func buildActiveFilters(stashFilters []*gql.FindSavedSceneFiltersFindSavedFiltersSavedFilter, cfgFilters []config.Filter) []gql.SavedFilterParts {
+	if len(cfgFilters) == 0 {
+		out := make([]gql.SavedFilterParts, 0, len(stashFilters))
+		for _, s := range stashFilters {
+			out = append(out, s.SavedFilterParts)
 		}
 		return out
 	}
 
-	switch {
-	case config.Get().Filters == "frontpage":
-		fpIds, err := stash.FindSavedFilterIdsByFrontPage(ctx, service.StashClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to find frontpage filters: %w", err)
-		}
-		return filterByIDs(fpIds), nil
-
-	case config.Get().Filters != "":
-		ids := strings.Split(config.Get().Filters, ",")
-		for i := range ids {
-			ids[i] = strings.Trim(ids[i], " \"'")
-		}
-		return filterByIDs(ids), nil
-
-	default:
-		fpIds, err := stash.FindSavedFilterIdsByFrontPage(ctx, service.StashClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to find frontpage filter IDs: %w", err)
-		}
-		front := filterByIDs(fpIds)
-
-		seen := make(map[string]struct{}, len(fpIds))
-		for _, id := range fpIds {
-			seen[id] = struct{}{}
-		}
-		var rest []gql.SavedFilterParts
-		for _, f := range savedFilters.FindSavedFilters {
-			if _, ok := seen[f.Id]; !ok {
-				rest = append(rest, f.SavedFilterParts)
-			}
-		}
-		return append(front, rest...), nil
+	stashFilterParts := make(map[string]gql.SavedFilterParts, len(stashFilters))
+	for _, sf := range stashFilters {
+		stashFilterParts[sf.Id] = sf.SavedFilterParts
 	}
+
+	out := make([]gql.SavedFilterParts, 0, len(stashFilters))
+	seen := make(map[string]struct{}, len(stashFilters))
+
+	// 1) Enabled cfgFilters in the given order.
+	for _, cf := range cfgFilters {
+		seen[cf.ID] = struct{}{}
+		if cf.Disabled {
+			continue
+		}
+		sf, ok := stashFilterParts[cf.ID]
+		if !ok {
+			continue
+		}
+
+		if cf.Name != "" {
+			sf.Name = cf.Name
+		}
+		out = append(out, sf)
+	}
+
+	for _, s := range stashFilters {
+		if _, done := seen[s.Id]; done {
+			continue
+		}
+		out = append(out, s.SavedFilterParts)
+	}
+
+	return out
 }

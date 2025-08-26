@@ -12,7 +12,6 @@ const (
 	envKeyStashGraphQLUrl  = "STASH_GRAPHQL_URL"
 	envKeyStashApiKey      = "STASH_API_KEY"
 	envKeyFavoriteTag      = "FAVORITE_TAG"
-	envKeyFilters          = "FILTERS"
 	envKeyLogLevel         = "LOG_LEVEL"
 	envKeyDisableLogColor  = "DISABLE_LOG_COLOR"
 	envKeyDisableRedact    = "DISABLE_REDACT"
@@ -21,12 +20,11 @@ const (
 	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
 )
 
-type Application struct {
+type ApplicationConfig struct {
 	ListenAddress       string
 	StashGraphQLUrl     string
 	StashApiKey         string
 	FavoriteTag         string
-	Filters             string
 	LogLevel            string
 	DisableLogColor     bool
 	IsRedactDisabled    bool
@@ -35,7 +33,7 @@ type Application struct {
 	IsPlayCountDisabled bool
 }
 
-var cfg Application
+var applicationConfig ApplicationConfig
 
 func Init() {
 	pflag.String(envKeyListenAddress, ":9666", "Local address for Stash-VR to listen on")
@@ -49,9 +47,6 @@ func Init() {
 
 	pflag.String(envKeyFavoriteTag, "FAVORITE", "Name of tag in Stash to hold scenes marked as favorites")
 	_ = viper.BindPFlag(envKeyFavoriteTag, pflag.Lookup(envKeyFavoriteTag))
-
-	pflag.String(envKeyFilters, "", "Narrow the selection of filters to show. Either 'frontpage' or a comma seperated list of filter ids")
-	_ = viper.BindPFlag(envKeyFilters, pflag.Lookup(envKeyFilters))
 
 	pflag.String(envKeyLogLevel, "info", "Set log level - trace, debug, warn, info or error")
 	_ = viper.BindPFlag(envKeyLogLevel, pflag.Lookup(envKeyLogLevel))
@@ -83,25 +78,24 @@ func Init() {
 
 	viper.AutomaticEnv()
 
-	cfg.ListenAddress = viper.GetString(envKeyListenAddress)
-	cfg.StashGraphQLUrl = viper.GetString(envKeyStashGraphQLUrl)
-	cfg.StashApiKey = viper.GetString(envKeyStashApiKey)
-	cfg.FavoriteTag = viper.GetString(envKeyFavoriteTag)
-	cfg.Filters = viper.GetString(envKeyFilters)
-	cfg.LogLevel = strings.ToLower(viper.GetString(envKeyLogLevel))
-	cfg.DisableLogColor = viper.GetBool(envKeyDisableLogColor)
-	cfg.IsRedactDisabled = viper.GetBool(envKeyDisableRedact)
-	cfg.ForceHTTPS = viper.GetBool(envKeyForceHTTPS)
-	cfg.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
-	cfg.IsPlayCountDisabled = viper.GetBool(envKeyDisablePlayCount)
+	applicationConfig.ListenAddress = viper.GetString(envKeyListenAddress)
+	applicationConfig.StashGraphQLUrl = viper.GetString(envKeyStashGraphQLUrl)
+	applicationConfig.StashApiKey = viper.GetString(envKeyStashApiKey)
+	applicationConfig.FavoriteTag = viper.GetString(envKeyFavoriteTag)
+	applicationConfig.LogLevel = strings.ToLower(viper.GetString(envKeyLogLevel))
+	applicationConfig.DisableLogColor = viper.GetBool(envKeyDisableLogColor)
+	applicationConfig.IsRedactDisabled = viper.GetBool(envKeyDisableRedact)
+	applicationConfig.ForceHTTPS = viper.GetBool(envKeyForceHTTPS)
+	applicationConfig.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
+	applicationConfig.IsPlayCountDisabled = viper.GetBool(envKeyDisablePlayCount)
 
 }
 
-func Get() Application {
-	return cfg
+func Application() ApplicationConfig {
+	return applicationConfig
 }
 
-func (a Application) Redacted() Application {
+func (a ApplicationConfig) Redacted() ApplicationConfig {
 	a.StashGraphQLUrl = Redacted(a.StashGraphQLUrl)
 	a.StashApiKey = Redacted(a.StashApiKey)
 	return a

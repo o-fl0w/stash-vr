@@ -15,6 +15,10 @@ fKUlgFY1QKnzcRvOSoqwo/ttdsRGEVZZSJXmglBwUqdjp6VdkPt5XoWOKGY6Xz3PVwxnkeWelfAO
 F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
 /DyRqAHqNQD350bBBvlzRSAFuS1FAAAAAAAAAAAAAABb/ADP/f1z77EnFAAAAABJRU5ErkJggg==" rel="icon" type="image/png"/>
 </head>
+<style>
+    .handle { cursor: grab; user-select: none; padding: 2px 6px; display: inline-block; }
+    tr.dragging { opacity: 0.6; }
+</style>
 <body>
 <h1>Stash-VR</h1>
 <samp>
@@ -115,6 +119,62 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
     {{end}}
     {{end}}
 </main>
+{{if and .StashData .StashData.FilterOverrides}}
+<section>
+    <form method="POST" action="/filters" id="filters">
+        <table>
+            <thead>
+            <tr>
+                <th></th>
+                <th>Disable</th>
+                <th>ID</th>
+                <th>Name</th>
+            </tr>
+            </thead>
+            <tbody id="rows">
+            {{ range $i, $ov := .StashData.FilterOverrides }}
+            <tr data-id="{{$i}}">
+                <td><span class="handle" draggable="true" title="Drag">≡</span></td>
+                <td><input type="checkbox" name="disabled" value="{{ $ov.ID }}" {{ if $ov.Disabled }}checked{{ end }}></td>
+                <td><samp>{{$ov.ID}}</samp><input type="hidden" name="id" value="{{ $ov.ID }}"></td>
+                <td><input name="name" value="{{ $ov.Name }}"></td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+        <button type="submit">Save</button>
+    </form>
+    <script>
+        const tbody = document.getElementById('rows');
+        let dragRow = null;
+
+        tbody.addEventListener('dragstart', (e) => {
+            const handle = e.target.closest('.handle');
+            if (!handle) return;
+            dragRow = handle.closest('tr');
+            e.dataTransfer.effectAllowed = 'move';
+            dragRow.classList.add('dragging');
+        });
+
+        tbody.addEventListener('dragend', () => {
+            if (dragRow) dragRow.classList.remove('dragging');
+            dragRow = null;
+        });
+
+        tbody.addEventListener('dragover', (e) => {
+            if (!dragRow) return;
+            e.preventDefault(); // allow drop
+            const overRow = e.target.closest('tr');
+            if (!overRow || overRow === dragRow) return;
+            const rect = overRow.getBoundingClientRect();
+            const before = (e.clientY - rect.top) < rect.height / 2;
+            tbody.insertBefore(dragRow, before ? overRow : overRow.nextSibling);
+        });
+        tbody.addEventListener('drop', (e) => e.preventDefault());
+    </script>
+</section>
+{{end}}
+<section>
 <details>
     <summary>Supported players</summary>
     <ul>
@@ -122,7 +182,7 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
         <li>DeoVR</li>
     </ul>
 </details>
-
+</section>
 <footer><p><a href="https://github.com/o-fl0w/stash-vr" target="_blank">https://github.com/o-fl0w/stash-vr</a></p>
 </footer>
 

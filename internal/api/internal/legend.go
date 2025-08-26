@@ -12,7 +12,8 @@ var (
 	LegendMetaPlayCount  = "Played"
 	LegendMetaResolution = "Resolution"
 
-	CommandIncrementO        = "/o"
-	CommandSetOrganizedTrue  = "/org"
-	CommandSetOrganizedFalse = "/org-"
+	LegendSummary = "?"
+
+	CommandIncrementO       = "/o"
+	CommandSetOrganizedTrue = "/org"
 )

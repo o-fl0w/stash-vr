@@ -28,6 +28,8 @@ func Router(libraryService *library.Service) *chi.Mux {
 	router.Mount("/heresphere", logMod("heresphere", heresphere.Router(libraryService)))
 	router.Mount("/deovr", logMod("deovr", deovr.Router(libraryService)))
 
+	router.Post("/filters", logMod("filters", web.FiltersUpdateHandler(libraryService)).ServeHTTP)
+
 	router.Get("/", rootHandler(libraryService))
 	router.Get("/*", logMod("static", staticHandler()).ServeHTTP)
 

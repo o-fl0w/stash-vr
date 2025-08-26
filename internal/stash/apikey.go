@@ -6,7 +6,7 @@ import (
 )
 
 func ApiKeyed(url string) string {
-	apiKey := config.Get().StashApiKey
+	apiKey := config.Application().StashApiKey
 	if apiKey == "" || strings.Contains(url, "apikey") {
 		return url
 	}

@@ -33,12 +33,21 @@ mutation SceneMarkerUpdate($id: ID!, $tag_id: ID!, $seconds: Float!, $end_second
     sceneMarkerUpdate(input:{id:$id primary_tag_id: $tag_id, seconds: $seconds, end_seconds: $end_seconds, title: $title}){id}
 }
 
-mutation SceneIncrementO($id: ID!, $timestamp: Timestamp!){
-    sceneAddO(id: $id, times: [$timestamp]){count}
+mutation SceneIncrementO($id: ID!){
+    sceneAddO(id: $id){count}
 }
 
-mutation SceneIncrementPlayCount($id: ID!, $timestamp: Timestamp!){
-    sceneAddPlay(id: $id, times: [$timestamp]){count}
+mutation SceneDecrementO($id: ID!){
+    sceneDeleteO(id: $id){count}
+}
+
+
+mutation SceneIncrementPlayCount($id: ID!){
+    sceneAddPlay(id: $id){count}
+}
+
+mutation SceneDecrementPlayCount($id: ID!){
+    sceneDeletePlay(id: $id){count}
 }
 
 mutation SceneUpdateOrganized($id: ID!, $isOrganized: Boolean){

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	_ "embed"
 	"errors"
 	"github.com/Khan/genqlient/graphql"
@@ -16,8 +17,8 @@ import (
 )
 
 //go:embed "index.html"
-var indexTemplate string
-var tmpl = template.Must(template.New("index").Parse(indexTemplate))
+var indexHtml string
+var indexTmpl = template.Must(template.New("index").Parse(indexHtml))
 
 const (
 	ok           = "OK"
@@ -30,9 +31,17 @@ type filterData struct {
 	Name string
 }
 
+type filterOverride struct {
+	ID         string
+	SourceName string
+	Name       string
+	Disabled   bool
+}
+
 type stashData struct {
-	Version    string
-	FilterData []filterData
+	Version         string
+	FilterData      []filterData
+	FilterOverrides []filterOverride
 }
 
 type indexData struct {
@@ -50,19 +59,62 @@ type indexData struct {
 	SceneCount              int
 }
 
+func stashFilters(ctx context.Context, stashClient graphql.Client) ([]filterData, error) {
+	resp, err := gql.FindSavedSceneFilters(ctx, stashClient)
+	if err != nil {
+		return nil, err
+	}
+	fd := make([]filterData, len(resp.FindSavedFilters))
+	for i, sf := range resp.FindSavedFilters {
+		fd[i] = filterData{
+			Id:   sf.Id,
+			Name: sf.Name,
+		}
+	}
+	return fd, nil
+}
+
+func filterOverrideRows(ctx context.Context, stashFilters []filterData) []filterOverride {
+	cfg := config.User(ctx)
+
+	rows := make([]filterOverride, 0, len(stashFilters))
+	seen := map[string]struct{}{}
+	for _, cf := range cfg.Filters {
+		for _, sf := range stashFilters {
+			if sf.Id == cf.ID {
+				name := cf.Name
+				if name == "" {
+					name = sf.Name
+				}
+				rows = append(rows, filterOverride{ID: sf.Id, SourceName: sf.Name, Name: name, Disabled: cf.Disabled})
+				seen[sf.Id] = struct{}{}
+				break
+			}
+		}
+	}
+	for _, s := range stashFilters {
+		if _, ok := seen[s.Id]; ok {
+			continue
+		}
+		rows = append(rows, filterOverride{ID: s.Id, SourceName: s.Name, Name: s.Name, Disabled: false})
+	}
+
+	return rows
+}
+
 func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var redactFunc func(string) string
-		if !config.Get().IsRedactDisabled {
+		if !config.Application().IsRedactDisabled {
 			redactFunc = config.Redacted
 		}
 		data := indexData{
 			Redact:                  redactFunc,
 			Version:                 build.FullVersion(),
-			LogLevel:                config.Get().LogLevel,
-			ForceHTTPS:              config.Get().ForceHTTPS,
-			StashGraphQLUrl:         config.Get().StashGraphQLUrl,
-			IsApiKeyProvided:        config.Get().StashApiKey != "",
+			LogLevel:                config.Application().LogLevel,
+			ForceHTTPS:              config.Application().ForceHTTPS,
+			StashGraphQLUrl:         config.Application().StashGraphQLUrl,
+			IsApiKeyProvided:        config.Application().StashApiKey != "",
 			StashConnectionResponse: fail,
 		}
 
@@ -82,14 +134,11 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 			} else {
 				data.StashConnectionResponse = ok
 				data.StashData = &stashData{Version: version}
-				resp, err := gql.FindSavedSceneFilters(r.Context(), libraryService.StashClient)
-				if err == nil {
-					for _, sf := range resp.FindSavedFilters {
-						data.StashData.FilterData = append(data.StashData.FilterData, filterData{
-							Id:   sf.Id,
-							Name: sf.Name,
-						})
-					}
+				data.StashData.FilterData, err = stashFilters(r.Context(), libraryService.StashClient)
+				if err != nil {
+					log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve stash filters")
+				} else {
+					data.StashData.FilterOverrides = filterOverrideRows(r.Context(), data.StashData.FilterData)
 				}
 			}
 		}()
@@ -108,9 +157,57 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 
 		wg.Wait()
 
-		if err := tmpl.Execute(w, data); err != nil {
+		if err := indexTmpl.Execute(w, data); err != nil {
 			log.Ctx(r.Context()).Err(err).Msg("index: execute template")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+	}
+}
+
+func FiltersUpdateHandler(libraryService *library.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "bad form", 400)
+			return
+		}
+
+		fds, err := stashFilters(r.Context(), libraryService.StashClient)
+		if err != nil {
+			http.Error(w, "error fetching filters from stash", 502)
+			return
+		}
+
+		ids := r.PostForm["id"]
+		names := r.PostForm["name"]
+		disabled := r.PostForm["disabled"]
+
+		disabledSet := make(map[string]bool, len(disabled))
+		for _, id := range disabled {
+			disabledSet[id] = true
+		}
+		ovs := make([]config.Filter, 0, len(ids))
+		for i, id := range ids {
+			ov := config.Filter{ID: id}
+			_, ov.Disabled = disabledSet[id]
+
+			if names[i] != "" {
+				for _, fd := range fds {
+					if id == fd.Id {
+						if names[i] != fd.Name {
+							ov.Name = names[i]
+						}
+						break
+					}
+				}
+			}
+
+			ovs = append(ovs, ov)
+		}
+
+		cfg := config.User(r.Context())
+		cfg.Filters = ovs
+
+		config.Save(r.Context(), cfg)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
