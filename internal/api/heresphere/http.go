@@ -272,7 +272,9 @@ func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 			h.ps.handleResume()
 		}
 	case evPause, evClose:
-		h.ps.handleStop(ctx, h.libraryService)
+		if h.ps != nil {
+			h.ps.handleStop(ctx, h.libraryService)
+		}
 	default:
 	}
 }

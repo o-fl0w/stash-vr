@@ -3,8 +3,10 @@ package heresphere
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"stash-vr/internal/api/internal"
+	"stash-vr/internal/config"
 	"stash-vr/internal/library"
 	"stash-vr/internal/util"
 	"strconv"
@@ -25,7 +27,7 @@ const seperator = ":"
 var summaryStripper, _ = regexp.Compile("[^a-zA-Z0-9_]+")
 
 func setTrack(tracks []tagDto, track int) {
-	for i, _ := range tracks {
+	for i := range tracks {
 		tracks[i].Track = &track
 	}
 }
@@ -90,21 +92,16 @@ func getSummary(vd *library.VideoData) string {
 	}
 
 	//tags
-	m := make(map[string]*string)
-	add := func(k string, v *string) {
-		stripped := strings.ReplaceAll(k, " ", "_")
-		stripped = summaryStripper.ReplaceAllString(stripped, "")
-		m[stripped] = v
-	}
+	m := make(map[string]string)
 	for _, t := range vd.SceneParts.Tags {
-		if t.Sort_name == nil || *t.Sort_name != "hidden" {
-			add(t.Name, t.Sort_name)
-		}
-		for _, p := range t.Parents {
-			if p.Sort_name == nil || *p.Sort_name != "hidden" {
-				add(p.Name, p.Sort_name)
+		sn := t.Name
+		if t.Sort_name != nil {
+			if *t.Sort_name == config.Application().ExcludeSortName {
+				continue
 			}
+			sn = *t.Sort_name
 		}
+		m[t.Name] = sn
 	}
 
 	type item struct {
@@ -114,11 +111,7 @@ func getSummary(vd *library.VideoData) string {
 
 	items := make([]item, 0, len(m))
 	for k, v := range m {
-		sk := k
-		if v != nil && *v != "" {
-			sk = *v
-		}
-		items = append(items, item{key: k, sortKey: sk})
+		items = append(items, item{key: k, sortKey: v})
 	}
 
 	sort.Slice(items, func(i, j int) bool {
@@ -128,14 +121,63 @@ func getSummary(vd *library.VideoData) string {
 		return items[i].sortKey < items[j].sortKey
 	})
 
-	keys := make([]string, len(items))
-	for i, it := range items {
-		keys[i] = strings.ReplaceAll(it.key, " ", "_")
+	seen := make(map[string]struct{})
+	keys := make([]string, 0, len(items))
+	for _, it := range items {
+		name := summaryStripper.ReplaceAllString(strings.ReplaceAll(it.key, " ", "_"), "")
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		keys = append(keys, it.key)
 	}
 
 	summary := strings.Join(keys, " | ")
 	return summary
 
+}
+
+func getStashTags(vd *library.VideoData) []tagDto {
+	type item struct {
+		sortName string
+		dto      tagDto
+	}
+	items := make([]item, 0, len(vd.SceneParts.Tags))
+	//tags := make([]tagDto, 0, len(vd.SceneParts.Tags))
+	isExcluded := func(sortName *string) bool {
+		return sortName != nil && *sortName == config.Application().ExcludeSortName
+	}
+
+	for _, t := range vd.SceneParts.Tags {
+		if isExcluded(t.Sort_name) {
+			continue
+		}
+		dto := tagDto{
+			Name: fmt.Sprintf("%s%s%s", internal.LegendTag, seperator, t.Name), value: t.Name,
+		}
+		items = append(items, item{sortName: util.FirstNonEmpty(t.Sort_name, &t.Name), dto: dto})
+
+		for _, p := range t.Parents {
+			if isExcluded(p.Sort_name) {
+				continue
+			}
+			pDto := tagDto{
+				Name: fmt.Sprintf("%s%s%s%s", internal.LegendTag, p.Name, seperator, t.Name), value: t.Name,
+			}
+			items = append(items, item{sortName: util.FirstNonEmpty(p.Sort_name, &p.Name), dto: pDto})
+		}
+	}
+
+	slices.SortFunc(items, func(a item, b item) int {
+		return strings.Compare(a.sortName, b.sortName)
+	})
+
+	tags := make([]tagDto, 0, len(items))
+	for _, it := range items {
+		tags = append(tags, it.dto)
+	}
+
+	return tags
 }
 
 func getPerformers(vd *library.VideoData) []tagDto {
@@ -189,25 +231,6 @@ func getFields(vd *library.VideoData) []tagDto {
 
 	tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%v", internal.LegendMetaOrganized, seperator, vd.SceneParts.Organized)})
 
-	return tags
-}
-
-func getStashTags(vd *library.VideoData) []tagDto {
-	tags := make([]tagDto, 0, len(vd.SceneParts.Tags))
-	for _, t := range vd.SceneParts.Tags {
-		dto := tagDto{
-			Name: fmt.Sprintf("%s%s%s", internal.LegendTag, seperator, t.Name), value: t.Name,
-		}
-		tags = append(tags, dto)
-
-		for _, p := range t.Parents {
-			pDto := tagDto{
-				Name: fmt.Sprintf("%s%s%s%s", internal.LegendTag, p.Name, seperator, t.Name), value: t.Name,
-			}
-			tags = append(tags, pDto)
-		}
-
-	}
 	return tags
 }
 

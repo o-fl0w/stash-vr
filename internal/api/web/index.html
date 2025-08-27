@@ -16,8 +16,20 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
 /DyRqAHqNQD350bBBvlzRSAFuS1FAAAAAAAAAAAAAABb/ADP/f1z77EnFAAAAABJRU5ErkJggg==" rel="icon" type="image/png"/>
 </head>
 <style>
-    .handle { cursor: grab; user-select: none; padding: 2px 6px; display: inline-block; }
-    tr.dragging { opacity: 0.6; }
+    .handle {
+        cursor: grab;
+        user-select: none;
+        padding: 2px 6px;
+        display: inline-block;
+    }
+
+    summary{
+        cursor: pointer;
+    }
+
+    tr.dragging {
+        opacity: 0.6;
+    }
 </style>
 <body>
 <h1>Stash-VR</h1>
@@ -121,29 +133,41 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
 </main>
 {{if and .StashData .StashData.FilterOverrides}}
 <section>
-    <form method="POST" action="/filters" id="filters">
-        <table>
-            <thead>
-            <tr>
-                <th></th>
-                <th>Disable</th>
-                <th>ID</th>
-                <th>Name</th>
-            </tr>
-            </thead>
-            <tbody id="rows">
-            {{ range $i, $ov := .StashData.FilterOverrides }}
-            <tr data-id="{{$i}}">
-                <td><span class="handle" draggable="true" title="Drag">≡</span></td>
-                <td><input type="checkbox" name="disabled" value="{{ $ov.ID }}" {{ if $ov.Disabled }}checked{{ end }}></td>
-                <td><samp>{{$ov.ID}}</samp><input type="hidden" name="id" value="{{ $ov.ID }}"></td>
-                <td><input name="name" value="{{ $ov.Name }}"></td>
-            </tr>
-            {{end}}
-            </tbody>
-        </table>
-        <button type="submit">Save</button>
-    </form>
+    <details>
+        <summary>Configure filter overrides</summary>
+        <form method="POST" action="/filters" id="filters">
+            <table>
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Disable</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                </tr>
+                </thead>
+                <tbody id="rows">
+                {{ range $i, $ov := .StashData.FilterOverrides }}
+                <tr data-id="{{$i}}">
+                    <td><span class="handle" draggable="true" title="Drag">≡</span></td>
+                    <td><input type="checkbox" name="disabled" value="{{ $ov.ID }}" {{ if $ov.Disabled }}checked{{ end }}/>
+                    </td>
+                    <td><samp>{{$ov.ID}}</samp><input type="hidden" name="id" value="{{ $ov.ID }}"/></td>
+                    <td>
+                        <input type="hidden" name="sourceName" value="{{$ov.SourceName}}"/>
+                        <input name="targetName" placeholder="{{$ov.SourceName}}"
+                               value='{{ if and (ne $ov.Name "") (ne $ov.Name $ov.SourceName)}}{{$ov.Name}}{{end}}'>
+                    </td>
+                </tr>
+                {{end}}
+                </tbody>
+            </table>
+            <button type="submit">Save</button>
+        </form>
+        <form method="POST" action="/filters">
+            <button type="submit">Reset</button>
+        </form>
+    </details>
+
     <script>
         const tbody = document.getElementById('rows');
         let dragRow = null;
@@ -163,7 +187,7 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
 
         tbody.addEventListener('dragover', (e) => {
             if (!dragRow) return;
-            e.preventDefault(); // allow drop
+            e.preventDefault();
             const overRow = e.target.closest('tr');
             if (!overRow || overRow === dragRow) return;
             const rect = overRow.getBoundingClientRect();
@@ -175,13 +199,13 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
 </section>
 {{end}}
 <section>
-<details>
-    <summary>Supported players</summary>
-    <ul>
-        <li>HereSphere</li>
-        <li>DeoVR</li>
-    </ul>
-</details>
+    <details>
+        <summary>Supported players</summary>
+        <ul>
+            <li>HereSphere</li>
+            <li>DeoVR</li>
+        </ul>
+    </details>
 </section>
 <footer><p><a href="https://github.com/o-fl0w/stash-vr" target="_blank">https://github.com/o-fl0w/stash-vr</a></p>
 </footer>

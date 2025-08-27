@@ -14,13 +14,13 @@ type Service struct {
 	single      singleflight.Group
 	Stats       Stats
 
-	tags map[string]*Tag
+	tagCache map[string]*Tag
 }
 
-func (service *Service) snapshot() map[string]*VideoData {
-	service.muVdCache.RLock()
-	defer service.muVdCache.RUnlock()
-	return maps.Clone(service.vdCache)
+func (libraryService *Service) snapshot() map[string]*VideoData {
+	libraryService.muVdCache.RLock()
+	defer libraryService.muVdCache.RUnlock()
+	return maps.Clone(libraryService.vdCache)
 }
 
 func NewService(client graphql.Client) *Service {

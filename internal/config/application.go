@@ -18,6 +18,7 @@ const (
 	envKeyForceHTTPS       = "FORCE_HTTPS"
 	envKeyHeatmapHeightPx  = "HEATMAP_HEIGHT_PX"
 	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
+	envKeyExcludeSortName  = "EXCLUDE_SORT_NAME"
 )
 
 type ApplicationConfig struct {
@@ -31,6 +32,7 @@ type ApplicationConfig struct {
 	ForceHTTPS          bool
 	HeatmapHeightPx     int
 	IsPlayCountDisabled bool
+	ExcludeSortName     string
 }
 
 var applicationConfig ApplicationConfig
@@ -66,6 +68,9 @@ func Init() {
 	pflag.Bool(envKeyDisablePlayCount, false, "Disable incrementing Stash play count for scenes")
 	_ = viper.BindPFlag(envKeyDisablePlayCount, pflag.Lookup(envKeyDisablePlayCount))
 
+	pflag.String(envKeyExcludeSortName, "hidden", "Exclude tags with this sort name")
+	_ = viper.BindPFlag(envKeyExcludeSortName, pflag.Lookup(envKeyExcludeSortName))
+
 	pflag.BoolP("help", "h", false, "Display usage information")
 	_ = viper.BindPFlag("help", pflag.Lookup("help"))
 
@@ -88,6 +93,7 @@ func Init() {
 	applicationConfig.ForceHTTPS = viper.GetBool(envKeyForceHTTPS)
 	applicationConfig.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
 	applicationConfig.IsPlayCountDisabled = viper.GetBool(envKeyDisablePlayCount)
+	applicationConfig.ExcludeSortName = viper.GetString(envKeyExcludeSortName)
 
 }
 

@@ -16,44 +16,42 @@ type Section struct {
 	Ids  []string
 }
 
-func (service *Service) GetSections(ctx context.Context) ([]Section, error) {
-	res, err, _ := service.single.Do("sections", func() (interface{}, error) {
-		filters, err := service.getFilters(ctx)
+func (libraryService *Service) GetSections(ctx context.Context) ([]Section, error) {
+	res, err, _ := libraryService.single.Do("sections", func() (interface{}, error) {
+		filters, err := libraryService.getFilters(ctx)
 		if err != nil {
 			return nil, err
 		}
 
 		var sections []Section
 		if filters != nil {
-			sections, err = service.getSectionsByFilters(ctx, filters)
+			sections, err = libraryService.getSectionsByFilters(ctx, filters)
 		} else {
 			log.Ctx(ctx).Info().Msg("No saved scene filters found, creating default section with ALL scenes")
-			sections, err = service.getDefaultSections(ctx)
+			sections, err = libraryService.getDefaultSections(ctx)
 		}
 		if err != nil {
 			return nil, err
 		}
 
-		service.muVdCache.Lock()
-		for k := range service.vdCache {
-			delete(service.vdCache, k)
+		libraryService.muVdCache.Lock()
+		for k := range libraryService.vdCache {
+			delete(libraryService.vdCache, k)
 		}
 
-		service.Stats.Links = 0
+		libraryService.Stats.Links = 0
 		for _, v := range sections {
-			service.Stats.Links += len(v.Ids)
+			libraryService.Stats.Links += len(v.Ids)
 			for _, id := range v.Ids {
-				service.vdCache[id] = nil
+				libraryService.vdCache[id] = nil
 			}
 		}
-		service.Stats.Scenes = len(service.vdCache)
-		service.muVdCache.Unlock()
+		libraryService.Stats.Scenes = len(libraryService.vdCache)
+		libraryService.muVdCache.Unlock()
 
-		log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", service.Stats.Links).
-			Int("scenes", service.Stats.Scenes).
+		log.Ctx(ctx).Info().Int("sections", len(sections)).Int("links", libraryService.Stats.Links).
+			Int("scenes", libraryService.Stats.Scenes).
 			Msg("Index built")
-
-		_ = service.LoadTags(ctx)
 
 		return sections, nil
 	})
@@ -63,8 +61,8 @@ func (service *Service) GetSections(ctx context.Context) ([]Section, error) {
 	return res.([]Section), nil
 }
 
-func (service *Service) getDefaultSections(ctx context.Context) ([]Section, error) {
-	resp, err := gql.FindAllSceneIds(ctx, service.StashClient)
+func (libraryService *Service) getDefaultSections(ctx context.Context) ([]Section, error) {
+	resp, err := gql.FindAllSceneIds(ctx, libraryService.StashClient)
 	if err != nil {
 		return nil, fmt.Errorf("FindAllSceneIds: %w", err)
 	}
@@ -78,7 +76,7 @@ func (service *Service) getDefaultSections(ctx context.Context) ([]Section, erro
 	return []Section{allScenesSection}, nil
 }
 
-func (service *Service) getSectionsByFilters(ctx context.Context, filters []gql.SavedFilterParts) ([]Section, error) {
+func (libraryService *Service) getSectionsByFilters(ctx context.Context, filters []gql.SavedFilterParts) ([]Section, error) {
 	sections := make([]Section, len(filters))
 
 	wg := sync.WaitGroup{}
@@ -95,7 +93,7 @@ func (service *Service) getSectionsByFilters(ctx context.Context, filters []gql.
 				return
 			}
 
-			resp, err := gql.FindSceneIdsByFilter(ctx, service.StashClient, &sceneFilter.SceneFilter, &sceneFilter.FilterOpts)
+			resp, err := gql.FindSceneIdsByFilter(ctx, libraryService.StashClient, &sceneFilter.SceneFilter, &sceneFilter.FilterOpts)
 			if err != nil {
 				flog.Err(err).Interface("savedFilter", f).Interface("sceneFilter", sceneFilter).Msg("Failed to find scenes by filter, skipping")
 				return
@@ -124,8 +122,8 @@ func (service *Service) getSectionsByFilters(ctx context.Context, filters []gql.
 	return sections, nil
 }
 
-func (service *Service) getFilters(ctx context.Context) ([]gql.SavedFilterParts, error) {
-	savedFilters, err := gql.FindSavedSceneFilters(ctx, service.StashClient)
+func (libraryService *Service) getFilters(ctx context.Context) ([]gql.SavedFilterParts, error) {
+	savedFilters, err := gql.FindSavedSceneFilters(ctx, libraryService.StashClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find saved filters: %w", err)
 	}

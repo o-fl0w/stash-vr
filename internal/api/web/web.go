@@ -164,41 +164,33 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 	}
 }
 
-func FiltersUpdateHandler(libraryService *library.Service) http.HandlerFunc {
+func FiltersUpdateHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "bad form", 400)
 			return
 		}
 
-		fds, err := stashFilters(r.Context(), libraryService.StashClient)
-		if err != nil {
-			http.Error(w, "error fetching filters from stash", 502)
-			return
+		ids := r.PostForm["id"]
+		if len(ids) == 0 {
+			config.Save(r.Context(), config.UserConfig{})
 		}
 
-		ids := r.PostForm["id"]
-		names := r.PostForm["name"]
+		sourceNames := r.PostForm["sourceName"]
+		targetNames := r.PostForm["targetName"]
 		disabled := r.PostForm["disabled"]
 
-		disabledSet := make(map[string]bool, len(disabled))
+		disabledSet := make(map[string]struct{}, len(disabled))
 		for _, id := range disabled {
-			disabledSet[id] = true
+			disabledSet[id] = struct{}{}
 		}
 		ovs := make([]config.Filter, 0, len(ids))
 		for i, id := range ids {
 			ov := config.Filter{ID: id}
 			_, ov.Disabled = disabledSet[id]
 
-			if names[i] != "" {
-				for _, fd := range fds {
-					if id == fd.Id {
-						if names[i] != fd.Name {
-							ov.Name = names[i]
-						}
-						break
-					}
-				}
+			if targetNames[i] != "" && targetNames[i] != sourceNames[i] {
+				ov.Name = targetNames[i]
 			}
 
 			ovs = append(ovs, ov)
