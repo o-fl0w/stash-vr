@@ -1,24 +1,38 @@
 project_name: stash-vr
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
 builds:
-  - main: ./cmd/stash-vr
+  - id: app
+    main: ./cmd/stash-vr
     ldflags:
-      - -X stash-vr/internal/build.Version={{.Version}} -X stash-vr/internal/build.SHA={{.Commit}}
+      - -X stash-vr/internal/build.Version={{.Version}} -X stash-vr/internal/build.SHA={{.Commit}} -s -w
     env:
       - CGO_ENABLED=0
-    targets:
-      - linux_amd64
-      - linux_arm64
-      - windows_amd64
-      - darwin_amd64
-      - darwin_arm64
+    goos: [linux, darwin, windows]
+    goarch: [amd64]          # add arm64 if you need it
+
+archives:
+  - format_overrides:
+      - goos: windows
+        format: zip
+
 checksum:
   disable: true
 changelog:
   skip: true
-archives:
-  - format: tar.gz
-    format_overrides:
-      - goos: windows
-        format: zip
+
+dockers:
+  - use: buildx
+    dockerfile: Dockerfile    # expects a Dockerfile at repo root
+    image_templates:
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:latest"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      -
 release:
   mode: keep-existing
