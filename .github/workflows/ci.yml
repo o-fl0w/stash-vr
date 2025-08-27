@@ -28,6 +28,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push (develop)
         uses: docker/build-push-action@v6
         with:
@@ -35,7 +38,14 @@ jobs:
           push: true
           tags: |
             ${{ steps.vars.outputs.image }}:develop
-            ${{ steps.vars.outputs.image }}:develop-${{ steps.vars.outputs.short_sha }}
+          cache-from: type=gha,scope=dev
+          cache-to: type=gha,mode=max,scope=dev
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          build-args: |
+            BUILD_VERSION=develop
+            BUILD_SHA=${{ github.sha }}
 
   release_with_goreleaser:
     if: github.event_name == 'release' && github.event.action == 'published'
@@ -49,8 +59,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true
 
-      # Needed for multi-arch Docker images (amd64 + arm64)
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:

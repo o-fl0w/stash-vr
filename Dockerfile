@@ -1,31 +1,41 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.24-alpine as build
+ARG GO_VERSION=1.24
+FROM golang:${GO_VERSION}-alpine AS build
 
-ARG BUILD_VERSION
-ARG BUILD_SHA
+ARG BUILD_VERSION=dev
+ARG BUILD_SHA=unknown
 
-WORKDIR /build
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
 
-COPY go.mod ./
-COPY go.sum ./
+WORKDIR /src
 
-RUN go mod download && go mod verify
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download && go mod verify
 
-COPY ./cmd ./cmd/
-COPY ./internal ./internal/
-#COPY ./pkg ./pkg/
+COPY . .
 
-RUN go generate ./cmd/stash-vr/ && go build -ldflags "-X stash-vr/internal/build.Version=$BUILD_VERSION -X stash-vr/internal/build.SHA=$BUILD_SHA" -o ./stash-vr ./cmd/stash-vr/
+ENV CGO_ENABLED=0
 
-FROM alpine:3.21
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -trimpath \
+      -ldflags "-s -w \
+        -X stash-vr/internal/build.Version=${BUILD_VERSION} \
+        -X stash-vr/internal/build.SHA=${BUILD_SHA}" \
+      -o /out/app ./cmd/stash-vr
+
+FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /app
-
-COPY --from=build /build/stash-vr ./
+COPY --from=build /out/app /app/stash-vr
 
 ENV STASH_GRAPHQL_URL=http://localhost:9999/graphql
 
 EXPOSE 9666
+USER nonroot:nonroot
 
-ENTRYPOINT ["./stash-vr"]
+ENTRYPOINT ["/app/stash-vr"]

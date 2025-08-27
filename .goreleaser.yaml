@@ -6,7 +6,7 @@ before:
 
 builds:
   - id: app
-    main: ./cmd/.ModulePath }}
+    main: ./cmd/stash-vr
     env:
       - CGO_ENABLED=0
     goos: [linux, darwin, windows]
@@ -24,7 +24,6 @@ checksum:
 changelog:
   skip: true
 
-# Build per-arch images and publish a multi-arch manifest
 dockers:
   - id: img-amd64
     use: buildx
@@ -33,7 +32,13 @@ dockers:
       - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-amd64"
     build_flag_templates:
       - "--platform=linux/amd64"
-
+      - "--cache-from=type=gha,scope=release-amd64"
+      - "--cache-to=type=gha,mode=max,scope=release-amd64"
+      - "--build-arg=BUILD_VERSION={{ .Version }}"
+      - "--build-arg=BUILD_SHA={{ .ShortCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Tag }}"
+      - "--label=org.opencontainers.image.revision={{ .Commit }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
   - id: img-arm64
     use: buildx
     dockerfile: Dockerfile
@@ -41,7 +46,13 @@ dockers:
       - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-arm64"
     build_flag_templates:
       - "--platform=linux/arm64"
-
+      - "--cache-from=type=gha,scope=release-arm64"
+      - "--cache-to=type=gha,mode=max,scope=release-arm64"
+      - "--build-arg=BUILD_VERSION={{ .Version }}"
+      - "--build-arg=BUILD_SHA={{ .ShortCommit }}"
+      - "--label=org.opencontainers.image.version={{ .Tag }}"
+      - "--label=org.opencontainers.image.revision={{ .Commit }}"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
 docker_manifests:
   - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}"
     image_templates:
