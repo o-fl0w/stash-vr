@@ -9,27 +9,33 @@ on:
 permissions:
   contents: write
 
-env:
-  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}
-
 jobs:
   docker_on_develop:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Vars (image lowercase + short sha)
+        id: vars
+        run: |
+          repo="${GITHUB_REPOSITORY#*/}"
+          echo "image=${{ secrets.DOCKER_USERNAME }}/$(echo "$repo" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build & push (develop)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:develop
-            ${{ env.IMAGE_NAME }}:develop-${{ github.sha }}
+            ${{ steps.vars.outputs.image }}:develop
+            ${{ steps.vars.outputs.image }}:develop-${{ steps.vars.outputs.short_sha }}
 
   release_with_goreleaser:
     if: github.event_name == 'release' && github.event.action == 'published'

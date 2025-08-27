@@ -6,13 +6,13 @@ before:
 
 builds:
   - id: app
-    main: ./cmd/{{ .ModulePath }}
-    ldflags:
-      - -X {{ .ModulePath }}/internal/build.Version={{ .Version }} -X {{ .ModulePath }}/internal/build.SHA={{ .ShortCommit }} -s -w
+    main: ./cmd/.ModulePath }}
     env:
       - CGO_ENABLED=0
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
+    ldflags:
+      - -X {{ .ModulePath }}/internal/build.Version={{ .Version }} -X {{ .ModulePath }}/internal/build.SHA={{ .ShortCommit }} -s -w
 
 archives:
   - format_overrides:
@@ -30,7 +30,7 @@ dockers:
     use: buildx
     dockerfile: Dockerfile
     image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-amd64"
     build_flag_templates:
       - "--platform=linux/amd64"
 
@@ -38,19 +38,19 @@ dockers:
     use: buildx
     dockerfile: Dockerfile
     image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-arm64"
     build_flag_templates:
       - "--platform=linux/arm64"
 
 docker_manifests:
-  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}"
+  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}"
     image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
-  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:latest"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-amd64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-arm64"
+  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:latest"
     image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-amd64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-arm64"
 
 release:
   mode: keep-existing
