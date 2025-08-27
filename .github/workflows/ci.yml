@@ -28,8 +28,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:dev
-            ${{ env.IMAGE_NAME }}:dev-${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:develop
+            ${{ env.IMAGE_NAME }}:develop-${{ github.sha }}
 
   release_with_goreleaser:
     if: github.event_name == 'release' && github.event.action == 'published'
