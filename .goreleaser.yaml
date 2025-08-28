@@ -1,69 +1,24 @@
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-
-version: 2
-
-before:
-  hooks:
-    - go mod tidy
-
+project_name: stash-vr
 builds:
-  - id: app
-    main: ./cmd/stash-vr
+  - main: ./cmd/stash-vr
+    ldflags:
+      - -X stash-vr/internal/build.Version={{.Version}} -X stash-vr/internal/build.SHA={{.Commit}}
     env:
       - CGO_ENABLED=0
-    goos: [linux, darwin, windows]
-    goarch: [amd64, arm64]
-    ldflags:
-      - -X {{ .ModulePath }}/internal/build.Version={{ .Version }} -X {{ .ModulePath }}/internal/build.SHA={{ .ShortCommit }} -s -w
-
-archives:
-  - format_overrides:
-      - goos: windows
-        format: zip
-
+    targets:
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - darwin_amd64
+      - darwin_arm64
 checksum:
   disable: true
 changelog:
-  disable: true
-
-dockers:
-  - id: img-amd64
-    goos: linux
-    goarch: amd64
-    image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/amd64"
-      - "--cache-from=type=gha,scope=release-amd64"
-      - "--cache-to=type=gha,mode=max,scope=release-amd64"
-      - "--label=org.opencontainers.image.version={{ .Tag }}"
-      - "--label=org.opencontainers.image.revision={{ .Commit }}"
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-  - id: img-arm64
-    goos: linux
-    goarch: arm64
-    image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/arm64"
-      - "--cache-from=type=gha,scope=release-arm64"
-      - "--cache-to=type=gha,mode=max,scope=release-arm64"
-      - "--label=org.opencontainers.image.version={{ .Tag }}"
-      - "--label=org.opencontainers.image.revision={{ .Commit }}"
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-docker_manifests:
-  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}"
-    image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
-  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:latest"
-    image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
-
+  skip: true
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
 release:
   mode: keep-existing
