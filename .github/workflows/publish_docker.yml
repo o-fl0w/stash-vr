@@ -33,7 +33,7 @@ jobs:
           images: ofl0w/stash-vr
           tags: |
             type=raw,value=develop,enable=${{ github.event_name == 'push' && github.ref_name == 'develop' }}
-            type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+            type=semver,pattern=v{{version}},enable=${{ github.event_name == 'release' }}
             type=raw,value=latest,enable=${{ github.event_name == 'release' }}
       - name: Compute build vars
         id: vars
