@@ -11,10 +11,10 @@ import (
 	"stash-vr/internal/util"
 )
 
-func (libraryService *Service) UpdateRating(ctx context.Context, id string, rating float32) error {
-	newRating := int(rating * 20)
+func (libraryService *Service) UpdateRating(ctx context.Context, id string, rating5 float32) error {
+	newRating100 := int(rating5 * 20)
 
-	_, err := gql.SceneUpdateRating100(ctx, libraryService.StashClient, id, &newRating)
+	_, err := gql.SceneUpdateRating100(ctx, libraryService.StashClient, id, &newRating100)
 	if err != nil {
 		return fmt.Errorf("SceneUpdateRating100: %w", err)
 	}

@@ -126,8 +126,12 @@ func (h *httpHandler) processUpdates(videoId string, vdReq videoDataRequestDto) 
 	ctx := context.Background()
 	needsRefetch := false
 	if vdReq.Rating != nil {
-		if err := h.libraryService.UpdateRating(ctx, videoId, *vdReq.Rating); err != nil {
-			log.Ctx(ctx).Warn().Err(err).Float32("rating", *vdReq.Rating).Msg("Failed to update rating")
+		r := *vdReq.Rating
+		if r < 1 { //use half-star to unset rating
+			r = 0
+		}
+		if err := h.libraryService.UpdateRating(ctx, videoId, r); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Float32("rating", r).Msg("Failed to update rating")
 		}
 		needsRefetch = true
 	}
