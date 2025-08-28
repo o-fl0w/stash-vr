@@ -22,7 +22,7 @@ archives:
 checksum:
   disable: true
 changelog:
-  skip: true
+  disable: true
 
 dockers:
   - id: img-amd64
