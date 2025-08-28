@@ -2,7 +2,9 @@ project_name: stash-vr
 builds:
   - main: ./cmd/stash-vr
     ldflags:
-      - -X stash-vr/internal/build.Version={{.Version}} -X stash-vr/internal/build.SHA={{.Commit}}
+      - s -w -X stash-vr/internal/build.Version={{.Version}} -X stash-vr/internal/build.SHA={{.ShortCommit}}
+    flags:
+      - -trimpath
     env:
       - CGO_ENABLED=0
     targets:
@@ -11,6 +13,9 @@ builds:
       - windows_amd64
       - darwin_amd64
       - darwin_arm64
+universal_binaries:
+  - replace: true
+
 checksum:
   disable: true
 changelog:

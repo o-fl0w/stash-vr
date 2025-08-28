@@ -1,14 +1,17 @@
 .idea
 .git
 .github
+.goreleaser.yaml
 
-dist
-bin
+dist/
+bin/
+build/
 
 **/*_test.go
 
 *.md
 
 Dockerfile
-.goreleaser.yaml
+docker-compose.yml
+
 graphql.config.yml

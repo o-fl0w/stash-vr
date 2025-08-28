@@ -14,7 +14,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v5
-      - run: go generate ./cmd/stash-vr/
+        with:
+          cache: true
       - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
