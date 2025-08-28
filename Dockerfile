@@ -11,7 +11,8 @@ COPY go.mod go.sum ./
 
 RUN go mod download && go mod verify
 
-COPY cmd/ internal/ ./
+COPY ./cmd ./cmd/
+COPY ./internal ./internal/
 
 RUN go build -ldflags "-X stash-vr/internal/build.Version=$BUILD_VERSION -X stash-vr/internal/build.SHA=$BUILD_SHA" -o ./stash-vr ./cmd/stash-vr/
 
