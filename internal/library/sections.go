@@ -53,6 +53,10 @@ func (libraryService *Service) GetSections(ctx context.Context) ([]Section, erro
 			Int("scenes", libraryService.Stats.Scenes).
 			Msg("Index built")
 
+		_ = libraryService.LoadTags(ctx)
+
+		log.Ctx(ctx).Debug().Int("tags", len(libraryService.tagCache)).Msg("Cached tags")
+
 		return sections, nil
 	})
 	if err != nil {

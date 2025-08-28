@@ -28,8 +28,6 @@ func (libraryService *Service) GetScenes(ctx context.Context) (map[string]*Video
 				return nil, fmt.Errorf("FindScenes: %w", err)
 			}
 
-			_ = libraryService.LoadTags(ctx)
-
 			libraryService.muVdCache.Lock()
 			for _, s := range resp.FindScenes.Scenes {
 				vd := VideoData{SceneParts: &s.SceneParts}
