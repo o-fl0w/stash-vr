@@ -29,7 +29,7 @@ dockers:
     use: buildx
     dockerfile: Dockerfile
     image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-amd64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--cache-from=type=gha,scope=release-amd64"
@@ -43,7 +43,7 @@ dockers:
     use: buildx
     dockerfile: Dockerfile
     image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-arm64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--cache-from=type=gha,scope=release-arm64"
@@ -54,14 +54,14 @@ dockers:
       - "--label=org.opencontainers.image.revision={{ .Commit }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
 docker_manifests:
-  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}"
+  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}"
     image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-amd64"
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-arm64"
-  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:latest"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
+  - name_template: "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:latest"
     image_templates:
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-amd64"
-      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName | lower }}:{{ .Tag }}-arm64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
+      - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
 
 release:
   mode: keep-existing
