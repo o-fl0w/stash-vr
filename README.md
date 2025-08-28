@@ -155,3 +155,4 @@ HereSphere doesn't support WEBP images, which is sometimes fetched when scraping
 - Make sure Stash-VR has network access to Stash
 - Make sure your VR-headset has network access to both Stash and Stash-VR
   - Try explicitly setting `LISTEN_ADDRESS` to the external (accessible by headset) ip:port of Stash-VR
+- If you can't seek or get errors about unsupported encoding/format, set the `Encoding` drop-down (above the seekbar) in HereSphere to `direct`. There's also an equivalent setting in DeoVR.
