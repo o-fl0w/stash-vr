@@ -58,17 +58,7 @@ Example: Connect to Stash running on stash-host:9999 with api key XXX and set St
 
 <details>
 <summary>More (click to expand)</summary>
- 
-* `FILTERS`
-  * Default: Empty (show all saved filters)
-  * Narrow the selection of filters to show by setting one of below values:
-    * `frontpage`
-      * Show only filters found on Stash front page.
-    * Comma separated list of filter ids, e.g. `1,5,12`
-      * To find ids of your saved filter you can run the following graphql query in Stash playground (http://stash-host:9999/playground
-       * `{findSavedFilters(mode: SCENES) {id name}}`
-    * Empty
-      * Show all saved filters.
+
 * `FAVORITE_TAG`
   * Default: `FAVORITE`
   * Name of tag in Stash to hold scenes marked as [favorites](#favorites) (will be created if not present).
@@ -81,6 +71,9 @@ Example: Connect to Stash running on stash-host:9999 with api key XXX and set St
 * `FORCE_HTTPS`
   * Default: `false`
   * Force Stash-VR to use HTTPS. Useful as a last resort attempt if you're having issues with Stash-VR behind a reverse proxy.
+* `EXCLUDE_SORT_NAME`
+  * Default: `hidden`
+  * Tags with this sort name will not be applied to videos or used for categorization. 
 </details>
 
 ## Usage
@@ -91,10 +84,13 @@ To enable two-way sync with Stash the relevant toggles (`Overwrite tags` etc.) i
 #### Manage metadata
 Scene metadata is handled using `Video Tags` in HereSphere. Both for presentation and making changes.
 
-* Stash tags
+* Scene tags
   * `#:<Name>`
-  * Adding or removing tags in this #:format in HereSphere will sync changes to Stash
-    * Tag in Stash is created if necessary.
+  * To tag a scene, create a tag in HereSphere following above format.
+    * `#:Music` will apply the tag `Music`, creating it if necessary.
+  * To untag a scene, delete the tag in HereSphere.
+  * Name may not start with `#`
+    * ~~`#:#Music`~~
 * Studio
   * `Studio:<Name>`
 * Performers
@@ -105,17 +101,22 @@ Scene metadata is handled using `Video Tags` in HereSphere. Both for presentatio
   * `Played:<Count>`
   * Automatically incremented
     * To disable, set `DISABLE_PLAY_COUNT=true`
+    * Uses `Minimum Play Percent` from Stash if set.
+  * To decrement (delete last timestamp), delete the `Played` tag
 * O-Count
   * `O-Count:<Count>`
   * To increment, add a tag `/o`
+  * To decrement (delete last timestamp), delete the `O-Count` tag
 * Organized
-  * `Organized:true`
+  * `Organized:<bool>`
   * To set organized, add a tag `/org`
-  * To unset organized, add a tag `/org-`
+  * To unset organized, delete the `Organized` tag
 * Markers
   * Everything else is treated as a marker
   * `<Primary Tag Name>` (empty title)
+    * `Music` will create marker with tag `Music` spanning HereSphere tag length
   * `<Primary Tag Name>:<Title>`
+    * `Music:Solo` will create marker with tag `Music` and title `Solo` spanning HereSphere tag length
   * Set the start and end time using HereSphere controls.
   * Changes in HereSphere will sync to Stash
 
@@ -123,8 +124,6 @@ Changes reflect in HereSphere when videos are re-opened.
 
 #### Favorites
 When the favorite-feature of HereSphere is first used Stash-VR will create a tag in Stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your scene.
-
-**Tip:** Create a filter using that tag, so it shows up in HereSphere for quick access to favorites.
 
 #### Rating
 Ratings set in HereSphere will be converted to its equivalent in Stash (4.5 stars => 90).

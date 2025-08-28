@@ -126,8 +126,12 @@ func (h *httpHandler) processUpdates(videoId string, vdReq videoDataRequestDto) 
 	ctx := context.Background()
 	needsRefetch := false
 	if vdReq.Rating != nil {
-		if err := h.libraryService.UpdateRating(ctx, videoId, *vdReq.Rating); err != nil {
-			log.Ctx(ctx).Warn().Err(err).Float32("rating", *vdReq.Rating).Msg("Failed to update rating")
+		r := *vdReq.Rating
+		if r < 1 { //use half-star to unset rating
+			r = 0
+		}
+		if err := h.libraryService.UpdateRating(ctx, videoId, r); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Float32("rating", r).Msg("Failed to update rating")
 		}
 		needsRefetch = true
 	}
@@ -153,6 +157,10 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 	newTags := make([]string, 0)
 	newMarkers := make([]library.MarkerDto, 0)
 
+	hasPlayCount := false
+	hasOrganized := false
+	hasOCount := false
+
 	for _, t := range *vdReq.Tags {
 		key, arg, _ := strings.Cut(t.Name, ":")
 
@@ -162,11 +170,21 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 
 		switch key {
 		case internal.LegendPerformer, internal.LegendSceneStudio, internal.LegendSceneGroup,
-			internal.LegendMetaOCount, internal.LegendMetaOrganized, internal.LegendMetaPlayCount,
-			internal.LegendMetaResolution:
+			internal.LegendMetaResolution, internal.LegendSummary:
 			continue
-		case internal.LegendTag:
-			if arg != "" {
+		case internal.LegendMetaOCount:
+			hasOCount = true
+			continue
+		case internal.LegendMetaOrganized:
+			hasOrganized = true
+			continue
+		case internal.LegendMetaPlayCount:
+			hasPlayCount = true
+			continue
+		}
+
+		if strings.HasPrefix(key, internal.LegendTag) {
+			if key == internal.LegendTag && arg != "" && arg[0] != '#' {
 				newTags = append(newTags, arg)
 			}
 			continue
@@ -184,12 +202,6 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 			}
 			continue
 		}
-		if strings.EqualFold(key, internal.CommandSetOrganizedFalse) {
-			if err := h.libraryService.SetOrganized(ctx, videoId, false); err != nil {
-				log.Ctx(ctx).Warn().Err(err).Msg("Failed to set organized=false")
-			}
-			continue
-		}
 
 		m := library.MarkerDto{
 			PrimaryTagName: key,
@@ -203,6 +215,24 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 			m.EndSecond = util.Ptr(*t.End / 1000)
 		}
 		newMarkers = append(newMarkers, m)
+	}
+
+	if !hasPlayCount {
+		if err := h.libraryService.DecrementPlayCount(ctx, videoId); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to decrement play count")
+		}
+	}
+
+	if !hasOrganized {
+		if err := h.libraryService.SetOrganized(ctx, videoId, false); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to set organized=false")
+		}
+	}
+
+	if !hasOCount {
+		if err := h.libraryService.DecrementO(ctx, videoId); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to decrement O")
+		}
 	}
 
 	if err := h.libraryService.UpdateTags(ctx, videoId, newTags); err != nil {
@@ -246,7 +276,9 @@ func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 			h.ps.handleResume()
 		}
 	case evPause, evClose:
-		h.ps.handleStop(ctx, h.libraryService)
+		if h.ps != nil {
+			h.ps.handleStop(ctx, h.libraryService)
+		}
 	default:
 	}
 }

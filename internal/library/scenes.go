@@ -9,36 +9,38 @@ import (
 	"time"
 )
 
-func (service *Service) GetScenes(ctx context.Context) (map[string]*VideoData, error) {
-	res, err, _ := service.single.Do("scenes", func() (interface{}, error) {
+func (libraryService *Service) GetScenes(ctx context.Context) (map[string]*VideoData, error) {
+	res, err, _ := libraryService.single.Do("scenes", func() (interface{}, error) {
 		start := time.Now()
-		service.mu.RLock()
-		toFetch := make([]int, 0, len(service.vdCache))
-		for k, vd := range service.vdCache {
+		libraryService.muVdCache.RLock()
+		toFetch := make([]int, 0, len(libraryService.vdCache))
+		for k, vd := range libraryService.vdCache {
 			if vd == nil {
 				id, _ := strconv.Atoi(k)
 				toFetch = append(toFetch, id)
 			}
 		}
-		service.mu.RUnlock()
+		libraryService.muVdCache.RUnlock()
 
 		if len(toFetch) > 0 {
-			resp, err := gql.FindScenes(ctx, service.StashClient, toFetch)
+			resp, err := gql.FindScenes(ctx, libraryService.StashClient, toFetch)
 			if err != nil {
 				return nil, fmt.Errorf("FindScenes: %w", err)
 			}
 
-			service.mu.Lock()
+			libraryService.muVdCache.Lock()
 			for _, s := range resp.FindScenes.Scenes {
-				service.vdCache[s.Id] = &VideoData{SceneParts: &s.SceneParts}
+				vd := VideoData{SceneParts: &s.SceneParts}
+				libraryService.decorateTags(&vd)
+				libraryService.vdCache[s.Id] = &vd
 			}
-			service.mu.Unlock()
+			libraryService.muVdCache.Unlock()
 			elapsed := time.Since(start)
 			log.Ctx(ctx).Trace().Int("fetched", len(toFetch)).Dur("ms", elapsed).Msg("Updated cache")
 		} else {
 			log.Ctx(ctx).Trace().Msg("Cache hit, no scenes to fetch")
 		}
-		return service.snapshot(), nil
+		return libraryService.snapshot(), nil
 	})
 	if err != nil {
 		return nil, err
@@ -46,31 +48,32 @@ func (service *Service) GetScenes(ctx context.Context) (map[string]*VideoData, e
 	return res.(map[string]*VideoData), nil
 }
 
-func (service *Service) GetScene(ctx context.Context, id string, forceFetch bool) (*VideoData, error) {
+func (libraryService *Service) GetScene(ctx context.Context, id string, forceFetch bool) (*VideoData, error) {
 	if !forceFetch {
-		service.mu.RLock()
-		vd := service.vdCache[id]
-		service.mu.RUnlock()
+		libraryService.muVdCache.RLock()
+		vd := libraryService.vdCache[id]
+		libraryService.muVdCache.RUnlock()
 		if vd != nil {
 			log.Ctx(ctx).Trace().Str("id", id).Msg("Return scene from cache")
 			return vd, nil
 		}
 	}
-	vd, err := service.fetchVideoData(ctx, id)
+	vd, err := libraryService.fetchVideoData(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	service.mu.Lock()
-	service.vdCache[id] = vd
-	service.mu.Unlock()
+	libraryService.decorateTags(vd)
+	libraryService.muVdCache.Lock()
+	libraryService.vdCache[id] = vd
+	libraryService.muVdCache.Unlock()
 	log.Ctx(ctx).Trace().Str("id", id).Msg("Return scene from fetch")
 	return vd, nil
 }
 
-func (service *Service) fetchVideoData(ctx context.Context, id string) (*VideoData, error) {
+func (libraryService *Service) fetchVideoData(ctx context.Context, id string) (*VideoData, error) {
 	iid, _ := strconv.Atoi(id)
 	sceneIds := []int{iid}
-	resp, err := gql.FindScenes(ctx, service.StashClient, sceneIds)
+	resp, err := gql.FindScenes(ctx, libraryService.StashClient, sceneIds)
 	if err != nil {
 		return nil, fmt.Errorf("FindScenes: %w", err)
 	}

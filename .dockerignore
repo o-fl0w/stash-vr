@@ -1,4 +1,10 @@
-internal/stash/gql/generated.go
-
 .git
+.github
+dist
+bin
+*.md
+**/*_test.go
+Dockerfile
+.goreleaser.yaml
+graphql.config.yml
 .idea

@@ -22,6 +22,7 @@ type videoDataDto struct {
 	Duration       float64       `json:"duration,omitempty"`
 	Rating         *float32      `json:"rating,omitempty"`
 	Favorites      *int          `json:"favorites,omitempty"`
+	Comments       *int          `json:"comments,omitempty"`
 	IsFavorite     *bool         `json:"isFavorite,omitempty"`
 	EventServer    *string       `json:"eventServer,omitempty"`
 	Scripts        []scriptDto   `json:"scripts,omitempty"`
@@ -92,6 +93,10 @@ func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error
 		dto.Rating = util.Ptr(float32(*vd.SceneParts.Rating100) / 20)
 	}
 
+	if vd.SceneParts.Play_count != nil {
+		dto.Comments = util.Ptr(*vd.SceneParts.Play_count)
+	}
+
 	if vd.SceneParts.O_counter != nil {
 		dto.Favorites = vd.SceneParts.O_counter
 	}
@@ -126,7 +131,7 @@ func setSubtitles(vd *library.VideoData, dto *videoDataDto) {
 
 func isFavorite(vd *library.VideoData) bool {
 	for _, t := range vd.SceneParts.Tags {
-		if t.Name == config.Get().FavoriteTag {
+		if t.Name == config.Application().FavoriteTag {
 			return true
 		}
 	}

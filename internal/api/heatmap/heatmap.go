@@ -93,7 +93,7 @@ func buildHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) 
 
 func overlay(dest draw.Image, heatmap image.Image) image.Image {
 	destSize := dest.Bounds().Size()
-	heatmapHeight := config.Get().HeatmapHeightPx
+	heatmapHeight := config.Application().HeatmapHeightPx
 	if heatmapHeight == 0 {
 		heatmapHeight = heatmap.Bounds().Size().Y
 	}

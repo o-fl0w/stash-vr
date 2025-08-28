@@ -16,17 +16,17 @@ import (
 
 func Run(ctx context.Context) error {
 	config.Init()
-	log.Logger = logger.New(config.Get().LogLevel, config.Get().DisableLogColor)
+	log.Logger = logger.New(config.Application().LogLevel, config.Application().DisableLogColor)
 	zerolog.DefaultContextLogger = &log.Logger
 
-	log.Info().Str("config", fmt.Sprintf("%+v", config.Get().Redacted())).Send()
+	log.Info().Str("config", fmt.Sprintf("%+v", config.Application().Redacted())).Send()
 
-	stashClient := stash.NewClient(config.Get().StashGraphQLUrl, config.Get().StashApiKey)
+	stashClient := stash.NewClient(config.Application().StashGraphQLUrl, config.Application().StashApiKey)
 	logVersions(ctx, stashClient)
 
 	libraryService := library.NewService(stashClient)
 
-	err := server.Listen(ctx, config.Get().ListenAddress, libraryService)
+	err := server.Listen(ctx, config.Application().ListenAddress, libraryService)
 	if err != nil {
 		return fmt.Errorf("server: %w", err)
 	}
