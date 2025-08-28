@@ -1,3 +1,5 @@
+version: 2
+
 project_name: stash-vr
 builds:
   - main: ./cmd/stash-vr
@@ -19,7 +21,7 @@ universal_binaries:
 checksum:
   disable: true
 changelog:
-  skip: true
+  disable: true
 archives:
   - format: tar.gz
     format_overrides:
