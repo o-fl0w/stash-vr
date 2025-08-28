@@ -2,9 +2,8 @@ name: Build and Publish Binaries
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   goreleaser:
