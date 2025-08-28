@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
 version: 2
 
 before:
@@ -26,42 +28,30 @@ changelog:
 
 dockers:
   - id: img-amd64
-    use: buildx
-    dockerfile: Dockerfile
-    files:
-      - Dockerfile
-      - go.mod
-      - go.sum
-      - cmd/**/*
-      - internal/**/*
+    goos: linux
+    goarch: amd64
     image_templates:
       - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
+    dockerfile: Dockerfile
+    use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--cache-from=type=gha,scope=release-amd64"
       - "--cache-to=type=gha,mode=max,scope=release-amd64"
-      - "--build-arg=BUILD_VERSION={{ .Version }}"
-      - "--build-arg=BUILD_SHA={{ .ShortCommit }}"
       - "--label=org.opencontainers.image.version={{ .Tag }}"
       - "--label=org.opencontainers.image.revision={{ .Commit }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
   - id: img-arm64
-    use: buildx
-    dockerfile: Dockerfile
-    files:
-      - Dockerfile
-      - go.mod
-      - go.sum
-      - cmd/**/*
-      - internal/**/*
+    goos: linux
+    goarch: arm64
     image_templates:
       - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
+    dockerfile: Dockerfile
+    use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--cache-from=type=gha,scope=release-arm64"
       - "--cache-to=type=gha,mode=max,scope=release-arm64"
-      - "--build-arg=BUILD_VERSION={{ .Version }}"
-      - "--build-arg=BUILD_SHA={{ .ShortCommit }}"
       - "--label=org.opencontainers.image.version={{ .Tag }}"
       - "--label=org.opencontainers.image.revision={{ .Commit }}"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
