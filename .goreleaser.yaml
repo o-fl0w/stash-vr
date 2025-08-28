@@ -28,6 +28,12 @@ dockers:
   - id: img-amd64
     use: buildx
     dockerfile: Dockerfile
+    files:
+      - Dockerfile
+      - go.mod
+      - go.sum
+      - cmd/**/*
+      - internal/**/*
     image_templates:
       - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-amd64"
     build_flag_templates:
@@ -42,6 +48,12 @@ dockers:
   - id: img-arm64
     use: buildx
     dockerfile: Dockerfile
+    files:
+      - Dockerfile
+      - go.mod
+      - go.sum
+      - cmd/**/*
+      - internal/**/*
     image_templates:
       - "{{ .Env.DOCKER_USERNAME }}/{{ .ProjectName }}:{{ .Tag }}-arm64"
     build_flag_templates:

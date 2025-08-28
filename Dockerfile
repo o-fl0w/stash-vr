@@ -11,11 +11,11 @@ ARG TARGETARCH=amd64
 
 WORKDIR /src
 
-COPY go.mod go.sum ./
+COPY go.mod go.sum* ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download && go mod verify
 
-COPY . .
+COPY cmd/ internal/ ./
 
 ENV CGO_ENABLED=0
 
