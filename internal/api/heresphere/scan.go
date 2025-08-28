@@ -21,6 +21,7 @@ type scanDataDto struct {
 	Duration     float64  `json:"duration,omitempty"`
 	Rating       *float32 `json:"rating,omitempty"`
 	Favorites    *int     `json:"favorites,omitempty"`
+	Comments     *int     `json:"comments,omitempty"`
 	IsFavorite   *bool    `json:"isFavorite,omitempty"`
 	Tags         []tagDto `json:"tags,omitempty"`
 }
@@ -53,6 +54,9 @@ func videoDataToScanDataDto(vd *library.VideoData, baseUrl string) scanDataDto {
 	}
 	if vd.SceneParts.O_counter != nil {
 		scanData.Favorites = vd.SceneParts.O_counter
+	}
+	if vd.SceneParts.Play_count != nil {
+		scanData.Comments = util.Ptr(*vd.SceneParts.Play_count)
 	}
 	if isFavorite(vd) {
 		scanData.IsFavorite = util.Ptr(true)

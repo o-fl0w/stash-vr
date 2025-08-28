@@ -22,6 +22,7 @@ type videoDataDto struct {
 	Duration       float64       `json:"duration,omitempty"`
 	Rating         *float32      `json:"rating,omitempty"`
 	Favorites      *int          `json:"favorites,omitempty"`
+	Comments       *int          `json:"comments,omitempty"`
 	IsFavorite     *bool         `json:"isFavorite,omitempty"`
 	EventServer    *string       `json:"eventServer,omitempty"`
 	Scripts        []scriptDto   `json:"scripts,omitempty"`
@@ -90,6 +91,10 @@ func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error
 
 	if vd.SceneParts.Rating100 != nil {
 		dto.Rating = util.Ptr(float32(*vd.SceneParts.Rating100) / 20)
+	}
+
+	if vd.SceneParts.Play_count != nil {
+		dto.Comments = util.Ptr(*vd.SceneParts.Play_count)
 	}
 
 	if vd.SceneParts.O_counter != nil {
