@@ -126,7 +126,7 @@ Changes reflect in HereSphere when videos are re-opened.
 When the favorite-feature of HereSphere is first used Stash-VR will create a tag in Stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your scene.
 
 #### Rating
-Ratings set in HereSphere will be converted to its equivalent in Stash (4.5 stars => 90).
+Ratings set in HereSphere will be converted to its equivalent in Stash (4.5 stars => 90). Setting half-star will unset rating.
 
 ## Known issues/Missing features
 
