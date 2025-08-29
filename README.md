@@ -103,7 +103,6 @@ Scene metadata is handled using `Video Tags` in HereSphere. Both for presentatio
 * Play count
   * `Played:<Count>`
   * Automatically incremented
-    * To disable, set `DISABLE_PLAY_COUNT=true`
     * Uses `Minimum Play Percent` from Stash if set.
   * To decrement (delete last timestamp), delete the `Played` tag
 * O-Count

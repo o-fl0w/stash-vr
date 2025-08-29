@@ -8,17 +8,16 @@ import (
 )
 
 const (
-	envKeyListenAddress    = "LISTEN_ADDRESS"
-	envKeyStashGraphQLUrl  = "STASH_GRAPHQL_URL"
-	envKeyStashApiKey      = "STASH_API_KEY"
-	envKeyFavoriteTag      = "FAVORITE_TAG"
-	envKeyLogLevel         = "LOG_LEVEL"
-	envKeyDisableLogColor  = "DISABLE_LOG_COLOR"
-	envKeyDisableRedact    = "DISABLE_REDACT"
-	envKeyForceHTTPS       = "FORCE_HTTPS"
-	envKeyHeatmapHeightPx  = "HEATMAP_HEIGHT_PX"
-	envKeyDisablePlayCount = "DISABLE_PLAY_COUNT"
-	envKeyExcludeSortName  = "EXCLUDE_SORT_NAME"
+	envKeyListenAddress   = "LISTEN_ADDRESS"
+	envKeyStashGraphQLUrl = "STASH_GRAPHQL_URL"
+	envKeyStashApiKey     = "STASH_API_KEY"
+	envKeyFavoriteTag     = "FAVORITE_TAG"
+	envKeyLogLevel        = "LOG_LEVEL"
+	envKeyDisableLogColor = "DISABLE_LOG_COLOR"
+	envKeyDisableRedact   = "DISABLE_REDACT"
+	envKeyForceHTTPS      = "FORCE_HTTPS"
+	envKeyHeatmapHeightPx = "HEATMAP_HEIGHT_PX"
+	envKeyExcludeSortName = "EXCLUDE_SORT_NAME"
 )
 
 type ApplicationConfig struct {
@@ -65,9 +64,6 @@ func Init() {
 	pflag.Int(envKeyHeatmapHeightPx, 0, "Height of heatmaps")
 	_ = viper.BindPFlag(envKeyHeatmapHeightPx, pflag.Lookup(envKeyHeatmapHeightPx))
 
-	pflag.Bool(envKeyDisablePlayCount, false, "Disable incrementing Stash play count for scenes")
-	_ = viper.BindPFlag(envKeyDisablePlayCount, pflag.Lookup(envKeyDisablePlayCount))
-
 	pflag.String(envKeyExcludeSortName, "hidden", "Exclude tags with this sort name")
 	_ = viper.BindPFlag(envKeyExcludeSortName, pflag.Lookup(envKeyExcludeSortName))
 
@@ -92,7 +88,6 @@ func Init() {
 	applicationConfig.IsRedactDisabled = viper.GetBool(envKeyDisableRedact)
 	applicationConfig.ForceHTTPS = viper.GetBool(envKeyForceHTTPS)
 	applicationConfig.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
-	applicationConfig.IsPlayCountDisabled = viper.GetBool(envKeyDisablePlayCount)
 	applicationConfig.ExcludeSortName = viper.GetString(envKeyExcludeSortName)
 
 }
