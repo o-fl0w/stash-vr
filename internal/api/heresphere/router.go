@@ -15,6 +15,7 @@ func Router(libraryService *library.Service) http.Handler {
 	r.Use(middleware.SetHeader("HereSphere-JSON-Version", "1"))
 	r.Post("/", internal.LogRoute("index", httpHandler.indexHandler))
 	r.Post("/scan", internal.LogRoute("scan", httpHandler.scanHandler))
+	r.Post("/auth", http.NotFound)
 	r.Handle("/{videoId}", internal.LogRoute("videoData", internal.LogVideoId(httpHandler.videoDataHandler)))
 	r.Post("/events/{videoId}", internal.LogRoute("events", httpHandler.eventsHandler))
 	return r
