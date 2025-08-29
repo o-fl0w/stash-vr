@@ -19,13 +19,14 @@ type httpHandler struct {
 	ps             *playbackState
 }
 
-var minPlayFraction float64
+var minPlayFraction *float64
 
 func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	baseUrl := internal.GetBaseUrl(req)
 
-	minPlayFraction = stash.GetMinPlayPercent(ctx, h.libraryService.StashClient) / 100
+	mpf := stash.GetMinPlayPercent(ctx, h.libraryService.StashClient) / 100
+	minPlayFraction = &mpf
 
 	sections, err := h.libraryService.GetSections(ctx)
 	if err != nil {
@@ -263,21 +264,21 @@ func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Ctx(ctx).Debug().Str("id", ev.Id).Interface("event", ev.Event).Send()
+	log.Ctx(ctx).Debug().Str("id", ev.Id).Str("event", ev.Event.String()).Send()
 
 	switch ev.Event {
 	case evPlay:
 		if h.ps == nil {
-			h.ps = newPlayback(vd, minPlayFraction)
+			h.ps = newPlayback(vd)
 		} else if h.ps.videoId != videoId {
-			h.ps.handleStop(ctx, h.libraryService)
-			h.ps = newPlayback(vd, minPlayFraction)
+			h.ps.handleStop(ctx, h.libraryService, minPlayFraction)
+			h.ps = newPlayback(vd)
 		} else {
 			h.ps.handleResume()
 		}
 	case evPause, evClose:
 		if h.ps != nil {
-			h.ps.handleStop(ctx, h.libraryService)
+			h.ps.handleStop(ctx, h.libraryService, minPlayFraction)
 		}
 	default:
 	}

@@ -53,3 +53,7 @@ mutation SceneDecrementPlayCount($id: ID!){
 mutation SceneUpdateOrganized($id: ID!, $isOrganized: Boolean){
     sceneUpdate(input: {id: $id, organized: $isOrganized}){id, organized}
 }
+
+mutation SceneAddPlayDurationSeconds($id: ID!, $seconds: Float){
+    sceneSaveActivity(id: $id, playDuration: $seconds)
+}

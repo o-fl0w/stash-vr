@@ -9,6 +9,7 @@ import (
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
+	"time"
 )
 
 func (libraryService *Service) UpdateRating(ctx context.Context, id string, rating5 float32) error {
@@ -226,6 +227,15 @@ func (libraryService *Service) SetOrganized(ctx context.Context, id string, newS
 	_, err := gql.SceneUpdateOrganized(ctx, libraryService.StashClient, id, &newState)
 	if err != nil {
 		return fmt.Errorf("SceneUpdateOrganized: %w", err)
+	}
+	return nil
+}
+
+func (libraryService *Service) AddPlayDuration(ctx context.Context, id string, duration time.Duration) error {
+	seconds := duration.Seconds()
+	_, err := gql.SceneAddPlayDurationSeconds(ctx, libraryService.StashClient, id, &seconds)
+	if err != nil {
+		return fmt.Errorf("SceneAddPlayDurationSeconds: %w", err)
 	}
 	return nil
 }

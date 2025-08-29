@@ -7,23 +7,31 @@ import (
 	"time"
 )
 
-func newPlayback(vd *library.VideoData, minPlayFraction float64) *playbackState {
+func newPlayback(vd *library.VideoData) *playbackState {
 	return &playbackState{
-		minPlayFraction: minPlayFraction,
-		videoId:         vd.Id(),
-		videoDuration:   vd.SceneParts.Files[0].Duration,
-		lastPlayTime:    time.Now(),
-		isPlaying:       true,
+		videoId:       vd.Id(),
+		videoDuration: vd.SceneParts.Files[0].Duration,
+		lastPlayTime:  time.Now(),
+		isPlaying:     true,
 	}
 }
 
-func (ps *playbackState) handleStop(ctx context.Context, libraryService *library.Service) {
+func (ps *playbackState) handleStop(ctx context.Context, libraryService *library.Service, minPlayFraction *float64) {
 	if ps.isPlaying {
-		if ps.accumulatePlayTime() {
+		currentPlayDuration := time.Now().Sub(ps.lastPlayTime)
+		ps.accumulatedPlayTime += currentPlayDuration
+		if !ps.thresholdReached && minPlayFraction != nil && ps.accumulatedPlayTime.Seconds() >= ps.videoDuration*(*minPlayFraction) {
+			ps.thresholdReached = true
+			log.Ctx(ctx).Debug().Str("total play time", ps.accumulatedPlayTime.Round(time.Second).String()).Msg("Incrementing play count")
 			err := libraryService.IncrementPlayCount(ctx, ps.videoId)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment play count")
 			}
+		}
+		log.Ctx(ctx).Debug().Str("duration", currentPlayDuration.Round(time.Second).String()).Msg("Adding play duration")
+		err := libraryService.AddPlayDuration(ctx, ps.videoId, currentPlayDuration)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to add play duration")
 		}
 	}
 	ps.isPlaying = false
@@ -36,18 +44,7 @@ func (ps *playbackState) handleResume() {
 	ps.isPlaying = true
 }
 
-func (ps *playbackState) accumulatePlayTime() bool {
-	ps.accumulatedPlayTime += time.Now().Sub(ps.lastPlayTime)
-	shouldIncrement := !ps.thresholdReached && ps.accumulatedPlayTime.Seconds() >= ps.videoDuration*ps.minPlayFraction
-	if shouldIncrement {
-		ps.thresholdReached = true
-	}
-	return shouldIncrement
-}
-
 type playbackState struct {
-	minPlayFraction float64
-
 	videoId       string
 	videoDuration float64
 

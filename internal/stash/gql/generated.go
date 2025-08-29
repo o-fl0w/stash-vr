@@ -2073,6 +2073,15 @@ func (v *SavedFilterPartsFind_filterSavedFindFilterType) GetDirection() *SortDir
 	return v.Direction
 }
 
+// SceneAddPlayDurationSecondsResponse is returned by SceneAddPlayDurationSeconds on success.
+type SceneAddPlayDurationSecondsResponse struct {
+	// Sets the resume time point (if provided) and adds the provided duration to the scene's play duration
+	SceneSaveActivity bool `json:"sceneSaveActivity"`
+}
+
+// GetSceneSaveActivity returns SceneAddPlayDurationSecondsResponse.SceneSaveActivity, and is useful for accessing the field via an interface.
+func (v *SceneAddPlayDurationSecondsResponse) GetSceneSaveActivity() bool { return v.SceneSaveActivity }
+
 // SceneDecrementOResponse is returned by SceneDecrementO on success.
 type SceneDecrementOResponse struct {
 	// Decrements the o-counter for a scene, removing the last recorded time if specific time not provided. Returns the new value
@@ -3566,6 +3575,18 @@ type __IsSceneOrganizedInput struct {
 // GetId returns __IsSceneOrganizedInput.Id, and is useful for accessing the field via an interface.
 func (v *__IsSceneOrganizedInput) GetId() *string { return v.Id }
 
+// __SceneAddPlayDurationSecondsInput is used internally by genqlient
+type __SceneAddPlayDurationSecondsInput struct {
+	Id      string   `json:"id"`
+	Seconds *float64 `json:"seconds"`
+}
+
+// GetId returns __SceneAddPlayDurationSecondsInput.Id, and is useful for accessing the field via an interface.
+func (v *__SceneAddPlayDurationSecondsInput) GetId() string { return v.Id }
+
+// GetSeconds returns __SceneAddPlayDurationSecondsInput.Seconds, and is useful for accessing the field via an interface.
+func (v *__SceneAddPlayDurationSecondsInput) GetSeconds() *float64 { return v.Seconds }
+
 // __SceneDecrementOInput is used internally by genqlient
 type __SceneDecrementOInput struct {
 	Id string `json:"id"`
@@ -4278,6 +4299,40 @@ func IsSceneOrganized(
 	}
 
 	data_ = &IsSceneOrganizedResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by SceneAddPlayDurationSeconds.
+const SceneAddPlayDurationSeconds_Operation = `
+mutation SceneAddPlayDurationSeconds ($id: ID!, $seconds: Float) {
+	sceneSaveActivity(id: $id, playDuration: $seconds)
+}
+`
+
+func SceneAddPlayDurationSeconds(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id string,
+	seconds *float64,
+) (data_ *SceneAddPlayDurationSecondsResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "SceneAddPlayDurationSeconds",
+		Query:  SceneAddPlayDurationSeconds_Operation,
+		Variables: &__SceneAddPlayDurationSecondsInput{
+			Id:      id,
+			Seconds: seconds,
+		},
+	}
+
+	data_ = &SceneAddPlayDurationSecondsResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
