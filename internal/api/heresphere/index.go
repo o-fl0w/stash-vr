@@ -15,7 +15,7 @@ type libraryDto struct {
 }
 
 func buildIndex(sections []library.Section, baseUrl string) (indexDto, error) {
-	index := indexDto{Access: 1, Library: make([]libraryDto, 0, len(sections))}
+	index := indexDto{Library: make([]libraryDto, 0, len(sections))}
 
 	for _, section := range sections {
 		l := libraryDto{

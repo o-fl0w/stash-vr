@@ -20,7 +20,7 @@ It's lightweight, optionally configurable and has support for two-way sync.
 * Transcoding endpoints to your videos served by Stash
 * HereSphere
   * Two-way sync of tags, rating, markers
-  * Increment o-count/play count
+  * Increment o-count/play count/play duration
   * Generate categorized tags, studios, performers
   * Delete scenes
   * Funscript
@@ -81,6 +81,9 @@ Browse to `http://<host>:9666` using a supported video player. You'll be present
 ### HereSphere
 ##### Two-way sync
 To enable two-way sync with Stash the relevant toggles (`Overwrite tags` etc.) in the cogwheel at the bottom right of preview view in HereSphere needs to be on.
+
+Play duration and play count will only be updated when "logged in" (using any username and password) in HereSphere.
+
 #### Manage metadata
 Scene metadata is handled using `Video Tags` in HereSphere. Both for presentation and making changes.
 
