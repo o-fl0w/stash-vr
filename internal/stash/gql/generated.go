@@ -185,7 +185,7 @@ func (v *FindAllTagsFindTagsFindTagsResultTypeTagsTag) GetId() string { return v
 func (v *FindAllTagsFindTagsFindTagsResultTypeTagsTag) GetName() string { return v.TagParts.Name }
 
 // GetSort_name returns FindAllTagsFindTagsFindTagsResultTypeTagsTag.Sort_name, and is useful for accessing the field via an interface.
-func (v *FindAllTagsFindTagsFindTagsResultTypeTagsTag) GetSort_name() *string {
+func (v *FindAllTagsFindTagsFindTagsResultTypeTagsTag) GetSort_name() string {
 	return v.TagParts.Sort_name
 }
 
@@ -224,7 +224,7 @@ type __premarshalFindAllTagsFindTagsFindTagsResultTypeTagsTag struct {
 
 	Name string `json:"name"`
 
-	Sort_name *string `json:"sort_name"`
+	Sort_name string `json:"sort_name"`
 
 	Parents []*TagPartsParentsTag `json:"parents"`
 }
@@ -937,7 +937,7 @@ func (v *FindTagsFindTagsFindTagsResultTypeTagsTag) GetId() string { return v.Ta
 func (v *FindTagsFindTagsFindTagsResultTypeTagsTag) GetName() string { return v.TagParts.Name }
 
 // GetSort_name returns FindTagsFindTagsFindTagsResultTypeTagsTag.Sort_name, and is useful for accessing the field via an interface.
-func (v *FindTagsFindTagsFindTagsResultTypeTagsTag) GetSort_name() *string {
+func (v *FindTagsFindTagsFindTagsResultTypeTagsTag) GetSort_name() string {
 	return v.TagParts.Sort_name
 }
 
@@ -978,7 +978,7 @@ type __premarshalFindTagsFindTagsFindTagsResultTypeTagsTag struct {
 
 	Name string `json:"name"`
 
-	Sort_name *string `json:"sort_name"`
+	Sort_name string `json:"sort_name"`
 
 	Parents []*TagPartsParentsTag `json:"parents"`
 }
@@ -3327,7 +3327,7 @@ type TagParts struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 	// Value that does not appear in the UI but overrides name for sorting
-	Sort_name *string               `json:"sort_name"`
+	Sort_name string                `json:"sort_name"`
 	Parents   []*TagPartsParentsTag `json:"parents"`
 }
 
@@ -3338,7 +3338,7 @@ func (v *TagParts) GetId() string { return v.Id }
 func (v *TagParts) GetName() string { return v.Name }
 
 // GetSort_name returns TagParts.Sort_name, and is useful for accessing the field via an interface.
-func (v *TagParts) GetSort_name() *string { return v.Sort_name }
+func (v *TagParts) GetSort_name() string { return v.Sort_name }
 
 // GetParents returns TagParts.Parents, and is useful for accessing the field via an interface.
 func (v *TagParts) GetParents() []*TagPartsParentsTag { return v.Parents }
@@ -3363,7 +3363,7 @@ func (v *TagPartsArrayTagsTag) GetId() string { return v.TagParts.Id }
 func (v *TagPartsArrayTagsTag) GetName() string { return v.TagParts.Name }
 
 // GetSort_name returns TagPartsArrayTagsTag.Sort_name, and is useful for accessing the field via an interface.
-func (v *TagPartsArrayTagsTag) GetSort_name() *string { return v.TagParts.Sort_name }
+func (v *TagPartsArrayTagsTag) GetSort_name() string { return v.TagParts.Sort_name }
 
 // GetParents returns TagPartsArrayTagsTag.Parents, and is useful for accessing the field via an interface.
 func (v *TagPartsArrayTagsTag) GetParents() []*TagPartsParentsTag { return v.TagParts.Parents }
@@ -3398,7 +3398,7 @@ type __premarshalTagPartsArrayTagsTag struct {
 
 	Name string `json:"name"`
 
-	Sort_name *string `json:"sort_name"`
+	Sort_name string `json:"sort_name"`
 
 	Parents []*TagPartsParentsTag `json:"parents"`
 }
@@ -3426,7 +3426,7 @@ type TagPartsParentsTag struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 	// Value that does not appear in the UI but overrides name for sorting
-	Sort_name *string `json:"sort_name"`
+	Sort_name string `json:"sort_name"`
 }
 
 // GetId returns TagPartsParentsTag.Id, and is useful for accessing the field via an interface.
@@ -3436,7 +3436,7 @@ func (v *TagPartsParentsTag) GetId() string { return v.Id }
 func (v *TagPartsParentsTag) GetName() string { return v.Name }
 
 // GetSort_name returns TagPartsParentsTag.Sort_name, and is useful for accessing the field via an interface.
-func (v *TagPartsParentsTag) GetSort_name() *string { return v.Sort_name }
+func (v *TagPartsParentsTag) GetSort_name() string { return v.Sort_name }
 
 type TimestampCriterionInput struct {
 	Modifier CriterionModifier `json:"modifier"`

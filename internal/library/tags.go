@@ -2,7 +2,9 @@ package library
 
 import (
 	"context"
+	"slices"
 	"sort"
+	"stash-vr/internal/config"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 )
@@ -10,7 +12,7 @@ import (
 type Tag struct {
 	Id        string
 	Name      string
-	SortName  *string
+	SortName  string
 	ParentIds []string
 }
 
@@ -24,7 +26,7 @@ func (libraryService *Service) LoadTags(ctx context.Context) error {
 		t := Tag{
 			Id:       st.Id,
 			Name:     st.Name,
-			SortName: st.Sort_name,
+			SortName: util.FirstNonEmpty(&st.Sort_name, &st.Name),
 		}
 
 		for _, p := range st.Parents {
@@ -63,10 +65,17 @@ func (libraryService *Service) ancestors(tagId string) []Tag {
 }
 
 func (libraryService *Service) decorateTags(vd *VideoData) {
+	slices.DeleteFunc(vd.SceneParts.Tags, func(tag *gql.TagPartsArrayTagsTag) bool {
+		return tag.Sort_name == config.Application().ExcludeSortName
+	})
+
 	allAncestors := map[string]Tag{}
 	for _, t := range vd.SceneParts.Tags {
 		ancestors := libraryService.ancestors(t.Id)
 		for _, a := range ancestors {
+			if a.SortName == config.Application().ExcludeSortName {
+				continue
+			}
 			allAncestors[a.Id] = a
 		}
 	}
@@ -77,19 +86,17 @@ func (libraryService *Service) decorateTags(vd *VideoData) {
 	}
 
 	sort.Slice(ordered, func(i, j int) bool {
-		si := util.FirstNonEmpty(ordered[i].SortName, &ordered[i].Name)
-		sj := util.FirstNonEmpty(ordered[j].SortName, &ordered[j].Name)
-		if si == sj {
+		if ordered[i].SortName == ordered[j].SortName {
 			return ordered[i].Name < ordered[j].Name
 		}
-		return si < sj
+		return ordered[i].SortName < ordered[j].SortName
 	})
 
 	for _, a := range ordered {
 		vd.SceneParts.Tags = append(vd.SceneParts.Tags, &gql.TagPartsArrayTagsTag{TagParts: gql.TagParts{
 			Id:        a.Id,
 			Name:      "#" + a.Name,
-			Sort_name: a.SortName},
+			Sort_name: "#" + a.SortName},
 		})
 	}
 }

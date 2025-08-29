@@ -94,14 +94,10 @@ func getSummary(vd *library.VideoData) string {
 	//tags
 	m := make(map[string]string)
 	for _, t := range vd.SceneParts.Tags {
-		sn := t.Name
-		if t.Sort_name != nil {
-			if *t.Sort_name == config.Application().ExcludeSortName {
-				continue
-			}
-			sn = *t.Sort_name
+		if t.Sort_name == config.Application().ExcludeSortName {
+			continue
 		}
-		m[t.Name] = sn
+		m[t.Name] = util.FirstNonEmpty(&t.Sort_name, &t.Name)
 	}
 
 	type item struct {
@@ -143,37 +139,49 @@ func getStashTags(vd *library.VideoData) []tagDto {
 		dto      tagDto
 	}
 	items := make([]item, 0, len(vd.SceneParts.Tags))
-	//tags := make([]tagDto, 0, len(vd.SceneParts.Tags))
-	isExcluded := func(sortName *string) bool {
-		return sortName != nil && *sortName == config.Application().ExcludeSortName
-	}
 
 	for _, t := range vd.SceneParts.Tags {
-		if isExcluded(t.Sort_name) {
+		if t.Sort_name == config.Application().ExcludeSortName {
 			continue
 		}
 		dto := tagDto{
 			Name: fmt.Sprintf("%s%s%s", internal.LegendTag, seperator, t.Name), value: t.Name,
 		}
-		items = append(items, item{sortName: util.FirstNonEmpty(t.Sort_name, &t.Name), dto: dto})
+		tSortName := util.FirstNonEmpty(&t.Sort_name, &t.Name)
+		items = append(items, item{sortName: tSortName, dto: dto})
 
 		for _, p := range t.Parents {
-			if isExcluded(p.Sort_name) {
+			if p.Sort_name == config.Application().ExcludeSortName {
 				continue
 			}
 			pDto := tagDto{
 				Name: fmt.Sprintf("%s%s%s%s", internal.LegendTag, p.Name, seperator, t.Name), value: t.Name,
 			}
-			items = append(items, item{sortName: util.FirstNonEmpty(p.Sort_name, &p.Name), dto: pDto})
+			items = append(items, item{sortName: util.FirstNonEmpty(&p.Sort_name, &p.Name), dto: pDto})
+		}
+	}
+	parentItems := make([]item, 0)
+	childItems := make([]item, 0)
+	for _, it := range items {
+		if strings.HasSuffix(it.sortName, "#") {
+			parentItems = append(parentItems, it)
+		} else {
+			childItems = append(childItems, it)
 		}
 	}
 
-	slices.SortFunc(items, func(a item, b item) int {
+	slices.SortFunc(parentItems, func(a item, b item) int {
+		return strings.Compare(a.sortName, b.sortName)
+	})
+	slices.SortFunc(childItems, func(a item, b item) int {
 		return strings.Compare(a.sortName, b.sortName)
 	})
 
 	tags := make([]tagDto, 0, len(items))
-	for _, it := range items {
+	for _, it := range parentItems {
+		tags = append(tags, it.dto)
+	}
+	for _, it := range childItems {
 		tags = append(tags, it.dto)
 	}
 

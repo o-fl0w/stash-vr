@@ -147,8 +147,14 @@ fragment TagPartsArray on Scene{
     }
 }
 
+
 fragment TagParts on Tag{
-    id,name, sort_name parents {
-        id name sort_name
+    id,name,
+    # @genqlient(pointer: false)
+    sort_name
+    parents {
+        id name
+        # @genqlient(pointer: false)
+        sort_name
     }
 }
