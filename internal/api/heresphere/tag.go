@@ -26,9 +26,13 @@ const seperator = ":"
 
 var summaryStripper, _ = regexp.Compile("[^a-zA-Z0-9_]+")
 
-func setTrack(tracks []tagDto, track int) {
-	for i := range tracks {
-		tracks[i].Track = &track
+func setTrack(tag *tagDto, track int) {
+	tag.Track = &track
+}
+
+func setTracks(tags []tagDto, track int) {
+	for i := range tags {
+		setTrack(&tags[i], track)
 	}
 }
 
@@ -36,32 +40,31 @@ func addTrack(target *[]tagDto, tags []tagDto, track int) int {
 	if len(tags) == 0 {
 		return track
 	}
-	setTrack(tags, track)
+	setTracks(tags, track)
 	*target = append(*target, tags...)
 	return track + 1
 }
 
-func addFullTrack(target *[]tagDto, tags []tagDto, track int, totalDuration float64) int {
+func addSplitTrack(target *[]tagDto, tags []tagDto, track int, totalDuration float64) int {
 	if len(tags) == 0 {
 		return track
 	}
 	equallyDivideTagDurations(totalDuration, tags)
-	setTrack(tags, track)
+	setTracks(tags, track)
 	*target = append(*target, tags...)
 	return track + 1
 }
 
-func addMultiTracks(target *[]tagDto, tags []tagDto, track int) int {
-	if len(tags) == 0 {
-		return track
+func addMultiTracks(target *[]tagDto, tags []tagDto, startTrack int) int {
+	tagCount := len(tags)
+	if tagCount == 0 {
+		return startTrack
 	}
-	for _, t := range tags {
-		i := track
-		t.Track = &i
+	for i, t := range tags {
+		setTrack(&t, startTrack+i)
 		*target = append(*target, t)
-		track++
 	}
-	return track
+	return startTrack + tagCount
 }
 
 func getTags(vd *library.VideoData) []tagDto {
@@ -73,10 +76,10 @@ func getTags(vd *library.VideoData) []tagDto {
 
 	summary := getSummary(vd)
 	if summary != "" {
-		trackIndex = addFullTrack(&tags, []tagDto{{Name: "?:" + summary}}, trackIndex, duration)
+		trackIndex = addSplitTrack(&tags, []tagDto{{Name: "?:" + summary}}, trackIndex, duration)
 	}
 
-	trackIndex = addFullTrack(&tags, getFields(vd), trackIndex, duration)
+	trackIndex = addSplitTrack(&tags, getFields(vd), trackIndex, duration)
 
 	trackIndex = addMultiTracks(&tags, getStashTags(vd), trackIndex)
 	trackIndex = addMultiTracks(&tags, getStudio(vd), trackIndex)
@@ -171,9 +174,15 @@ func getStashTags(vd *library.VideoData) []tagDto {
 	}
 
 	slices.SortFunc(parentItems, func(a item, b item) int {
+		if a.sortName == b.sortName {
+			return strings.Compare(a.dto.Name, b.dto.Name)
+		}
 		return strings.Compare(a.sortName, b.sortName)
 	})
 	slices.SortFunc(childItems, func(a item, b item) int {
+		if a.sortName == b.sortName {
+			return strings.Compare(a.dto.Name, b.dto.Name)
+		}
 		return strings.Compare(a.sortName, b.sortName)
 	})
 
@@ -272,13 +281,14 @@ func equallyDivideTagDurations(totalDuration float64, tags []tagDto) {
 	switch n {
 	case 0:
 	case 1:
-		tags[0].Start = 1
-		tags[0].End = util.Ptr(totalDuration - 1)
+		tags[0].Start = 0.1
 	default:
-		durationPerItem := (totalDuration - 1) / float64(n) //-1 because HS doesn't display single full-length tags
+		durationPerItem := (totalDuration - 0.1) / float64(n) //-1 because HS doesn't display single full-length tags
 		for i := range tags {
-			tags[i].Start = 1 + float64(i)*durationPerItem
-			tags[i].End = util.Ptr(float64(i+1) * durationPerItem)
+			start := 0.1 + float64(i)*durationPerItem
+			end := start + durationPerItem
+			tags[i].Start = start
+			tags[i].End = &end
 		}
 	}
 }
