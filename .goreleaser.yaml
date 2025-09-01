@@ -4,7 +4,7 @@ project_name: stash-vr
 builds:
   - main: ./cmd/stash-vr
     ldflags:
-      - s -w -X {{ .ModulePath }}/internal/build.Version={{.Version}} -X {{ .ModulePath }}/internal/build.SHA={{.ShortCommit}}
+      - -s -w -X {{ .ModulePath }}/internal/build.Version={{.Version}} -X {{ .ModulePath }}/internal/build.SHA={{.ShortCommit}}
     flags:
       - -trimpath
     env:
