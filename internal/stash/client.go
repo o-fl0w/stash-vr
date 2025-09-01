@@ -44,7 +44,7 @@ func NewClient(graphqlUrl string, apiKey string) graphql.Client {
 func GetVersion(ctx context.Context, client graphql.Client) (string, error) {
 	version, err := gql.Version(ctx, client)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return *version.Version.Version, nil
 }
