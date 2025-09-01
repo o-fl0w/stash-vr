@@ -32,7 +32,7 @@ func buildScan(ctx context.Context, vds map[string]*library.VideoData, baseUrl s
 		scanData := videoDataToScanDataDto(vd, baseUrl)
 		scanDoc.ScanData = append(scanDoc.ScanData, scanData)
 	}
-	log.Ctx(ctx).Trace().Int("scenes", len(scanDoc.ScanData)).Msg("/scan")
+	log.Ctx(ctx).Debug().Int("scenes", len(scanDoc.ScanData)).Msg("/scan")
 	return &scanDoc, nil
 }
 
