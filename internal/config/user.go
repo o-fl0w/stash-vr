@@ -33,18 +33,19 @@ func User(ctx context.Context) UserConfig {
 	}
 
 	path := resolvePath()
-	cfg, err := read(path)
+	cfg, err := read(ctx, path)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("path", path).Msg("failed to load user config, using defaults")
+		log.Ctx(ctx).Warn().Msg("failed to load user config, using defaults")
 		ensureDefaults(&cfg)
 	}
 
 	return cfg
 }
 
-func read(path string) (UserConfig, error) {
+func read(ctx context.Context, path string) (UserConfig, error) {
 	f, err := os.Open(path)
 	if err != nil {
+		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error opening file")
 		return UserConfig{}, err
 	}
 	defer f.Close()
@@ -62,17 +63,18 @@ func Save(ctx context.Context, cfg UserConfig) {
 	ensureDefaults(&cfg)
 
 	path := resolvePath()
-	err := write(path, cfg)
+	err := write(ctx, path, cfg)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Str("path", path).Msg("failed to save user config")
+		log.Ctx(ctx).Warn().Msg("failed to save user config")
 	}
 
 	c := clone(cfg)
 	userConfig = &c
 }
 
-func write(path string, cfg UserConfig) error {
+func write(ctx context.Context, path string, cfg UserConfig) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error creating directory")
 		return err
 	}
 
@@ -82,6 +84,7 @@ func write(path string, cfg UserConfig) error {
 	}
 
 	if err := os.WriteFile(path, data, 0o600); err != nil {
+		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error writing file")
 		return err
 	}
 	return nil
