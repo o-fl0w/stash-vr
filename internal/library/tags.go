@@ -3,7 +3,6 @@ package library
 import (
 	"context"
 	"slices"
-	"sort"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
@@ -84,13 +83,6 @@ func (libraryService *Service) decorateTags(vd *VideoData) {
 	for _, t := range allAncestors {
 		ordered = append(ordered, t)
 	}
-
-	sort.Slice(ordered, func(i, j int) bool {
-		if ordered[i].SortName == ordered[j].SortName {
-			return ordered[i].Name < ordered[j].Name
-		}
-		return ordered[i].SortName < ordered[j].SortName
-	})
 
 	for _, a := range ordered {
 		vd.SceneParts.Tags = append(vd.SceneParts.Tags, &gql.TagPartsArrayTagsTag{TagParts: gql.TagParts{
