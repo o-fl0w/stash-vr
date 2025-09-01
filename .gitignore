@@ -1,3 +1,4 @@
 *.iml
 /.idea/
 /graphql.config.yml
+/build/

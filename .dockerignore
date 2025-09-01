@@ -3,8 +3,6 @@
 .github
 .goreleaser.yaml
 
-dist/
-bin/
 build/
 
 **/*_test.go
