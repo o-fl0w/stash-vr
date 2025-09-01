@@ -128,7 +128,7 @@ func getSummary(vd *library.VideoData) string {
 			continue
 		}
 		seen[name] = struct{}{}
-		keys = append(keys, it.key)
+		keys = append(keys, name)
 	}
 
 	summary := strings.Join(keys, " | ")
