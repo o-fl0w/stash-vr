@@ -18,6 +18,7 @@ const (
 	envKeyForceHTTPS      = "FORCE_HTTPS"
 	envKeyHeatmapHeightPx = "HEATMAP_HEIGHT_PX"
 	envKeyExcludeSortName = "EXCLUDE_SORT_NAME"
+	envKeyUserConfigPath  = "CONFIG_PATH"
 )
 
 type ApplicationConfig struct {
@@ -32,6 +33,7 @@ type ApplicationConfig struct {
 	HeatmapHeightPx     int
 	IsPlayCountDisabled bool
 	ExcludeSortName     string
+	ConfigPath          string
 }
 
 var applicationConfig ApplicationConfig
@@ -67,6 +69,9 @@ func Init() {
 	pflag.String(envKeyExcludeSortName, "hidden", "Exclude tags with this sort name")
 	_ = viper.BindPFlag(envKeyExcludeSortName, pflag.Lookup(envKeyExcludeSortName))
 
+	pflag.String(envKeyUserConfigPath, "", "Path to store user config (may contain filter names in plain text)")
+	_ = viper.BindPFlag(envKeyUserConfigPath, pflag.Lookup(envKeyUserConfigPath))
+
 	pflag.BoolP("help", "h", false, "Display usage information")
 	_ = viper.BindPFlag("help", pflag.Lookup("help"))
 
@@ -89,6 +94,7 @@ func Init() {
 	applicationConfig.ForceHTTPS = viper.GetBool(envKeyForceHTTPS)
 	applicationConfig.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
 	applicationConfig.ExcludeSortName = viper.GetString(envKeyExcludeSortName)
+	applicationConfig.ConfigPath = viper.GetString(envKeyUserConfigPath)
 
 }
 

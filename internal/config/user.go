@@ -21,7 +21,6 @@ type UserConfig struct {
 }
 
 const (
-	appName    = "stash-vr"
 	configFile = "config.json"
 )
 
@@ -32,10 +31,15 @@ func User(ctx context.Context) UserConfig {
 		return clone(*userConfig)
 	}
 
+	if Application().ConfigPath == "" {
+		cfg := UserConfig{}
+		ensureDefaults(&cfg)
+		return cfg
+	}
+
 	path := resolvePath()
 	cfg, err := read(ctx, path)
 	if err != nil {
-		log.Ctx(ctx).Warn().Msg("failed to load user config, using defaults")
 		ensureDefaults(&cfg)
 	}
 
@@ -45,7 +49,7 @@ func User(ctx context.Context) UserConfig {
 func read(ctx context.Context, path string) (UserConfig, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error opening file")
+		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error opening config file")
 		return UserConfig{}, err
 	}
 	defer f.Close()
@@ -61,20 +65,24 @@ func read(ctx context.Context, path string) (UserConfig, error) {
 
 func Save(ctx context.Context, cfg UserConfig) {
 	ensureDefaults(&cfg)
+	c := clone(cfg)
+	userConfig = &c
+
+	if Application().ConfigPath == "" {
+		log.Ctx(ctx).Warn().Msg("attempt to save user config but CONFIG_PATH not specified, config will apply but not persist")
+		return
+	}
 
 	path := resolvePath()
 	err := write(ctx, path, cfg)
 	if err != nil {
 		log.Ctx(ctx).Warn().Msg("failed to save user config")
 	}
-
-	c := clone(cfg)
-	userConfig = &c
 }
 
 func write(ctx context.Context, path string, cfg UserConfig) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error creating directory")
+		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error creating config directory")
 		return err
 	}
 
@@ -84,23 +92,14 @@ func write(ctx context.Context, path string, cfg UserConfig) error {
 	}
 
 	if err := os.WriteFile(path, data, 0o600); err != nil {
-		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error writing file")
+		log.Ctx(ctx).Debug().Err(err).Str("path", path).Msg("error writing config file")
 		return err
 	}
 	return nil
 }
 
 func resolvePath() string {
-	// Docker convention
-	if fi, err := os.Stat("/config"); err == nil && fi.IsDir() {
-		return filepath.Join("/config", configFile)
-	}
-	// UserConfig config dir
-	if base, err := os.UserConfigDir(); err == nil && base != "" {
-		return filepath.Join(base, appName, configFile)
-	}
-	// Fallback to cwd
-	return filepath.Join(".", configFile)
+	return filepath.Join(Application().ConfigPath, configFile)
 }
 
 func ensureDefaults(u *UserConfig) {
