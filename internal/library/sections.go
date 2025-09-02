@@ -24,11 +24,11 @@ func (libraryService *Service) GetSections(ctx context.Context) ([]Section, erro
 		}
 
 		var sections []Section
-		if filters != nil {
-			sections, err = libraryService.getSectionsByFilters(ctx, filters)
-		} else {
+		if len(filters) == 0 {
 			log.Ctx(ctx).Info().Msg("No saved scene filters found, creating default section with ALL scenes")
 			sections, err = libraryService.getDefaultSections(ctx)
+		} else {
+			sections, err = libraryService.getSectionsByFilters(ctx, filters)
 		}
 		if err != nil {
 			return nil, err
