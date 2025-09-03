@@ -105,5 +105,6 @@ func Application() ApplicationConfig {
 func (a ApplicationConfig) Redacted() ApplicationConfig {
 	a.StashGraphQLUrl = Redacted(a.StashGraphQLUrl)
 	a.StashApiKey = Redacted(a.StashApiKey)
+	a.ConfigPath = Redacted(a.ConfigPath)
 	return a
 }
