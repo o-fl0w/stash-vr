@@ -22,18 +22,17 @@ const (
 )
 
 type ApplicationConfig struct {
-	ListenAddress       string
-	StashGraphQLUrl     string
-	StashApiKey         string
-	FavoriteTag         string
-	LogLevel            string
-	DisableLogColor     bool
-	IsRedactDisabled    bool
-	ForceHTTPS          bool
-	HeatmapHeightPx     int
-	IsPlayCountDisabled bool
-	ExcludeSortName     string
-	ConfigPath          string
+	ListenAddress    string
+	StashGraphQLUrl  string
+	StashApiKey      string
+	FavoriteTag      string
+	LogLevel         string
+	DisableLogColor  bool
+	IsRedactDisabled bool
+	ForceHTTPS       bool
+	HeatmapHeightPx  int
+	ExcludeSortName  string
+	ConfigPath       string
 }
 
 var applicationConfig ApplicationConfig
