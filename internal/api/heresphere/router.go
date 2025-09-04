@@ -26,5 +26,5 @@ func getVideoDataUrl(baseUrl string, id string) string {
 }
 
 func getEventsUrl(baseUrl string, id string) string {
-	return baseUrl + "/heresphere/events" + "/" + url.QueryEscape(id)
+	return baseUrl + "/heresphere/events/" + url.QueryEscape(id)
 }
