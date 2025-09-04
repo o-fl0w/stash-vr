@@ -2780,10 +2780,11 @@ func (v *ScenePartsCaptionsVideoCaption) GetLanguage_code() string { return v.La
 
 // ScenePartsFilesVideoFile includes the requested fields of the GraphQL type VideoFile.
 type ScenePartsFilesVideoFile struct {
-	Basename string  `json:"basename"`
-	Duration float64 `json:"duration"`
-	Path     string  `json:"path"`
-	Height   int     `json:"height"`
+	Basename    string  `json:"basename"`
+	Duration    float64 `json:"duration"`
+	Path        string  `json:"path"`
+	Height      int     `json:"height"`
+	Video_codec string  `json:"video_codec"`
 }
 
 // GetBasename returns ScenePartsFilesVideoFile.Basename, and is useful for accessing the field via an interface.
@@ -2797,6 +2798,9 @@ func (v *ScenePartsFilesVideoFile) GetPath() string { return v.Path }
 
 // GetHeight returns ScenePartsFilesVideoFile.Height, and is useful for accessing the field via an interface.
 func (v *ScenePartsFilesVideoFile) GetHeight() int { return v.Height }
+
+// GetVideo_codec returns ScenePartsFilesVideoFile.Video_codec, and is useful for accessing the field via an interface.
+func (v *ScenePartsFilesVideoFile) GetVideo_codec() string { return v.Video_codec }
 
 // ScenePartsGroupsSceneGroup includes the requested fields of the GraphQL type SceneGroup.
 type ScenePartsGroupsSceneGroup struct {
@@ -4063,6 +4067,7 @@ fragment SceneParts on Scene {
 		duration
 		path
 		height
+		video_codec
 	}
 	studio {
 		name

@@ -23,16 +23,14 @@ func (libraryService *Service) GetScenes(ctx context.Context) (map[string]*Video
 		libraryService.muVdCache.RUnlock()
 
 		if len(toFetch) > 0 {
-			resp, err := gql.FindScenes(ctx, libraryService.StashClient, toFetch)
+			vds, err := libraryService.fetchVideoData(ctx, toFetch)
 			if err != nil {
-				return nil, fmt.Errorf("FindScenes: %w", err)
+				return nil, err
 			}
 
 			libraryService.muVdCache.Lock()
-			for _, s := range resp.FindScenes.Scenes {
-				vd := VideoData{SceneParts: &s.SceneParts}
-				libraryService.decorateTags(&vd)
-				libraryService.vdCache[s.Id] = &vd
+			for _, vd := range vds {
+				libraryService.vdCache[vd.Id()] = vd
 			}
 			libraryService.muVdCache.Unlock()
 			elapsed := time.Since(start)
@@ -58,25 +56,29 @@ func (libraryService *Service) GetScene(ctx context.Context, id string, forceFet
 			return vd, nil
 		}
 	}
-	vd, err := libraryService.fetchVideoData(ctx, id)
+	iid, _ := strconv.Atoi(id)
+	vds, err := libraryService.fetchVideoData(ctx, []int{iid})
 	if err != nil {
 		return nil, err
 	}
-	libraryService.decorateTags(vd)
+
 	libraryService.muVdCache.Lock()
-	libraryService.vdCache[id] = vd
+	libraryService.vdCache[id] = vds[0]
 	libraryService.muVdCache.Unlock()
 	log.Ctx(ctx).Trace().Str("id", id).Msg("Return scene from fetch")
-	return vd, nil
+	return vds[0], nil
 }
 
-func (libraryService *Service) fetchVideoData(ctx context.Context, id string) (*VideoData, error) {
-	iid, _ := strconv.Atoi(id)
-	sceneIds := []int{iid}
+func (libraryService *Service) fetchVideoData(ctx context.Context, sceneIds []int) ([]*VideoData, error) {
 	resp, err := gql.FindScenes(ctx, libraryService.StashClient, sceneIds)
 	if err != nil {
 		return nil, fmt.Errorf("FindScenes: %w", err)
 	}
-	vd := VideoData{SceneParts: &resp.FindScenes.Scenes[0].SceneParts}
-	return &vd, nil
+	vds := make([]*VideoData, len(resp.FindScenes.Scenes))
+	for i, s := range resp.FindScenes.Scenes {
+		vd := VideoData{SceneParts: &s.SceneParts}
+		libraryService.decorateTags(&vd)
+		vds[i] = &vd
+	}
+	return vds, nil
 }

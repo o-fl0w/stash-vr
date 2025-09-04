@@ -101,20 +101,19 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	vdReq, err := internal.UnmarshalBody[videoDataRequestDto](req)
-	if err != nil {
+	if vdReq, err := internal.UnmarshalBody[videoDataRequestDto](req); err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("Failed to parse request body")
-	}
-
-	if vdReq.DeleteFile != nil && *vdReq.DeleteFile {
-		if err = h.libraryService.Delete(ctx, videoId); err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to delete scene")
-			w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		if vdReq.DeleteFile != nil && *vdReq.DeleteFile {
+			if err = h.libraryService.Delete(ctx, videoId); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Failed to delete scene")
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+			return
 		}
-		return
-	}
 
-	go h.processUpdates(videoId, vdReq)
+		go h.processUpdates(videoId, vdReq)
+	}
 
 	vd, err := h.libraryService.GetScene(ctx, videoId, false)
 	if err != nil {
@@ -122,7 +121,7 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	dto, err := buildVideoData(vd, baseUrl)
+	dto, err := buildVideoData(ctx, vd, baseUrl)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to build video data")
 		w.WriteHeader(http.StatusInternalServerError)

@@ -34,16 +34,21 @@ func GetDirectStream(sp *gql.SceneParts) Stream {
 }
 func GetTranscodingStream(sp *gql.SceneParts) Stream {
 	mp4Sources := make([]Source, 0)
+	seenResolutions := make(map[int]struct{})
 	for _, stream := range sp.SceneStreams {
 		if strings.HasPrefix(*stream.Mime_type, "video/mp4") && *stream.Label != "Direct stream" {
 			resolution, err := parseResolutionFromLabel(*stream.Label)
 			if err != nil {
 				resolution = sp.Files[0].Height
 			}
+			if _, seen := seenResolutions[resolution]; seen {
+				continue
+			}
 			mp4Sources = append(mp4Sources, Source{
 				Resolution: resolution,
 				Url:        stream.Url,
 			})
+			seenResolutions[resolution] = struct{}{}
 		}
 	}
 	slices.SortFunc(mp4Sources, func(a, b Source) int { return b.Resolution - a.Resolution })

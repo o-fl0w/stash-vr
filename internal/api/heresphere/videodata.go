@@ -1,7 +1,9 @@
 package heresphere
 
 import (
+	"context"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/config"
 	"stash-vr/internal/library"
@@ -56,7 +58,7 @@ type subtitleDto struct {
 	Url      string `json:"url,omitempty"`
 }
 
-func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error) {
+func buildVideoData(ctx context.Context, vd *library.VideoData, baseUrl string) (*videoDataDto, error) {
 	videoId := vd.Id()
 	if len(vd.SceneParts.Files) == 0 {
 		return nil, fmt.Errorf("scene %s has no files", videoId)
@@ -112,6 +114,12 @@ func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error
 	setSubtitles(vd, &dto)
 
 	dto.Tags = getTags(vd)
+
+	log.Ctx(ctx).Debug().
+		Str("thumbImage", *dto.ThumbnailImage).
+		Str("thumbVideo", *dto.ThumbnailVideo).
+		Str("codec", vd.SceneParts.Files[0].Video_codec).
+		Interface("media", dto.Media).Send()
 
 	return &dto, nil
 }
