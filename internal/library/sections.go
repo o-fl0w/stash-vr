@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"slices"
 	"stash-vr/internal/config"
+	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/filter"
 	"stash-vr/internal/stash/gql"
 	"sync"
@@ -132,20 +133,58 @@ func (libraryService *Service) getFilters(ctx context.Context) ([]gql.SavedFilte
 		return nil, fmt.Errorf("failed to find saved filters: %w", err)
 	}
 
+	if len(savedFilters.FindSavedFilters) == 0 {
+		return nil, nil
+	}
+
+	var out []gql.SavedFilterParts
+
 	userConfigFilters := config.User(ctx).Filters
-	out := buildActiveFilters(savedFilters.FindSavedFilters, userConfigFilters)
+
+	if len(userConfigFilters) == 0 {
+		out, err = libraryService.buildFiltersByFrontpage(ctx, savedFilters)
+	} else {
+		out = buildFiltersByUserConfig(ctx, savedFilters, userConfigFilters)
+	}
 	return out, nil
 }
 
-func buildActiveFilters(stashFilters []*gql.FindSavedSceneFiltersFindSavedFiltersSavedFilter, cfgFilters []config.Filter) []gql.SavedFilterParts {
-	if len(cfgFilters) == 0 {
-		out := make([]gql.SavedFilterParts, 0, len(stashFilters))
-		for _, s := range stashFilters {
-			out = append(out, s.SavedFilterParts)
-		}
-		return out
+func (libraryService *Service) buildFiltersByFrontpage(ctx context.Context, savedFilters *gql.FindSavedSceneFiltersResponse) ([]gql.SavedFilterParts, error) {
+	fpIds, err := stash.FindSavedFilterIdsByFrontPage(ctx, libraryService.StashClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find frontpage filter IDs: %w", err)
 	}
 
+	var front []gql.SavedFilterParts
+
+	for _, id := range fpIds {
+		for _, f := range savedFilters.FindSavedFilters {
+			if f.Id == id {
+				front = append(front, f.SavedFilterParts)
+				break
+			}
+		}
+	}
+
+	seen := make(map[string]struct{}, len(fpIds))
+	for _, id := range fpIds {
+		seen[id] = struct{}{}
+	}
+	var rest []gql.SavedFilterParts
+	for _, f := range savedFilters.FindSavedFilters {
+		if _, ok := seen[f.Id]; !ok {
+			rest = append(rest, f.SavedFilterParts)
+		}
+	}
+	out := append(front, rest...)
+
+	log.Ctx(ctx).Debug().Int("count", len(out)).Msg("Filters built by frontpage")
+
+	return out, nil
+}
+
+func buildFiltersByUserConfig(ctx context.Context, savedFilters *gql.FindSavedSceneFiltersResponse, cfgFilters []config.Filter) []gql.SavedFilterParts {
+	stashFilters := savedFilters.FindSavedFilters
 	stashFilterParts := make(map[string]gql.SavedFilterParts, len(stashFilters))
 	for _, sf := range stashFilters {
 		stashFilterParts[sf.Id] = sf.SavedFilterParts
@@ -177,6 +216,8 @@ func buildActiveFilters(stashFilters []*gql.FindSavedSceneFiltersFindSavedFilter
 		}
 		out = append(out, s.SavedFilterParts)
 	}
+
+	log.Ctx(ctx).Debug().Int("count", len(out)).Msg("Filters built by user config")
 
 	return out
 }
