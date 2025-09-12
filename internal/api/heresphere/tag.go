@@ -76,7 +76,7 @@ func getTags(vd *library.VideoData) []tagDto {
 
 	summary := getSummary(vd)
 	if summary != "" {
-		trackIndex = addSplitTrack(&tags, []tagDto{{Name: "?:" + summary}}, trackIndex, duration)
+		trackIndex = addSplitTrack(&tags, []tagDto{{Name: internal.LegendSummary + seperator + summary}}, trackIndex, duration)
 	}
 
 	trackIndex = addSplitTrack(&tags, getFields(vd), trackIndex, duration)

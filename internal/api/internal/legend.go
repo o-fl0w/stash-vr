@@ -12,7 +12,7 @@ var (
 	LegendMetaPlayCount  = "Played"
 	LegendMetaResolution = "Resolution"
 
-	LegendSummary = "?"
+	LegendSummary = "Σ"
 
 	CommandIncrementO       = "/o"
 	CommandSetOrganizedTrue = "/org"
