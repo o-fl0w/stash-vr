@@ -11,6 +11,7 @@ var (
 	LegendMetaOrganized  = "Organized"
 	LegendMetaPlayCount  = "Played"
 	LegendMetaResolution = "Resolution"
+	LegendMetaRating     = "Rating"
 
 	LegendSummary = "Σ"
 

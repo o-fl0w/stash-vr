@@ -12,10 +12,14 @@ import (
 	"time"
 )
 
-func (libraryService *Service) UpdateRating(ctx context.Context, id string, rating5 float32) error {
-	newRating100 := int(rating5 * 20)
+func (libraryService *Service) UpdateRating(ctx context.Context, id string, rating5 *float32) error {
+	var newRating100 *int
+	if rating5 != nil {
+		converted := int(*rating5 * 20)
+		newRating100 = &converted
+	}
 
-	_, err := gql.SceneUpdateRating100(ctx, libraryService.StashClient, id, &newRating100)
+	_, err := gql.SceneUpdateRating100(ctx, libraryService.StashClient, id, newRating100)
 	if err != nil {
 		return fmt.Errorf("SceneUpdateRating100: %w", err)
 	}

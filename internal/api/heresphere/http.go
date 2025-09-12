@@ -137,12 +137,8 @@ func (h *httpHandler) processUpdates(videoId string, vdReq videoDataRequestDto) 
 	ctx := context.Background()
 	needsRefetch := false
 	if vdReq.Rating != nil {
-		r := *vdReq.Rating
-		if r < 1 { //use half-star to unset rating
-			r = 0
-		}
-		if err := h.libraryService.UpdateRating(ctx, videoId, r); err != nil {
-			log.Ctx(ctx).Warn().Err(err).Float32("rating", r).Msg("Failed to update rating")
+		if err := h.libraryService.UpdateRating(ctx, videoId, vdReq.Rating); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Float32("rating", *vdReq.Rating).Msg("Failed to update rating")
 		}
 		needsRefetch = true
 	}
@@ -171,6 +167,7 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 	hasPlayCount := false
 	hasOrganized := false
 	hasOCount := false
+	hasRating := false
 
 	for _, t := range *vdReq.Tags {
 		key, arg, _ := strings.Cut(t.Name, ":")
@@ -191,6 +188,9 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 			continue
 		case internal.LegendMetaPlayCount:
 			hasPlayCount = true
+			continue
+		case internal.LegendMetaRating:
+			hasRating = true
 			continue
 		}
 
@@ -243,6 +243,12 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 	if !hasOCount {
 		if err := h.libraryService.DecrementO(ctx, videoId); err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to decrement O")
+		}
+	}
+
+	if !hasRating {
+		if err := h.libraryService.UpdateRating(ctx, videoId, nil); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to set zero rating")
 		}
 	}
 

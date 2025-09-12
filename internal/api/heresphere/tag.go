@@ -248,6 +248,12 @@ func getFields(vd *library.VideoData) []tagDto {
 
 	tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%v", internal.LegendMetaOrganized, seperator, vd.SceneParts.Organized)})
 
+	rating := "?"
+	if vd.SceneParts.Rating100 != nil {
+		rating = strconv.Itoa(*vd.SceneParts.Rating100)
+	}
+	tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%s", internal.LegendMetaRating, seperator, rating)})
+
 	return tags
 }
 
