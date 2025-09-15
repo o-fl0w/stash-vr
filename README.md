@@ -95,8 +95,13 @@ Scene metadata is handled using `Video Tags` in HereSphere. Both for presentatio
     * ~~`#:#Music`~~
 * Parent tags
   * `#<Parent>:<Name>` - read-only.
+  * Hidden in tag editor, visible in categorized tags under category `#<Parent>`
 * Ancestor tags
   * `#:#<Name>` - read-only
+  * Hidden in tag editor, visible in categorized tags under `#` as `#<Name>`
+* Summary tag
+  * `Σ:<SUMMARY>` - read-only
+  * Generated summary string of the scene, parent and ancestor tags shown above seekbar.
 * Studio
   * `Studio:<Name>` - read-only.
 * Performers
