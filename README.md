@@ -100,7 +100,7 @@ Scene metadata is handled using `Video Tags` in HereSphere. Both for presentatio
   * `#:#<Name>` - read-only
   * Hidden in tag editor, visible in categorized tags under `#` as `#<Name>`
 * Summary tag
-  * `Σ:<SUMMARY>` - read-only
+  * `Summary:<SUMMARY>` - read-only
   * Generated summary string of the scene, parent and ancestor tags shown above seekbar.
 * Studio
   * `Studio:<Name>` - read-only.
