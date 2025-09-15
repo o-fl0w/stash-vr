@@ -95,6 +95,8 @@ Scene metadata is handled using `Video Tags` in HereSphere. Both for presentatio
     * ~~`#:#Music`~~
 * Parent tags
   * `#<Parent>:<Name>` - read-only.
+* Ancestor tags
+  * `#:#<Name>` - read-only
 * Studio
   * `Studio:<Name>` - read-only.
 * Performers
@@ -114,6 +116,10 @@ Scene metadata is handled using `Video Tags` in HereSphere. Both for presentatio
   * `Organized:<bool>`
   * To set organized, add a tag `/org`
   * To unset organized, delete the `Organized` tag
+* Rating
+  * `Rating:<value>` 
+  * Ratings set in HereSphere will be converted to its equivalent in Stash (4.5 stars => 90).
+  * To unset rating, delete the `Rating` tag
 * Markers
   * Everything else is treated as a marker
   * `<Primary Tag Name>` (empty title)
@@ -127,10 +133,6 @@ Changes reflect in HereSphere when videos are re-opened.
 
 #### Favorites
 When the favorite-feature of HereSphere is first used Stash-VR will create a tag in Stash named according to `FAVORITE_TAG` (set in docker env., defaults to `FAVORITE`) and apply that tag to your scene.
-
-#### Rating
-To unset rating set it to half-star.
-Ratings set in HereSphere will be converted to its equivalent in Stash (4.5 stars => 90).
 
 ## Known issues/Missing features
 
