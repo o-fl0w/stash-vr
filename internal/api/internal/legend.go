@@ -13,7 +13,7 @@ var (
 	LegendMetaResolution = "Resolution"
 	LegendMetaRating     = "Rating"
 
-	LegendSummary = "Σ"
+	LegendSummary = "Summary"
 
 	CommandIncrementO       = "/o"
 	CommandSetOrganizedTrue = "/org"
