@@ -8,31 +8,33 @@ import (
 )
 
 const (
-	envKeyListenAddress   = "LISTEN_ADDRESS"
-	envKeyStashGraphQLUrl = "STASH_GRAPHQL_URL"
-	envKeyStashApiKey     = "STASH_API_KEY"
-	envKeyFavoriteTag     = "FAVORITE_TAG"
-	envKeyLogLevel        = "LOG_LEVEL"
-	envKeyDisableLogColor = "DISABLE_LOG_COLOR"
-	envKeyDisableRedact   = "DISABLE_REDACT"
-	envKeyForceHTTPS      = "FORCE_HTTPS"
-	envKeyHeatmapHeightPx = "HEATMAP_HEIGHT_PX"
-	envKeyExcludeSortName = "EXCLUDE_SORT_NAME"
-	envKeyUserConfigPath  = "CONFIG_PATH"
+	envKeyListenAddress      = "LISTEN_ADDRESS"
+	envKeyStashGraphQLUrl    = "STASH_GRAPHQL_URL"
+	envKeyStashApiKey        = "STASH_API_KEY"
+	envKeyFavoriteTag        = "FAVORITE_TAG"
+	envKeyLogLevel           = "LOG_LEVEL"
+	envKeyDisableLogColor    = "DISABLE_LOG_COLOR"
+	envKeyDisableRedact      = "DISABLE_REDACT"
+	envKeyForceHTTPS         = "FORCE_HTTPS"
+	envKeyHeatmapHeightPx    = "HEATMAP_HEIGHT_PX"
+	envKeyExcludeSortName    = "EXCLUDE_SORT_NAME"
+	envKeyUserConfigPath     = "CONFIG_PATH"
+	envKeyGenerateSummaryIds = "GENERATE_SUMMARY_IDS"
 )
 
 type ApplicationConfig struct {
-	ListenAddress    string
-	StashGraphQLUrl  string
-	StashApiKey      string
-	FavoriteTag      string
-	LogLevel         string
-	DisableLogColor  bool
-	IsRedactDisabled bool
-	ForceHTTPS       bool
-	HeatmapHeightPx  int
-	ExcludeSortName  string
-	ConfigPath       string
+	ListenAddress      string
+	StashGraphQLUrl    string
+	StashApiKey        string
+	FavoriteTag        string
+	LogLevel           string
+	DisableLogColor    bool
+	IsRedactDisabled   bool
+	ForceHTTPS         bool
+	HeatmapHeightPx    int
+	ExcludeSortName    string
+	ConfigPath         string
+	GenerateSummaryIds bool
 }
 
 var applicationConfig ApplicationConfig
@@ -71,6 +73,9 @@ func Init() {
 	pflag.String(envKeyUserConfigPath, "", "Path to store user config (may contain filter names in plain text)")
 	_ = viper.BindPFlag(envKeyUserConfigPath, pflag.Lookup(envKeyUserConfigPath))
 
+	pflag.String(envKeyGenerateSummaryIds, "", "Generate summary ids for categorized tags")
+	_ = viper.BindPFlag(envKeyGenerateSummaryIds, pflag.Lookup(envKeyGenerateSummaryIds))
+
 	pflag.BoolP("help", "h", false, "Display usage information")
 	_ = viper.BindPFlag("help", pflag.Lookup("help"))
 
@@ -94,6 +99,7 @@ func Init() {
 	applicationConfig.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
 	applicationConfig.ExcludeSortName = viper.GetString(envKeyExcludeSortName)
 	applicationConfig.ConfigPath = viper.GetString(envKeyUserConfigPath)
+	applicationConfig.GenerateSummaryIds = viper.GetBool(envKeyGenerateSummaryIds)
 
 }
 

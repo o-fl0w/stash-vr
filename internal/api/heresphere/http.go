@@ -178,7 +178,7 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 
 		switch key {
 		case internal.LegendPerformer, internal.LegendSceneStudio, internal.LegendSceneGroup,
-			internal.LegendMetaResolution, internal.LegendSummary:
+			internal.LegendMetaResolution, internal.LegendSummary, internal.LegendSummaryId:
 			continue
 		case internal.LegendMetaOCount:
 			hasOCount = true

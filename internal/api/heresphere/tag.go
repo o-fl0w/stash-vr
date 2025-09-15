@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
-	"sort"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/library"
@@ -90,6 +89,9 @@ func getTags(vd *library.VideoData) []tagDto {
 	summary := getSummary(vd)
 	if summary != "" {
 		trackIndex = addSplitTrack(&tags, []tagDto{{Name: internal.LegendSummary + seperator + summary}}, trackIndex, duration)
+		if config.Application().GenerateSummaryIds {
+			addHiddenToTrack(&tags, []tagDto{{Name: internal.LegendSummaryId + seperator + MnemonicID(summary, 10, 3)}}, trackIndex)
+		}
 	}
 
 	trackIndex = addSplitTrack(&tags, getFields(vd), trackIndex, duration)
@@ -101,52 +103,6 @@ func getTags(vd *library.VideoData) []tagDto {
 	trackIndex = addMultiTracks(&tags, getGroups(vd), trackIndex)
 
 	return tags
-}
-
-func getSummary(vd *library.VideoData) string {
-	if len(vd.SceneParts.Tags) == 0 {
-		return ""
-	}
-
-	m := make(map[string]string)
-	for _, t := range vd.SceneParts.Tags {
-		if t.Sort_name == config.Application().ExcludeSortName {
-			continue
-		}
-		m[t.Name] = util.FirstNonEmpty(&t.Sort_name, &t.Name)
-	}
-
-	type item struct {
-		key     string
-		sortKey string
-	}
-
-	items := make([]item, 0, len(m))
-	for k, v := range m {
-		items = append(items, item{key: k, sortKey: v})
-	}
-
-	sort.Slice(items, func(i, j int) bool {
-		if items[i].sortKey == items[j].sortKey {
-			return items[i].key < items[j].key
-		}
-		return items[i].sortKey < items[j].sortKey
-	})
-
-	seen := make(map[string]struct{})
-	keys := make([]string, 0, len(items))
-	for _, it := range items {
-		name := summaryStripper.ReplaceAllString(strings.ReplaceAll(it.key, " ", "_"), "")
-		if _, ok := seen[name]; ok {
-			continue
-		}
-		seen[name] = struct{}{}
-		keys = append(keys, name)
-	}
-
-	summary := strings.Join(keys, " | ")
-	return summary
-
 }
 
 func getAncestorTags(vd *library.VideoData) []tagDto {
