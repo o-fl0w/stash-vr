@@ -79,16 +79,11 @@ func (libraryService *Service) decorateTags(vd *VideoData) {
 		}
 	}
 
-	ordered := make([]Tag, 0, len(allAncestors))
-	for _, t := range allAncestors {
-		ordered = append(ordered, t)
-	}
-
-	for _, a := range ordered {
+	for _, a := range allAncestors {
 		vd.SceneParts.Tags = append(vd.SceneParts.Tags, &gql.TagPartsArrayTagsTag{TagParts: gql.TagParts{
 			Id:        a.Id,
-			Name:      "#" + a.Name,
-			Sort_name: "#" + a.SortName},
+			Name:      a.Name,
+			Sort_name: "svr.ancestor" + a.SortName},
 		})
 	}
 }

@@ -45,6 +45,19 @@ func addTrack(target *[]tagDto, tags []tagDto, track int) int {
 	return track + 1
 }
 
+func addHiddenToTrack(target *[]tagDto, tags []tagDto, track int) {
+	if len(tags) == 0 {
+		return
+	}
+	end := 0.01
+	for i := range tags {
+		tags[i].Start = 0
+		tags[i].End = &end
+		tags[i].Track = &track
+	}
+	*target = append(*target, tags...)
+}
+
 func addSplitTrack(target *[]tagDto, tags []tagDto, track int, totalDuration float64) int {
 	if len(tags) == 0 {
 		return track
@@ -80,6 +93,7 @@ func getTags(vd *library.VideoData) []tagDto {
 	}
 
 	trackIndex = addSplitTrack(&tags, getFields(vd), trackIndex, duration)
+	addHiddenToTrack(&tags, getAncestorTags(vd), trackIndex)
 
 	trackIndex = addMultiTracks(&tags, getStashTags(vd), trackIndex)
 	trackIndex = addMultiTracks(&tags, getStudio(vd), trackIndex)
@@ -94,7 +108,6 @@ func getSummary(vd *library.VideoData) string {
 		return ""
 	}
 
-	//tags
 	m := make(map[string]string)
 	for _, t := range vd.SceneParts.Tags {
 		if t.Sort_name == config.Application().ExcludeSortName {
@@ -136,6 +149,51 @@ func getSummary(vd *library.VideoData) string {
 
 }
 
+func getAncestorTags(vd *library.VideoData) []tagDto {
+	type item struct {
+		sortName string
+		dto      tagDto
+	}
+	items := make([]item, 0, len(vd.SceneParts.Tags))
+
+	for _, t := range vd.SceneParts.Tags {
+		if t.Sort_name == config.Application().ExcludeSortName {
+			continue
+		}
+		if strings.HasPrefix(t.Sort_name, "svr.ancestor") {
+			dto := tagDto{
+				Name: fmt.Sprintf("%s%s%s%s", internal.LegendTag, seperator, internal.LegendTag, t.Name), value: t.Name,
+			}
+			items = append(items, item{sortName: t.Sort_name, dto: dto})
+			continue
+		}
+
+		for _, p := range t.Parents {
+			if p.Sort_name == config.Application().ExcludeSortName {
+				continue
+			}
+			pDto := tagDto{
+				Name: fmt.Sprintf("%s%s%s%s", internal.LegendTag, p.Name, seperator, t.Name), value: t.Name,
+			}
+			items = append(items, item{sortName: "svr.parent" + util.FirstNonEmpty(&p.Sort_name, &p.Name), dto: pDto})
+		}
+	}
+
+	slices.SortFunc(items, func(a item, b item) int {
+		if a.sortName == b.sortName {
+			return strings.Compare(a.dto.Name, b.dto.Name)
+		}
+		return strings.Compare(a.sortName, b.sortName)
+	})
+
+	tags := make([]tagDto, 0, len(items))
+	for _, it := range items {
+		tags = append(tags, it.dto)
+	}
+
+	return tags
+}
+
 func getStashTags(vd *library.VideoData) []tagDto {
 	type item struct {
 		sortName string
@@ -147,39 +205,16 @@ func getStashTags(vd *library.VideoData) []tagDto {
 		if t.Sort_name == config.Application().ExcludeSortName {
 			continue
 		}
+		if strings.HasPrefix(t.Sort_name, "svr.ancestor") {
+			continue
+		}
 		dto := tagDto{
 			Name: fmt.Sprintf("%s%s%s", internal.LegendTag, seperator, t.Name), value: t.Name,
 		}
-		tSortName := util.FirstNonEmpty(&t.Sort_name, &t.Name)
-		items = append(items, item{sortName: tSortName, dto: dto})
-
-		for _, p := range t.Parents {
-			if p.Sort_name == config.Application().ExcludeSortName {
-				continue
-			}
-			pDto := tagDto{
-				Name: fmt.Sprintf("%s%s%s%s", internal.LegendTag, p.Name, seperator, t.Name), value: t.Name,
-			}
-			items = append(items, item{sortName: util.FirstNonEmpty(&p.Sort_name, &p.Name), dto: pDto})
-		}
-	}
-	parentItems := make([]item, 0)
-	childItems := make([]item, 0)
-	for _, it := range items {
-		if strings.HasSuffix(it.sortName, "#") {
-			parentItems = append(parentItems, it)
-		} else {
-			childItems = append(childItems, it)
-		}
+		items = append(items, item{sortName: "svr.child" + util.FirstNonEmpty(&t.Sort_name, &t.Name), dto: dto})
 	}
 
-	slices.SortFunc(parentItems, func(a item, b item) int {
-		if a.sortName == b.sortName {
-			return strings.Compare(a.dto.Name, b.dto.Name)
-		}
-		return strings.Compare(a.sortName, b.sortName)
-	})
-	slices.SortFunc(childItems, func(a item, b item) int {
+	slices.SortFunc(items, func(a item, b item) int {
 		if a.sortName == b.sortName {
 			return strings.Compare(a.dto.Name, b.dto.Name)
 		}
@@ -187,10 +222,7 @@ func getStashTags(vd *library.VideoData) []tagDto {
 	})
 
 	tags := make([]tagDto, 0, len(items))
-	for _, it := range parentItems {
-		tags = append(tags, it.dto)
-	}
-	for _, it := range childItems {
+	for _, it := range items {
 		tags = append(tags, it.dto)
 	}
 
