@@ -90,7 +90,7 @@ func getTags(vd *library.VideoData) []tagDto {
 	if summary != "" {
 		trackIndex = addSplitTrack(&tags, []tagDto{{Name: internal.LegendSummary + seperator + summary}}, trackIndex, duration)
 		if config.Application().GenerateSummaryIds {
-			addHiddenToTrack(&tags, []tagDto{{Name: internal.LegendSummaryId + seperator + MnemonicID(summary, 10, 3)}}, trackIndex)
+			addHiddenToTrack(&tags, []tagDto{{Name: internal.LegendSummaryId + seperator + MnemonicID(summary, 16, 3)}}, trackIndex)
 		}
 	}
 
