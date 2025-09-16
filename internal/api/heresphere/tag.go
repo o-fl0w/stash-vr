@@ -7,6 +7,7 @@ import (
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/library"
+	"stash-vr/internal/prefix"
 	"stash-vr/internal/util"
 	"strconv"
 	"strings"
@@ -48,9 +49,9 @@ func addHiddenToTrack(target *[]tagDto, tags []tagDto, track int) {
 	if len(tags) == 0 {
 		return
 	}
-	end := 0.01
+	end := -1.0
 	for i := range tags {
-		tags[i].Start = 0
+		tags[i].Start = -1
 		tags[i].End = &end
 		tags[i].Track = &track
 	}
@@ -86,21 +87,22 @@ func getTags(vd *library.VideoData) []tagDto {
 
 	trackIndex := addTrack(&tags, getMarkers(vd), 0)
 
-	summary := getSummary(vd)
-	if summary != "" {
+	if summary := getSummary(vd, false); summary != "" {
 		trackIndex = addSplitTrack(&tags, []tagDto{{Name: internal.LegendSummary + seperator + summary}}, trackIndex, duration)
-		if config.Application().GenerateSummaryIds {
-			addHiddenToTrack(&tags, []tagDto{{Name: internal.LegendSummaryId + seperator + MnemonicID(summary, 16, 3)}}, trackIndex)
-		}
 	}
 
 	trackIndex = addSplitTrack(&tags, getFields(vd), trackIndex, duration)
-	addHiddenToTrack(&tags, getAncestorTags(vd), trackIndex)
-
 	trackIndex = addMultiTracks(&tags, getStashTags(vd), trackIndex)
 	trackIndex = addMultiTracks(&tags, getStudio(vd), trackIndex)
 	trackIndex = addMultiTracks(&tags, getPerformers(vd), trackIndex)
 	trackIndex = addMultiTracks(&tags, getGroups(vd), trackIndex)
+
+	addHiddenToTrack(&tags, getAncestorTags(vd), 2)
+	if config.Application().GenerateSummaryIds {
+		if shortSummary := getSummary(vd, true); shortSummary != "" {
+			addHiddenToTrack(&tags, []tagDto{{Name: internal.LegendSummaryId + seperator + MnemonicID(shortSummary, 16, 3)}}, 2)
+		}
+	}
 
 	return tags
 }
@@ -116,7 +118,7 @@ func getAncestorTags(vd *library.VideoData) []tagDto {
 		if t.Sort_name == config.Application().ExcludeSortName {
 			continue
 		}
-		if strings.HasPrefix(t.Sort_name, "svr.ancestor") {
+		if strings.HasPrefix(t.Sort_name, prefix.SvrAncestor) {
 			dto := tagDto{
 				Name: fmt.Sprintf("%s%s%s%s", internal.LegendTag, seperator, internal.LegendTag, t.Name), value: t.Name,
 			}
@@ -131,7 +133,7 @@ func getAncestorTags(vd *library.VideoData) []tagDto {
 			pDto := tagDto{
 				Name: fmt.Sprintf("%s%s%s%s", internal.LegendTag, p.Name, seperator, t.Name), value: t.Name,
 			}
-			items = append(items, item{sortName: "svr.parent" + util.FirstNonEmpty(&p.Sort_name, &p.Name), dto: pDto})
+			items = append(items, item{sortName: prefix.SvrParent + util.FirstNonEmpty(&p.Sort_name, &p.Name), dto: pDto})
 		}
 	}
 
@@ -161,13 +163,13 @@ func getStashTags(vd *library.VideoData) []tagDto {
 		if t.Sort_name == config.Application().ExcludeSortName {
 			continue
 		}
-		if strings.HasPrefix(t.Sort_name, "svr.ancestor") {
+		if strings.HasPrefix(t.Sort_name, prefix.SvrAncestor) {
 			continue
 		}
 		dto := tagDto{
 			Name: fmt.Sprintf("%s%s%s", internal.LegendTag, seperator, t.Name), value: t.Name,
 		}
-		items = append(items, item{sortName: "svr.child" + util.FirstNonEmpty(&t.Sort_name, &t.Name), dto: dto})
+		items = append(items, item{sortName: prefix.SvrChild + util.FirstNonEmpty(&t.Sort_name, &t.Name), dto: dto})
 	}
 
 	slices.SortFunc(items, func(a item, b item) int {

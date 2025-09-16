@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"stash-vr/internal/config"
+	"stash-vr/internal/prefix"
 	"stash-vr/internal/stash/gql"
 	"stash-vr/internal/util"
 )
@@ -83,7 +84,7 @@ func (libraryService *Service) decorateTags(vd *VideoData) {
 		vd.SceneParts.Tags = append(vd.SceneParts.Tags, &gql.TagPartsArrayTagsTag{TagParts: gql.TagParts{
 			Id:        a.Id,
 			Name:      a.Name,
-			Sort_name: "svr.ancestor" + a.SortName},
+			Sort_name: prefix.SvrAncestor + a.SortName},
 		})
 	}
 }
