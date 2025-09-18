@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/stash/gql"
+	"strings"
 )
 
 type Filter struct {
@@ -24,14 +25,20 @@ func SavedFilterToSceneFilter(ctx context.Context, savedFilter gql.SavedFilterPa
 		return Filter{}, err
 	}
 
-	return Filter{
+	if savedFilter.Find_filter.Sort != nil && strings.HasPrefix(*savedFilter.Find_filter.Sort, "random_") {
+		*savedFilter.Find_filter.Sort = "random"
+	}
+
+	filter := Filter{
 		FilterOpts: gql.FindFilterType{
 			Direction: savedFilter.Find_filter.Direction,
 			Per_page:  &perPage,
 			Sort:      savedFilter.Find_filter.Sort,
 		},
 		SceneFilter: sceneFilter,
-	}, nil
+	}
+
+	return filter, nil
 
 }
 
