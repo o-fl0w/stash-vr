@@ -23,18 +23,25 @@ func modifier(c map[string]any) gql.CriterionModifier {
 }
 
 func parseIntCriterionInput(c map[string]any) *gql.IntCriterionInput {
-	return &gql.IntCriterionInput{
-		Value:    GetOr[int](c, "value.value", 0),
-		Value2:   Get[int](c, "value.value2"),
+	out := gql.IntCriterionInput{
 		Modifier: modifier(c),
 	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
+	}
+	out.Value = GetOr[int](c, "value.value", 0)
+	out.Value2 = Get[int](c, "value.value2")
+	return &out
 }
 
 func parseHierarchicalMultiCriterionInput(c map[string]any) *gql.HierarchicalMultiCriterionInput {
 	out := gql.HierarchicalMultiCriterionInput{
 		Modifier: modifier(c),
-		Depth:    Get[int](c, "value.depth"),
 	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
+	}
+	out.Depth = Get[int](c, "value.depth")
 
 	items := Get[[]any](c, "value.items")
 	if items != nil {
@@ -58,6 +65,9 @@ func parseMultiCriterionInput(c map[string]any) *gql.MultiCriterionInput {
 	out := gql.MultiCriterionInput{
 		Modifier: modifier(c),
 	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
+	}
 
 	excluded := Get[[]any](c, "value.excluded")
 	if excluded != nil {
@@ -75,9 +85,11 @@ func parseMultiCriterionInput(c map[string]any) *gql.MultiCriterionInput {
 		}
 	} else {
 		values := Get[[]any](c, "value")
-		out.Value = make([]string, len(*values))
-		for i, o := range *values {
-			out.Value[i] = *Get[string](o, "id")
+		if values != nil {
+			out.Value = make([]string, len(*values))
+			for i, o := range *values {
+				out.Value[i] = *Get[string](o, "id")
+			}
 		}
 	}
 
@@ -87,33 +99,45 @@ func parseMultiCriterionInput(c map[string]any) *gql.MultiCriterionInput {
 func parseTimestampCriterionInput(c map[string]any) *gql.TimestampCriterionInput {
 	out := gql.TimestampCriterionInput{
 		Modifier: modifier(c),
-		Value:    *Get[string](c, "value.value"),
-		Value2:   Get[string](c, "value.value2"),
 	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
+	}
+	out.Value = *Get[string](c, "value.value")
+	out.Value2 = Get[string](c, "value.value2")
 	return &out
 }
 
 func parseDateCriterionInput(c map[string]any) *gql.DateCriterionInput {
 	out := gql.DateCriterionInput{
 		Modifier: modifier(c),
-		Value:    *Get[string](c, "value.value"),
-		Value2:   Get[string](c, "value.value2"),
 	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
+	}
+	out.Value = *Get[string](c, "value.value")
+	out.Value2 = Get[string](c, "value.value2")
 	return &out
 }
 
 func parsePhashDistanceCriterionInput(c map[string]any) *gql.PhashDistanceCriterionInput {
 	out := gql.PhashDistanceCriterionInput{
 		Modifier: modifier(c),
-		Value:    *Get[string](c, "value.value"),
-		Distance: Get[int](c, "value.distance"),
 	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
+	}
+	out.Value = *Get[string](c, "value.value")
+	out.Distance = Get[int](c, "value.distance")
 	return &out
 }
 
 func parseResolutionCriterionInput(c map[string]any) *gql.ResolutionCriterionInput {
 	out := gql.ResolutionCriterionInput{
 		Modifier: modifier(c),
+	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
 	}
 
 	switch *Get[string](c, "value") {
@@ -153,9 +177,9 @@ func parseResolutionCriterionInput(c map[string]any) *gql.ResolutionCriterionInp
 func parseStashIDCriterionInput(c map[string]any) *gql.StashIDCriterionInput {
 	out := gql.StashIDCriterionInput{
 		Modifier: modifier(c),
-		Endpoint: Get[string](c, "value.endpoint"),
-		Stash_id: Get[string](c, "value.stashID"),
 	}
+	out.Endpoint = Get[string](c, "value.endpoint")
+	out.Stash_id = Get[string](c, "value.stashID")
 	return &out
 }
 
@@ -174,14 +198,20 @@ func parsePHashDuplicationCriterionInput(c map[string]any) *gql.PHashDuplication
 func parseStringCriterionInput(c map[string]any) *gql.StringCriterionInput {
 	out := gql.StringCriterionInput{
 		Modifier: modifier(c),
-		Value:    *Get[string](c, "value"),
 	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
+	}
+	out.Value = *Get[string](c, "value")
 	return &out
 }
 
 func parseCaptionCriterionInput(c map[string]any) *gql.StringCriterionInput {
 	out := gql.StringCriterionInput{
 		Modifier: modifier(c),
+	}
+	if out.Modifier == gql.CriterionModifierIsNull {
+		return &out
 	}
 	switch *Get[string](c, "value") {
 	case "Deutsche":
