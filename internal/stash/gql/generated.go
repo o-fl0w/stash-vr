@@ -1758,6 +1758,8 @@ type PerformerFilterType struct {
 	Gallery_count *IntCriterionInput `json:"gallery_count,omitempty"`
 	// Filter by gender
 	Gender *GenderCriterionInput `json:"gender,omitempty"`
+	// Filter by groups where performer appears in scene
+	Groups *HierarchicalMultiCriterionInput `json:"groups,omitempty"`
 	// Filter by hair color
 	Hair_color *StringCriterionInput `json:"hair_color,omitempty"`
 	// Filter by height in cm
@@ -1876,6 +1878,9 @@ func (v *PerformerFilterType) GetGallery_count() *IntCriterionInput { return v.G
 
 // GetGender returns PerformerFilterType.Gender, and is useful for accessing the field via an interface.
 func (v *PerformerFilterType) GetGender() *GenderCriterionInput { return v.Gender }
+
+// GetGroups returns PerformerFilterType.Groups, and is useful for accessing the field via an interface.
+func (v *PerformerFilterType) GetGroups() *HierarchicalMultiCriterionInput { return v.Groups }
 
 // GetHair_color returns PerformerFilterType.Hair_color, and is useful for accessing the field via an interface.
 func (v *PerformerFilterType) GetHair_color() *StringCriterionInput { return v.Hair_color }

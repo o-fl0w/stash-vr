@@ -6,8 +6,16 @@ schema {
     subscription: Subscription
 }
 
-"The @defer directive may be specified on a fragment spread to imply de-prioritization, that causes the fragment to be omitted in the initial response, and delivered as a subsequent response afterward. A query with @defer directive will cause the request to potentially return multiple responses, where non-deferred data is delivered in the initial response and data deferred delivered in a subsequent response. @include and @skip take precedence over @defer."
-directive @defer(if: Boolean = true, label: String) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+"Directs the executor to defer this fragment when the `if` argument is true or undefined."
+directive @defer(
+    "Deferred when true or undefined."
+    if: Boolean = true,
+    "Unique name"
+    label: String
+) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"Indicates exactly one field must be supplied and this field must not be `null`."
+directive @oneOf on INPUT_OBJECT
 
 interface BaseFile {
     basename: String!
@@ -16,11 +24,13 @@ interface BaseFile {
     fingerprints: [Fingerprint!]!
     id: ID!
     mod_time: Time!
-    parent_folder_id: ID!
+    parent_folder: Folder!
+    parent_folder_id: ID! @deprecated(reason: "Use parent_folder instead")
     path: String!
     size: Int64!
     updated_at: Time!
-    zip_file_id: ID
+    zip_file: BasicFile
+    zip_file_id: ID @deprecated(reason: "Use zip_file instead")
 }
 
 "Scraped Content is the forming union over the different scrapers"
@@ -35,6 +45,22 @@ type AutoTagMetadataOptions {
     studios: [String!]
     "IDs of tags to tag files with, or \"*\" for all"
     tags: [String!]
+}
+
+type BasicFile implements BaseFile {
+    basename: String!
+    created_at: Time!
+    fingerprint(type: String!): String
+    fingerprints: [Fingerprint!]!
+    id: ID!
+    mod_time: Time!
+    parent_folder: Folder!
+    parent_folder_id: ID! @deprecated(reason: "Use parent_folder instead")
+    path: String!
+    size: Int64!
+    updated_at: Time!
+    zip_file: BasicFile
+    zip_file_id: ID @deprecated(reason: "Use zip_file instead")
 }
 
 type ConfigDLNAResult {
@@ -291,6 +317,22 @@ type Directory {
     path: String!
 }
 
+type FindFilesResultType {
+    count: Int!
+    "Total duration in seconds of any video files"
+    duration: Float!
+    files: [BaseFile!]!
+    "Total megapixels of any image files"
+    megapixels: Float!
+    "Total file size in bytes"
+    size: Int!
+}
+
+type FindFoldersResultType {
+    count: Int!
+    folders: [Folder!]!
+}
+
 type FindGalleriesResultType {
     count: Int!
     galleries: [Gallery!]!
@@ -358,10 +400,12 @@ type Folder {
     created_at: Time!
     id: ID!
     mod_time: Time!
-    parent_folder_id: ID
+    parent_folder: Folder
+    parent_folder_id: ID @deprecated(reason: "Use parent_folder instead")
     path: String!
     updated_at: Time!
-    zip_file_id: ID
+    zip_file: BasicFile
+    zip_file_id: ID @deprecated(reason: "Use zip_file instead")
 }
 
 "Gallery type"
@@ -407,11 +451,13 @@ type GalleryFile implements BaseFile {
     fingerprints: [Fingerprint!]!
     id: ID!
     mod_time: Time!
-    parent_folder_id: ID!
+    parent_folder: Folder!
+    parent_folder_id: ID! @deprecated(reason: "Use parent_folder instead")
     path: String!
     size: Int64!
     updated_at: Time!
-    zip_file_id: ID
+    zip_file: BasicFile
+    zip_file_id: ID @deprecated(reason: "Use zip_file instead")
 }
 
 type GalleryPathsType {
@@ -460,6 +506,7 @@ type Group {
     front_image_path: String
     id: ID!
     name: String!
+    performer_count(depth: Int): Int!
     rating100: Int
     scene_count(depth: Int): Int!
     scenes: [Scene!]!
@@ -549,15 +596,18 @@ type ImageFile implements BaseFile {
     created_at: Time!
     fingerprint(type: String!): String
     fingerprints: [Fingerprint!]!
+    format: String!
     height: Int!
     id: ID!
     mod_time: Time!
-    parent_folder_id: ID!
+    parent_folder: Folder!
+    parent_folder_id: ID! @deprecated(reason: "Use parent_folder instead")
     path: String!
     size: Int64!
     updated_at: Time!
     width: Int!
-    zip_file_id: ID
+    zip_file: BasicFile
+    zip_file_id: ID @deprecated(reason: "Use zip_file instead")
 }
 
 type ImageFileType {
@@ -1030,6 +1080,14 @@ type Query {
         """
         duration_diff: Float
     ): [[Scene!]!]!
+    "Find a file by its id or path"
+    findFile(id: ID, path: String): BaseFile!
+    "Queries for Files"
+    findFiles(file_filter: FileFilterType, filter: FindFilterType, ids: [ID!]): FindFilesResultType!
+    "Find a file by its id or path"
+    findFolder(id: ID, path: String): Folder!
+    "Queries for Files"
+    findFolders(filter: FindFilterType, folder_filter: FolderFilterType, ids: [ID!]): FindFoldersResultType!
     findGalleries(filter: FindFilterType, gallery_filter: GalleryFilterType, ids: [ID!]): FindGalleriesResultType!
     findGallery(id: ID!): Gallery
     "Find a group by ID"
@@ -1492,6 +1550,7 @@ type ScraperSpec {
 type StashBox {
     api_key: String!
     endpoint: String!
+    max_requests_per_minute: Int!
     name: String!
 }
 
@@ -1637,13 +1696,15 @@ type VideoFile implements BaseFile {
     height: Int!
     id: ID!
     mod_time: Time!
-    parent_folder_id: ID!
+    parent_folder: Folder!
+    parent_folder_id: ID! @deprecated(reason: "Use parent_folder instead")
     path: String!
     size: Int64!
     updated_at: Time!
     video_codec: String!
     width: Int!
-    zip_file_id: ID
+    zip_file: BasicFile
+    zip_file_id: ID @deprecated(reason: "Use zip_file instead")
 }
 
 enum BlobsStorageType {
@@ -2386,6 +2447,38 @@ input ExportObjectsInput {
     tags: ExportObjectTypeInput
 }
 
+input FileFilterType {
+    AND: FileFilterType
+    NOT: FileFilterType
+    OR: FileFilterType
+    basename: StringCriterionInput
+    "Filter by creation time"
+    created_at: TimestampCriterionInput
+    dir: StringCriterionInput
+    "Filter files that have an exact match available"
+    duplicated: PHashDuplicationCriterionInput
+    "Filter by related galleries that meet this criteria"
+    galleries_filter: GalleryFilterType
+    gallery_count: IntCriterionInput
+    "find files based on hash"
+    hashes: [FingerprintFilterInput!]
+    image_count: IntCriterionInput
+    image_file_filter: ImageFileFilterInput
+    "Filter by related images that meet this criteria"
+    images_filter: ImageFilterType
+    "Filter by modification time"
+    mod_time: TimestampCriterionInput
+    parent_folder: HierarchicalMultiCriterionInput
+    path: StringCriterionInput
+    scene_count: IntCriterionInput
+    "Filter by related scenes that meet this criteria"
+    scenes_filter: SceneFilterType
+    "Filter by last update time"
+    updated_at: TimestampCriterionInput
+    video_file_filter: VideoFileFilterInput
+    zip_file: MultiCriterionInput
+}
+
 input FileSetFingerprintsInput {
     "only supplied fingerprint types will be modified"
     fingerprints: [SetFingerprintsInput!]!
@@ -2405,10 +2498,37 @@ input FindJobInput {
     id: ID!
 }
 
+input FingerprintFilterInput {
+    "Hamming distance - defaults to 0"
+    distance: Int
+    type: String!
+    value: String!
+}
+
 input FloatCriterionInput {
     modifier: CriterionModifier!
     value: Float!
     value2: Float
+}
+
+input FolderFilterType {
+    AND: FolderFilterType
+    NOT: FolderFilterType
+    OR: FolderFilterType
+    "Filter by creation time"
+    created_at: TimestampCriterionInput
+    "Filter by files that meet this criteria"
+    files_filter: FileFilterType
+    "Filter by related galleries that meet this criteria"
+    galleries_filter: GalleryFilterType
+    gallery_count: IntCriterionInput
+    "Filter by modification time"
+    mod_time: TimestampCriterionInput
+    parent_folder: HierarchicalMultiCriterionInput
+    path: StringCriterionInput
+    "Filter by last update time"
+    updated_at: TimestampCriterionInput
+    zip_file: MultiCriterionInput
 }
 
 input GalleryAddInput {
@@ -2763,6 +2883,12 @@ input ImageDestroyInput {
     id: ID!
 }
 
+input ImageFileFilterInput {
+    format: StringCriterionInput
+    orientation: OrientationCriterionInput
+    resolution: ResolutionCriterionInput
+}
+
 input ImageFilterType {
     AND: ImageFilterType
     NOT: ImageFilterType
@@ -3071,6 +3197,8 @@ input PerformerFilterType {
     gallery_count: IntCriterionInput
     "Filter by gender"
     gender: GenderCriterionInput
+    "Filter by groups where performer appears in scene"
+    groups: HierarchicalMultiCriterionInput
     "Filter by hair color"
     hair_color: StringCriterionInput
     "Filter by height in cm"
@@ -3727,6 +3855,7 @@ input StashBoxFingerprintSubmissionInput {
 input StashBoxInput {
     api_key: String!
     endpoint: String!
+    max_requests_per_minute: Int
     name: String!
 }
 
@@ -3957,4 +4086,19 @@ input TimestampCriterionInput {
     modifier: CriterionModifier!
     value: String!
     value2: String
+}
+
+input VideoFileFilterInput {
+    audio_codec: StringCriterionInput
+    bitrate: IntCriterionInput
+    captions: StringCriterionInput
+    "in seconds"
+    duration: IntCriterionInput
+    format: StringCriterionInput
+    framerate: IntCriterionInput
+    interactive: Boolean
+    interactive_speed: IntCriterionInput
+    orientation: OrientationCriterionInput
+    resolution: ResolutionCriterionInput
+    video_codec: StringCriterionInput
 }
