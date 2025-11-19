@@ -2,9 +2,10 @@ package heresphere
 
 import (
 	"context"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/library"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func newPlayback(vd *library.VideoData) *playbackState {
@@ -18,7 +19,7 @@ func newPlayback(vd *library.VideoData) *playbackState {
 
 func (ps *playbackState) handleStop(ctx context.Context, libraryService *library.Service, minPlayFraction *float64) {
 	if ps.isPlaying {
-		currentPlayDuration := time.Now().Sub(ps.lastPlayTime)
+		currentPlayDuration := time.Since(ps.lastPlayTime)
 		ps.accumulatedPlayTime += currentPlayDuration
 		if !ps.thresholdReached && minPlayFraction != nil && ps.accumulatedPlayTime.Seconds() >= ps.videoDuration*(*minPlayFraction) {
 			ps.thresholdReached = true

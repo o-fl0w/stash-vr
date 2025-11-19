@@ -244,6 +244,10 @@ func getFields(vd *library.VideoData) []tagDto {
 	}
 	tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%s", internal.LegendMetaRating, seperator, rating)})
 
+	if vd.SceneParts.Interactive {
+		tags = append(tags, tagDto{Name: fmt.Sprintf("%s%s%v", internal.LegendMetaInteractive, seperator, vd.SceneParts.Interactive)})
+	}
+
 	return tags
 }
 

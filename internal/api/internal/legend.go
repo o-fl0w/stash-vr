@@ -7,11 +7,12 @@ var (
 	LegendSceneStudio = "Studio"
 	LegendSceneGroup  = "%"
 
-	LegendMetaOCount     = "O-Count"
-	LegendMetaOrganized  = "Organized"
-	LegendMetaPlayCount  = "Played"
-	LegendMetaResolution = "Resolution"
-	LegendMetaRating     = "Rating"
+	LegendMetaOCount      = "O-Count"
+	LegendMetaOrganized   = "Organized"
+	LegendMetaPlayCount   = "Played"
+	LegendMetaResolution  = "Resolution"
+	LegendMetaRating      = "Rating"
+	LegendMetaInteractive = "Interactive"
 
 	LegendSummary   = "Summary"
 	LegendSummaryId = "SummaryId"
