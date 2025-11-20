@@ -72,6 +72,7 @@ func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error
 
 	setStreamSources(vd, &dto)
 	setMarkers(vd, &dto)
+	set3DFormat(vd, &dto)
 
 	return &dto, nil
 }
@@ -106,5 +107,45 @@ func setMarkers(vd *library.VideoData, dto *videoDataDto) {
 			Name: sb.String(),
 		}
 		dto.TimeStamps = append(dto.TimeStamps, ts)
+	}
+}
+
+func set3DFormat(vd *library.VideoData, dto *videoDataDto) {
+	for _, tag := range vd.SceneParts.Tags {
+		switch tag.Name {
+		case "DOME":
+			dto.Is3d = true
+			dto.ScreenType = "dome"
+			dto.StereoMode = "sbs"
+			continue
+		case "SPHERE":
+			dto.Is3d = true
+			dto.ScreenType = "sphere"
+			dto.StereoMode = "sbs"
+			continue
+		case "FISHEYE":
+			dto.Is3d = true
+			dto.ScreenType = "fisheye"
+			dto.StereoMode = "sbs"
+			continue
+		case "MKX200":
+			dto.Is3d = true
+			dto.ScreenType = "mkx200"
+			dto.StereoMode = "sbs"
+			continue
+		case "RF52":
+			dto.Is3d = true
+			dto.ScreenType = "rf52"
+			dto.StereoMode = "cuv"
+			continue
+		case "SBS":
+			dto.Is3d = true
+			dto.StereoMode = "sbs"
+			continue
+		case "TB":
+			dto.Is3d = true
+			dto.StereoMode = "tb"
+			continue
+		}
 	}
 }

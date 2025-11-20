@@ -26,6 +26,10 @@ type videoDataDto struct {
 	Favorites      *int          `json:"favorites,omitempty"`
 	Comments       *int          `json:"comments,omitempty"`
 	IsFavorite     *bool         `json:"isFavorite,omitempty"`
+	Projection     string        `json:"projection,omitempty"`
+	Stereo         string        `json:"stereo,omitempty"`
+	Fov            float32       `json:"fov,omitempty"`
+	Lens           string        `json:"lens,omitempty"`
 	EventServer    *string       `json:"eventServer,omitempty"`
 	Scripts        []scriptDto   `json:"scripts,omitempty"`
 	Tags           []tagDto      `json:"tags,omitempty"`
@@ -109,6 +113,8 @@ func buildVideoData(ctx context.Context, vd *library.VideoData, baseUrl string) 
 
 	setMediaSources(vd, &dto)
 
+	set3DFormat(vd, &dto)
+
 	setScripts(vd, &dto)
 
 	setSubtitles(vd, &dto)
@@ -154,6 +160,48 @@ func setScripts(vd *library.VideoData, dto *videoDataDto) {
 		Name: "Script-" + vd.Title(),
 		Url:  stash.ApiKeyed(*vd.SceneParts.Paths.Funscript),
 	})
+}
+
+func set3DFormat(vd *library.VideoData, dto *videoDataDto) {
+	for _, t := range vd.SceneParts.Tags {
+		switch t.Name {
+		case "DOME":
+			dto.Projection = "equirectangular"
+			dto.Stereo = "sbs"
+			continue
+		case "SPHERE":
+			dto.Projection = "equirectangular360"
+			dto.Stereo = "sbs"
+			continue
+		case "FISHEYE":
+			dto.Projection = "fisheye"
+			dto.Stereo = "sbs"
+			continue
+		case "MKX200":
+			dto.Projection = "fisheye"
+			dto.Stereo = "sbs"
+			dto.Lens = "MKX200"
+			dto.Fov = 200.0
+			continue
+		case "RF52":
+			dto.Projection = "fisheye"
+			dto.Stereo = "sbs"
+			dto.Fov = 190.0
+			continue
+		case "CUBEMAP":
+			dto.Projection = "cubemap"
+			dto.Stereo = "sbs"
+		case "EAC":
+			dto.Projection = "equiangularCubemap"
+			dto.Stereo = "sbs"
+		case "SBS":
+			dto.Stereo = "sbs"
+			continue
+		case "TB":
+			dto.Stereo = "tb"
+			continue
+		}
+	}
 }
 
 func setMediaSources(vd *library.VideoData, dto *videoDataDto) {
