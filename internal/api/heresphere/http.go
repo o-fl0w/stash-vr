@@ -20,11 +20,6 @@ type httpHandler struct {
 }
 
 var minPlayFraction *float64
-var shouldRecordActivity bool
-
-func hasUsername(req *http.Request) bool {
-	return req.Header.Get("Auth-Token") != ""
-}
 
 func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
@@ -49,12 +44,6 @@ func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 	}()
 
 	dto, err := buildIndex(sections, baseUrl)
-	if hasUsername(req) {
-		shouldRecordActivity = true
-		dto.Access = 1
-	} else {
-		shouldRecordActivity = false
-	}
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to build index")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -262,10 +251,6 @@ func (h *httpHandler) processIncomingTags(ctx context.Context, videoId string, v
 }
 
 func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
-	if !shouldRecordActivity {
-		return
-	}
-
 	ctx := req.Context()
 
 	ev, err := internal.UnmarshalBody[playbackEvent](req)

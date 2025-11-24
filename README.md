@@ -80,9 +80,6 @@ Browse to `http://<host>:9666` using a supported video player. You'll be present
 ### HereSphere
 ##### Two-way sync
 To enable two-way sync with Stash the relevant toggles (`Overwrite tags` etc.) in the cogwheel at the bottom right of preview view in HereSphere needs to be on.
-
-To enable update of play duration and count you need to be "logged in" (using any value for username and password) in HereSphere. "Log out" to disable updates. 
-
 #### Manage metadata
 Scene metadata is handled using `Video Tags` in HereSphere. Both for presentation and making changes.
 
