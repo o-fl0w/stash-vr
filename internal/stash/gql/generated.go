@@ -189,6 +189,11 @@ func (v *FindAllTagsFindTagsFindTagsResultTypeTagsTag) GetSort_name() string {
 	return v.TagParts.Sort_name
 }
 
+// GetAliases returns FindAllTagsFindTagsFindTagsResultTypeTagsTag.Aliases, and is useful for accessing the field via an interface.
+func (v *FindAllTagsFindTagsFindTagsResultTypeTagsTag) GetAliases() []string {
+	return v.TagParts.Aliases
+}
+
 // GetParents returns FindAllTagsFindTagsFindTagsResultTypeTagsTag.Parents, and is useful for accessing the field via an interface.
 func (v *FindAllTagsFindTagsFindTagsResultTypeTagsTag) GetParents() []*TagPartsParentsTag {
 	return v.TagParts.Parents
@@ -226,6 +231,8 @@ type __premarshalFindAllTagsFindTagsFindTagsResultTypeTagsTag struct {
 
 	Sort_name string `json:"sort_name"`
 
+	Aliases []string `json:"aliases"`
+
 	Parents []*TagPartsParentsTag `json:"parents"`
 }
 
@@ -243,6 +250,7 @@ func (v *FindAllTagsFindTagsFindTagsResultTypeTagsTag) __premarshalJSON() (*__pr
 	retval.Id = v.TagParts.Id
 	retval.Name = v.TagParts.Name
 	retval.Sort_name = v.TagParts.Sort_name
+	retval.Aliases = v.TagParts.Aliases
 	retval.Parents = v.TagParts.Parents
 	return &retval, nil
 }
@@ -941,6 +949,9 @@ func (v *FindTagsFindTagsFindTagsResultTypeTagsTag) GetSort_name() string {
 	return v.TagParts.Sort_name
 }
 
+// GetAliases returns FindTagsFindTagsFindTagsResultTypeTagsTag.Aliases, and is useful for accessing the field via an interface.
+func (v *FindTagsFindTagsFindTagsResultTypeTagsTag) GetAliases() []string { return v.TagParts.Aliases }
+
 // GetParents returns FindTagsFindTagsFindTagsResultTypeTagsTag.Parents, and is useful for accessing the field via an interface.
 func (v *FindTagsFindTagsFindTagsResultTypeTagsTag) GetParents() []*TagPartsParentsTag {
 	return v.TagParts.Parents
@@ -980,6 +991,8 @@ type __premarshalFindTagsFindTagsFindTagsResultTypeTagsTag struct {
 
 	Sort_name string `json:"sort_name"`
 
+	Aliases []string `json:"aliases"`
+
 	Parents []*TagPartsParentsTag `json:"parents"`
 }
 
@@ -998,6 +1011,7 @@ func (v *FindTagsFindTagsFindTagsResultTypeTagsTag) __premarshalJSON() (*__prema
 	retval.Id = v.TagParts.Id
 	retval.Name = v.TagParts.Name
 	retval.Sort_name = v.TagParts.Sort_name
+	retval.Aliases = v.TagParts.Aliases
 	retval.Parents = v.TagParts.Parents
 	return &retval, nil
 }
@@ -3337,6 +3351,7 @@ type TagParts struct {
 	Name string `json:"name"`
 	// Value that does not appear in the UI but overrides name for sorting
 	Sort_name string                `json:"sort_name"`
+	Aliases   []string              `json:"aliases"`
 	Parents   []*TagPartsParentsTag `json:"parents"`
 }
 
@@ -3348,6 +3363,9 @@ func (v *TagParts) GetName() string { return v.Name }
 
 // GetSort_name returns TagParts.Sort_name, and is useful for accessing the field via an interface.
 func (v *TagParts) GetSort_name() string { return v.Sort_name }
+
+// GetAliases returns TagParts.Aliases, and is useful for accessing the field via an interface.
+func (v *TagParts) GetAliases() []string { return v.Aliases }
 
 // GetParents returns TagParts.Parents, and is useful for accessing the field via an interface.
 func (v *TagParts) GetParents() []*TagPartsParentsTag { return v.Parents }
@@ -3373,6 +3391,9 @@ func (v *TagPartsArrayTagsTag) GetName() string { return v.TagParts.Name }
 
 // GetSort_name returns TagPartsArrayTagsTag.Sort_name, and is useful for accessing the field via an interface.
 func (v *TagPartsArrayTagsTag) GetSort_name() string { return v.TagParts.Sort_name }
+
+// GetAliases returns TagPartsArrayTagsTag.Aliases, and is useful for accessing the field via an interface.
+func (v *TagPartsArrayTagsTag) GetAliases() []string { return v.TagParts.Aliases }
 
 // GetParents returns TagPartsArrayTagsTag.Parents, and is useful for accessing the field via an interface.
 func (v *TagPartsArrayTagsTag) GetParents() []*TagPartsParentsTag { return v.TagParts.Parents }
@@ -3409,6 +3430,8 @@ type __premarshalTagPartsArrayTagsTag struct {
 
 	Sort_name string `json:"sort_name"`
 
+	Aliases []string `json:"aliases"`
+
 	Parents []*TagPartsParentsTag `json:"parents"`
 }
 
@@ -3426,6 +3449,7 @@ func (v *TagPartsArrayTagsTag) __premarshalJSON() (*__premarshalTagPartsArrayTag
 	retval.Id = v.TagParts.Id
 	retval.Name = v.TagParts.Name
 	retval.Sort_name = v.TagParts.Sort_name
+	retval.Aliases = v.TagParts.Aliases
 	retval.Parents = v.TagParts.Parents
 	return &retval, nil
 }
@@ -3781,6 +3805,7 @@ fragment TagParts on Tag {
 	id
 	name
 	sort_name
+	aliases
 	parents {
 		id
 		name
@@ -4019,6 +4044,7 @@ fragment TagParts on Tag {
 	id
 	name
 	sort_name
+	aliases
 	parents {
 		id
 		name
@@ -4130,6 +4156,7 @@ fragment TagParts on Tag {
 	id
 	name
 	sort_name
+	aliases
 	parents {
 		id
 		name
@@ -4249,6 +4276,7 @@ fragment TagParts on Tag {
 	id
 	name
 	sort_name
+	aliases
 	parents {
 		id
 		name

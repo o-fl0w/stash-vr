@@ -152,6 +152,7 @@ fragment TagParts on Tag{
     id,name,
     # @genqlient(pointer: false)
     sort_name
+    aliases
     parents {
         id name
         # @genqlient(pointer: false)

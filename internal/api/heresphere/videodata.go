@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"stash-vr/internal/api/heatmap"
+	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/library"
 	"stash-vr/internal/stash"
@@ -164,40 +165,40 @@ func setScripts(vd *library.VideoData, dto *videoDataDto) {
 
 func set3DFormat(vd *library.VideoData, dto *videoDataDto) {
 	for _, t := range vd.SceneParts.Tags {
-		switch t.Name {
-		case "DOME":
+		switch {
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_DOME):
 			dto.Projection = "equirectangular"
 			dto.Stereo = "sbs"
 			continue
-		case "SPHERE":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_SPHERE):
 			dto.Projection = "equirectangular360"
 			dto.Stereo = "sbs"
 			continue
-		case "FISHEYE":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_FISHEYE):
 			dto.Projection = "fisheye"
 			dto.Stereo = "sbs"
 			continue
-		case "MKX200":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_MKX200):
 			dto.Projection = "fisheye"
 			dto.Stereo = "sbs"
 			dto.Lens = "MKX200"
 			dto.Fov = 200.0
 			continue
-		case "RF52":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_RF52):
 			dto.Projection = "fisheye"
 			dto.Stereo = "sbs"
 			dto.Fov = 190.0
 			continue
-		case "CUBEMAP":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_CUBEMAP):
 			dto.Projection = "cubemap"
 			dto.Stereo = "sbs"
-		case "EAC":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_EAC):
 			dto.Projection = "equiangularCubemap"
 			dto.Stereo = "sbs"
-		case "SBS":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_SBS):
 			dto.Stereo = "sbs"
 			continue
-		case "TB":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_TB):
 			dto.Stereo = "tb"
 			continue
 		}

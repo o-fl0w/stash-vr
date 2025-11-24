@@ -20,3 +20,16 @@ var (
 	CommandIncrementO       = "/o"
 	CommandSetOrganizedTrue = "/org"
 )
+
+var (
+	TagVR_DOME    = "DOME"
+	TagVR_SPHERE  = "SPHERE"
+	TagVR_FISHEYE = "FISHEYE"
+	TagVR_MKX200  = "MKX200"
+	TagVR_RF52    = "RF52"
+	TagVR_SBS     = "SBS"
+	TagVR_TB      = "TB"
+
+	TagVR_CUBEMAP = "CUBEMAP"
+	TagVR_EAC     = "EAC"
+)

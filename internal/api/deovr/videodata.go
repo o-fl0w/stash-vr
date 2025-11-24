@@ -3,6 +3,7 @@ package deovr
 import (
 	"fmt"
 	"stash-vr/internal/api/heatmap"
+	"stash-vr/internal/api/internal"
 	"stash-vr/internal/library"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
@@ -111,38 +112,38 @@ func setMarkers(vd *library.VideoData, dto *videoDataDto) {
 }
 
 func set3DFormat(vd *library.VideoData, dto *videoDataDto) {
-	for _, tag := range vd.SceneParts.Tags {
-		switch tag.Name {
-		case "DOME":
+	for _, t := range vd.SceneParts.Tags {
+		switch {
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_DOME):
 			dto.Is3d = true
 			dto.ScreenType = "dome"
 			dto.StereoMode = "sbs"
 			continue
-		case "SPHERE":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_SPHERE):
 			dto.Is3d = true
 			dto.ScreenType = "sphere"
 			dto.StereoMode = "sbs"
 			continue
-		case "FISHEYE":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_FISHEYE):
 			dto.Is3d = true
 			dto.ScreenType = "fisheye"
 			dto.StereoMode = "sbs"
 			continue
-		case "MKX200":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_MKX200):
 			dto.Is3d = true
 			dto.ScreenType = "mkx200"
 			dto.StereoMode = "sbs"
 			continue
-		case "RF52":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_RF52):
 			dto.Is3d = true
 			dto.ScreenType = "rf52"
 			dto.StereoMode = "cuv"
 			continue
-		case "SBS":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_SBS):
 			dto.Is3d = true
 			dto.StereoMode = "sbs"
 			continue
-		case "TB":
+		case util.StrSliceEquals(t.Name, t.Aliases, internal.TagVR_TB):
 			dto.Is3d = true
 			dto.StereoMode = "tb"
 			continue
