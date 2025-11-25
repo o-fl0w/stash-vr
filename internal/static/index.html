@@ -1,19 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <title>Stash-VR</title>
-    <link href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAACOElEQVR42u2bS3LCMBBE8WxzGm7E
-0XKjnIZ1sqKKRRJsoxl1j17vqDJgd/f8JOtyAQAAAAAAAAAAACjD5nrjH59f38+f77er5bMEHkSA
-lIhAAMheLwU5ChOQTBc0nHynjqhlF+QUJQGppKA08h1SEYMYEZCbetSjwD4CXNeAWgjgTr68AF07
-HwsBXpH/cL+7SNYpaK9ICLAgsbZt6KjU89d1auIxiBEBde5XjIJ2EeBWH8KN2G6zgYwAI4jd634l
-EcOB/Az3q4hAF7R6FzS683Eb6rZO5P81dCmL0GY/gDfjBAvv47uvHD5TPDZk6IJy08reKFhKgMqh
-S30uiM7ud6gF0cX9nJARXXJQj4JNyfn323WrGLr23stSNeDIA/9G4BHnLrchk73ec+QatVTUakNG
-veeXFGDGWo6SUFH1sNUijSC3whTRzf17f0ulFkRH9zOInXCi8tCVKf60FHSkpTxDgMtcEDPcf4TY
-7CNKs2tBqKaekV2MsgihnHr2XMcZscSOpnJHbNZwNlSAyp2u5+sqSRudhkq39d5Zbq6Kvup3iaKS
-fKUlgFY1QKnzcRvOSoqwo/ttdsRGEVZZSJXmglBwUqdjp6VdkPt5XoWOKGY6Xz3PVwxnkeWelfAO
-F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
-/DyRqAHqNQD350bBBvlzRSAFuS1FAAAAAAAAAAAAAABb/ADP/f1z77EnFAAAAABJRU5ErkJggg==" rel="icon" type="image/png"/>
+    <link href="icon.png" rel="icon" type="image/png"/>
 </head>
 <style>
     .handle {
@@ -23,16 +13,24 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
         display: inline-block;
     }
 
-    summary{
+    summary {
         cursor: pointer;
     }
 
     tr.dragging {
         opacity: 0.6;
     }
+
+    .coverOk {
+        display: none
+    }
+
+    .coverErr {
+        display: none
+    }
 </style>
 <body>
-<h1>Stash-VR</h1>
+<h1><img src="icon.png" style="vertical-align: middle;">Stash-VR</h1>
 <samp>
     <table>
         <tr>
@@ -65,8 +63,16 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
             <td>{{.IsApiKeyProvided}}</td>
         </tr>
         <tr>
-            <td>Stash connection</td>
-            <td><b>{{.StashConnectionResponse}}</b></td>
+            <td>Stash-VR → Stash</td>
+            <td>
+                {{if eq .StashConnectionResponse "OK"}}
+                <span style="background: lime">{{.StashConnectionResponse}}</span>
+                {{else if eq .StashConnectionResponse "UNAUTHORIZED"}}
+                <span style="background: orange">Failed authorization: Verify that the correct Stash API Key is provided</span>
+                {{else}}
+                <span style="background: red">Network error: Verify that the provided Stash GraphQL url is correct and can be reached from Stash-VR</span>
+                {{end}}
+            </td>
         </tr>
         {{if not (eq .StashData nil)}}
         <tr>
@@ -93,6 +99,19 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
                 </details>
             </td>
         </tr>
+        <tr>
+            <td>Headset/Browser → Stash</td>
+            <td>
+                <img src="{{.StashData.SampleSceneCoverUrl}}"
+                     style="width: 0; height: 0;"
+                     onload="this.style.display='none';document.querySelectorAll('.coverOk').forEach(el => el.style.display='inline');"
+                     onerror="this.style.display='none';document.querySelectorAll('.coverErr').forEach(el => el.style.display='inline');">
+                <details class="coverErr"><summary style="background: red">Failed to reach Stash: Check your network settings and make sure <b>this headset</b> can reach Stash</summary>
+                    Error fetching <a href="{{.StashData.SampleSceneCoverUrl}}">{{.StashData.SampleSceneCoverUrl}}</a>
+                </details>
+                <span class="coverOk" style="display: none; background: lime">OK</span>
+            </td>
+        </tr>
         {{end}}
         <tr>
             <td>Generated sections</td>
@@ -106,30 +125,30 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
             <td>Distinct scenes</td>
             <td>{{.SceneCount}}</td>
         </tr>
+
     </table>
 </samp>
 <main>
     {{if eq .StashConnectionResponse "OK"}}
-    <p>
-        <mark style="background-color: #00ff00">All OK!</mark>
-    </p>
-    <p>Open this endpoint in your favorite supported VR video player to browse your library.</p>
-    {{else if eq .StashConnectionResponse "UNAUTHORIZED"}}
-    <p>
-        <mark style="background-color: #ffaa00">Failed authorization. <b>Verify that correct API Key is provided</b>
-        </mark>
-    </p>
-    {{else}}
-    <p>
-        <mark style="background-color: #ff0000">Stash-VR could not connect to Stash.</mark>
-    </p>
-    <p>Verify that provided Stash GraphQL url is correct and can be reached from Stash-VR
-    <p>
-    <p>For further troubleshooting <b>review the log output</b></p>
-    {{if not (or (eq .LogLevel "debug") (eq .LogLevel "trace")) }}
-    <p>Log level is set to "{{.LogLevel}}". For even further details <b>rerun Stash-VR with log level "debug"</b></p>
+    <div class="coverOk">
+        <p>Open and bookmark one of the endpoints below in your VR player to access your library:</p>
+        <ul>
+            <li><a href="/heresphere">/heresphere</a></li>
+            <li><a href="/deovr">/deovr</a></li>
+        </ul>
+    </div>
     {{end}}
-    {{end}}
+
+    {{if not (eq .StashConnectionResponse "OK")}}
+    <div>
+        {{else}}
+        <div class="coverErr">
+            {{end}}
+            <p>For troubleshooting <b>review the log output</b></p>
+            {{if not (or (eq .LogLevel "debug") (eq .LogLevel "trace")) }}
+            <p>Log level is set to "{{.LogLevel}}". For further details <b>rerun Stash-VR with log level "debug"</b></p>
+            {{end}}
+        </div>
 </main>
 {{if and .StashData .StashData.FilterOverrides}}
 <section>
@@ -149,7 +168,8 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
                 {{ range $i, $ov := .StashData.FilterOverrides }}
                 <tr data-id="{{$i}}">
                     <td><span class="handle" draggable="true" title="Drag">≡</span></td>
-                    <td><input type="checkbox" name="disabled" value="{{ $ov.ID }}" {{ if $ov.Disabled }}checked{{ end }}/>
+                    <td><input type="checkbox" name="disabled" value="{{ $ov.ID }}" {{ if $ov.Disabled }}checked{{ end
+                               }}/>
                     </td>
                     <td><samp>{{$ov.ID}}</samp><input type="hidden" name="id" value="{{ $ov.ID }}"/></td>
                     <td>
@@ -198,15 +218,6 @@ F9vKAigMZ4H7zQaxTuSPHrrOcMMpycu5BcApEdA59YwS4ShHRIDTIPafuqtNs6M6ohj1h9SNxAiA
     </script>
 </section>
 {{end}}
-<section>
-    <details>
-        <summary>Supported players</summary>
-        <ul>
-            <li>HereSphere</li>
-            <li>DeoVR</li>
-        </ul>
-    </details>
-</section>
 <footer><p><a href="https://github.com/o-fl0w/stash-vr" target="_blank">https://github.com/o-fl0w/stash-vr</a></p>
 </footer>
 

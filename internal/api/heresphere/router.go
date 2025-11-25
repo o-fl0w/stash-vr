@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/library"
+	"stash-vr/internal/static"
 )
 
 func Router(libraryService *library.Service) http.Handler {
@@ -14,6 +15,10 @@ func Router(libraryService *library.Service) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.SetHeader("HereSphere-JSON-Version", "1"))
 	r.Post("/", internal.LogRoute("index", httpHandler.indexHandler))
+	r.Get("/", internal.LogRoute("static", func(writer http.ResponseWriter, request *http.Request) {
+		http.ServeFileFS(writer, request, static.Fs, "loading.html")
+	}))
+
 	r.Post("/scan", internal.LogRoute("scan", httpHandler.scanHandler))
 	r.Post("/auth", http.NotFound)
 	r.Handle("/{videoId}", internal.LogRoute("videoData", internal.LogVideoId(httpHandler.videoDataHandler)))

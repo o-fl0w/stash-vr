@@ -13,17 +13,16 @@ import (
 	"stash-vr/internal/library"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/stash/gql"
+	"stash-vr/internal/static"
 	"sync"
 )
 
-//go:embed "index.html"
-var indexHtml string
-var indexTmpl = template.Must(template.New("index").Parse(indexHtml))
+var indexTmpl = template.Must(template.ParseFS(static.Fs, "index.html"))
 
 const (
-	ok           = "OK"
-	fail         = "FAIL"
-	unauthorized = "UNAUTHORIZED"
+	statusOk           = "OK"
+	statusError        = "ERROR"
+	statusUnauthorized = "UNAUTHORIZED"
 )
 
 type filterData struct {
@@ -39,9 +38,10 @@ type filterOverride struct {
 }
 
 type stashData struct {
-	Version         string
-	FilterData      []filterData
-	FilterOverrides []filterOverride
+	Version             string
+	FilterData          []filterData
+	FilterOverrides     []filterOverride
+	SampleSceneCoverUrl string
 }
 
 type indexData struct {
@@ -57,6 +57,14 @@ type indexData struct {
 	SectionCount            int
 	LinkCount               int
 	SceneCount              int
+}
+
+func sampleSceneCoverUrl(ctx context.Context, stashClient graphql.Client) (string, error) {
+	resp, err := gql.FindSampleSceneCover(ctx, stashClient)
+	if err != nil {
+		return "", err
+	}
+	return stash.ApiKeyed(*resp.FindScenes.Scenes[0].Paths.Screenshot), nil
 }
 
 func stashFilters(ctx context.Context, stashClient graphql.Client) ([]filterData, error) {
@@ -115,7 +123,7 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 			ForceHTTPS:              config.Application().ForceHTTPS,
 			StashGraphQLUrl:         config.Application().StashGraphQLUrl,
 			IsApiKeyProvided:        config.Application().StashApiKey != "",
-			StashConnectionResponse: fail,
+			StashConnectionResponse: statusError,
 		}
 
 		wg := sync.WaitGroup{}
@@ -127,18 +135,22 @@ func IndexHandler(libraryService *library.Service) http.HandlerFunc {
 				var gqlErr *graphql.HTTPError
 				if errors.As(err, &gqlErr) {
 					if gqlErr.StatusCode == 401 {
-						data.StashConnectionResponse = unauthorized
+						data.StashConnectionResponse = statusUnauthorized
 					}
 				}
 				log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve stash version")
 			} else {
-				data.StashConnectionResponse = ok
+				data.StashConnectionResponse = statusOk
 				data.StashData = &stashData{Version: version}
 				data.StashData.FilterData, err = stashFilters(r.Context(), libraryService.StashClient)
 				if err != nil {
 					log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve stash filters")
 				} else {
 					data.StashData.FilterOverrides = filterOverrideRows(r.Context(), data.StashData.FilterData)
+				}
+				data.StashData.SampleSceneCoverUrl, err = sampleSceneCoverUrl(r.Context(), libraryService.StashClient)
+				if err != nil {
+					log.Ctx(r.Context()).Warn().Err(err).Msg("Failed to retrieve sample scene cover url")
 				}
 			}
 		}()

@@ -360,6 +360,47 @@ func (v *FindPerformerByNameResponse) GetFindPerformers() *FindPerformerByNameFi
 	return v.FindPerformers
 }
 
+// FindSampleSceneCoverFindScenesFindScenesResultType includes the requested fields of the GraphQL type FindScenesResultType.
+type FindSampleSceneCoverFindScenesFindScenesResultType struct {
+	Scenes []*FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScene `json:"scenes"`
+}
+
+// GetScenes returns FindSampleSceneCoverFindScenesFindScenesResultType.Scenes, and is useful for accessing the field via an interface.
+func (v *FindSampleSceneCoverFindScenesFindScenesResultType) GetScenes() []*FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScene {
+	return v.Scenes
+}
+
+// FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScene includes the requested fields of the GraphQL type Scene.
+type FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScene struct {
+	Paths *FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScenePathsScenePathsType `json:"paths"`
+}
+
+// GetPaths returns FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScene.Paths, and is useful for accessing the field via an interface.
+func (v *FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScene) GetPaths() *FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScenePathsScenePathsType {
+	return v.Paths
+}
+
+// FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScenePathsScenePathsType includes the requested fields of the GraphQL type ScenePathsType.
+type FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScenePathsScenePathsType struct {
+	Screenshot *string `json:"screenshot"`
+}
+
+// GetScreenshot returns FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScenePathsScenePathsType.Screenshot, and is useful for accessing the field via an interface.
+func (v *FindSampleSceneCoverFindScenesFindScenesResultTypeScenesScenePathsScenePathsType) GetScreenshot() *string {
+	return v.Screenshot
+}
+
+// FindSampleSceneCoverResponse is returned by FindSampleSceneCover on success.
+type FindSampleSceneCoverResponse struct {
+	// A function which queries Scene objects
+	FindScenes *FindSampleSceneCoverFindScenesFindScenesResultType `json:"findScenes"`
+}
+
+// GetFindScenes returns FindSampleSceneCoverResponse.FindScenes, and is useful for accessing the field via an interface.
+func (v *FindSampleSceneCoverResponse) GetFindScenes() *FindSampleSceneCoverFindScenesFindScenesResultType {
+	return v.FindScenes
+}
+
 // FindSavedSceneFiltersFindSavedFiltersSavedFilter includes the requested fields of the GraphQL type SavedFilter.
 type FindSavedSceneFiltersFindSavedFiltersSavedFilter struct {
 	SavedFilterParts `json:"-"`
@@ -3893,6 +3934,40 @@ func FindPerformerByName(
 	}
 
 	data_ = &FindPerformerByNameResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by FindSampleSceneCover.
+const FindSampleSceneCover_Operation = `
+query FindSampleSceneCover {
+	findScenes(filter: {per_page:1,sort:"random"}, scene_filter: {NOT:{is_missing:"cover"}}) {
+		scenes {
+			paths {
+				screenshot
+			}
+		}
+	}
+}
+`
+
+func FindSampleSceneCover(
+	ctx_ context.Context,
+	client_ graphql.Client,
+) (data_ *FindSampleSceneCoverResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "FindSampleSceneCover",
+		Query:  FindSampleSceneCover_Operation,
+	}
+
+	data_ = &FindSampleSceneCoverResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

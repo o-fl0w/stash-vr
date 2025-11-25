@@ -100,6 +100,19 @@ query FindAllTags{
     }}
 }
 
+query FindSampleSceneCover{
+    findScenes(
+        filter: { per_page: 1, sort: "random" }
+        scene_filter: { NOT: { is_missing: "cover" } }
+    ) {
+        scenes {
+            paths {
+                screenshot
+            }
+        }
+    }
+}
+
 fragment SavedFilterParts on SavedFilter{
     id, name, mode, find_filter {sort, direction}, object_filter
 }
