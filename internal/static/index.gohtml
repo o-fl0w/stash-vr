@@ -11,6 +11,7 @@
         user-select: none;
         padding: 2px 6px;
         display: inline-block;
+        touch-action: none;
     }
 
     summary {
@@ -106,11 +107,17 @@
                      style="width: 0; height: 0;"
                      onload="this.style.display='none';document.querySelectorAll('.coverOk').forEach(el => el.style.display='inline');"
                      onerror="this.style.display='none';document.querySelectorAll('.coverErr').forEach(el => el.style.display='inline');">
-                <details class="coverErr"><summary style="background: red">Failed to reach Stash: Check your network settings and make sure <b>this headset</b> can reach Stash</summary>
-                    Error fetching <a href="{{.StashData.SampleSceneCoverUrl}}">{{.StashData.SampleSceneCoverUrl}}</a>
-                </details>
-                <span class="coverOk" style="display: none; background: lime">OK</span>
+                <span class="coverOk" style="background: lime">OK</span>
+                <span class="coverErr" style="background: red">Failed to reach Stash: Check your network settings and make sure <b>this headset</b> can reach Stash</span>
             </td>
+        </tr>
+        <tr>
+            <td>Sample cover</td>
+            <td>
+                <details>
+                    <summary>URL</summary>
+                <a href="{{.StashData.SampleSceneCoverUrl}}">{{.StashData.SampleSceneCoverUrl}}</a>
+            </details></td>
         </tr>
         {{end}}
         <tr>
@@ -131,19 +138,26 @@
 <main>
     {{if eq .StashConnectionResponse "OK"}}
     <div class="coverOk">
-        <p>Open and bookmark one of the endpoints below in your VR player to access your library:</p>
+    <p>
+        <mark style="background-color: lime">All OK!</mark>
+    </p>
+        <p>Open this page in your VR player and follow the steps for the app you use:</p>
+
+        <p><strong>HereSphere:</strong></p>
         <ul>
-            <li><a href="/heresphere">/heresphere</a></li>
-            <li><a href="/deovr">/deovr</a></li>
+            <li>Open the following URL in HereSphere: <a href="/heresphere">/heresphere</a></li>
+            <li>Bookmark it in HereSphere to access your library later.</li>
+        </ul>
+
+        <p><strong>DeoVR:</strong></p>
+        <ul>
+            <li>Open this page inside DeoVR. DeoVR should automatically detect the library and open its interface.</li>
+            <li>If it does not, press the play button in the top-right corner of DeoVR.</li>
         </ul>
     </div>
     {{end}}
 
-    {{if not (eq .StashConnectionResponse "OK")}}
-    <div>
-        {{else}}
-        <div class="coverErr">
-            {{end}}
+    <div {{if eq .StashConnectionResponse "OK"}}class="coverErr"{{end}}>
             <p>For troubleshooting <b>review the log output</b></p>
             {{if not (or (eq .LogLevel "debug") (eq .LogLevel "trace")) }}
             <p>Log level is set to "{{.LogLevel}}". For further details <b>rerun Stash-VR with log level "debug"</b></p>
@@ -153,7 +167,7 @@
 {{if and .StashData .StashData.FilterOverrides}}
 <section>
     <details>
-        <summary>Configure filter overrides</summary>
+        <summary><strong>Configure filter overrides</strong></summary>
         <form method="POST" action="/filters" id="filters">
             <table>
                 <thead>
@@ -168,8 +182,8 @@
                 {{ range $i, $ov := .StashData.FilterOverrides }}
                 <tr data-id="{{$i}}">
                     <td><span class="handle" draggable="true" title="Drag">≡</span></td>
-                    <td><input type="checkbox" name="disabled" value="{{ $ov.ID }}" {{ if $ov.Disabled }}checked{{ end
-                               }}/>
+                    <td>
+                        <input type="checkbox" name="disabled" value="{{ $ov.ID }}" {{ if $ov.Disabled }}checked{{ end }}/>
                     </td>
                     <td><samp>{{$ov.ID}}</samp><input type="hidden" name="id" value="{{ $ov.ID }}"/></td>
                     <td>
@@ -197,6 +211,7 @@
             if (!handle) return;
             dragRow = handle.closest('tr');
             e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', '');
             dragRow.classList.add('dragging');
         });
 
@@ -215,6 +230,52 @@
             tbody.insertBefore(dragRow, before ? overRow : overRow.nextSibling);
         });
         tbody.addEventListener('drop', (e) => e.preventDefault());
+
+        const isTouchLike = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        if (isTouchLike) {
+            let touchDragging = false;
+            let touchRow = null;
+
+            function moveRowToTouchPosition(touch) {
+                const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (!el) return;
+                const overRow = el.closest('tr');
+                if (!overRow || overRow === touchRow) return;
+                const rect = overRow.getBoundingClientRect();
+                const before = (touch.clientY - rect.top) < rect.height / 2;
+                tbody.insertBefore(touchRow, before ? overRow : overRow.nextSibling);
+            }
+
+            tbody.addEventListener('touchstart', (e) => {
+                const handle = e.target.closest('.handle');
+                if (!handle) return;
+
+                touchRow = handle.closest('tr');
+                touchDragging = true;
+                touchRow.classList.add('dragging');
+                e.preventDefault();
+            }, { passive: false });
+
+            tbody.addEventListener('touchmove', (e) => {
+                if (!touchDragging || !touchRow) return;
+                const touch = e.touches[0];
+                if (!touch) return;
+                moveRowToTouchPosition(touch);
+                e.preventDefault();
+            }, { passive: false });
+
+            function endTouchDrag(e) {
+                if (!touchDragging) return;
+                touchDragging = false;
+                if (touchRow) touchRow.classList.remove('dragging');
+                touchRow = null;
+                if (e) e.preventDefault();
+            }
+
+            tbody.addEventListener('touchend', endTouchDrag, { passive: false });
+            tbody.addEventListener('touchcancel', endTouchDrag, { passive: false });
+        }
     </script>
 </section>
 {{end}}

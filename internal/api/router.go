@@ -13,7 +13,6 @@ import (
 	"stash-vr/internal/library"
 	"stash-vr/internal/static"
 	"stash-vr/internal/util"
-	"strings"
 	"time"
 )
 
@@ -32,25 +31,11 @@ func Router(libraryService *library.Service) *chi.Mux {
 	router.Post("/filters", logMod("filters", web.FiltersUpdateHandler()).ServeHTTP)
 	router.Get("/cover/{videoId}", logMod("heatmap", heatmap.CoverHandler(libraryService)).ServeHTTP)
 
-	router.Get("/", rootHandler(libraryService))
+	router.Get("/", web.IndexHandler(libraryService).ServeHTTP)
 
 	router.Get("/*", http.FileServerFS(static.Fs).ServeHTTP)
 
 	return router
-}
-
-func rootHandler(libraryService *library.Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		userAgent := r.Header.Get("User-Agent")
-		log.Ctx(r.Context()).Debug().Str("user-agent", userAgent).Send()
-
-		if strings.Contains(userAgent, "HereSphere") {
-			log.Ctx(r.Context()).Trace().Msg("Redirecting to /heresphere")
-			http.Redirect(w, r, "/heresphere", 307)
-		} else {
-			logMod("web", web.IndexHandler(libraryService)).ServeHTTP(w, r)
-		}
-	}
 }
 
 func logMod(value string, next http.Handler) http.Handler {
@@ -69,7 +54,7 @@ func requestLogger(next http.Handler) http.Handler {
 			Str("method", r.Method).
 			Str("url", url).Logger()
 
-		baseLogger.Trace().
+		baseLogger.Debug().
 			Str("proto", r.Proto).
 			Str("user_agent", r.UserAgent()).
 			Msg("Incoming request")

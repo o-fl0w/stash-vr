@@ -17,7 +17,7 @@ import (
 	"sync"
 )
 
-var indexTmpl = template.Must(template.ParseFS(static.Fs, "index.html"))
+var indexTmpl = template.Must(template.ParseFS(static.Fs, "index.gohtml"))
 
 const (
 	statusOk           = "OK"
