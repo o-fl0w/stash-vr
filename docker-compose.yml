@@ -6,22 +6,21 @@ services:
     restart: unless-stopped
     ports:
       - "9666:9666"
+    volumes:
+      - /path/in/host:/config
     environment:
       STASH_GRAPHQL_URL: "http://localhost:9999/graphql"
       #STASH_API_KEY: "xxx"
+
+      ## For configurations in status page to persist a path must be provided that Stash-VR has write access to.
+      #CONFIG_PATH: /config
+
       #FAVORITE_TAG: "FAVORITE"
-
-      ## FILTERS can be either 'frontpage' or a comma separated list of filter ids.
-      ## If left empty all saved filters will be shown.
-      #FILTERS: "2,3,7"     # comma separated list of filter ids to show
-      #FILTERS: "frontpage" # show only scene filters from front page
-
-      #ALLOW_SYNC_MARKERS: "true"
+      #EXCLUDE_SORT_NAME: "hidden"
       #HEATMAP_HEIGHT_PX: 45
-      #DISABLE_PLAY_COUNT: "true"
-      #EVENT_SERVER_URL: "http://192.168.0.127:8099":"
+
+      #FORCE_HTTPS: "true"
 
       #LOG_LEVEL: "debug"
       #DISABLE_LOG_COLOR: "true"
-
-      #FORCE_HTTPS: "true"
+      #DISABLE_REDACT=true
