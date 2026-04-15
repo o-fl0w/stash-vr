@@ -3,7 +3,6 @@ package heresphere
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
@@ -11,6 +10,8 @@ import (
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type videoDataDto struct {
@@ -93,7 +94,7 @@ func buildVideoData(ctx context.Context, vd *library.VideoData, baseUrl string) 
 	}
 
 	if vd.SceneParts.Date != nil {
-		dto.DateReleased = vd.SceneParts.Date
+		dto.DateReleased = util.Ptr(util.NormalizeDate(*vd.SceneParts.Date))
 	}
 
 	if vd.SceneParts.Rating100 != nil {
