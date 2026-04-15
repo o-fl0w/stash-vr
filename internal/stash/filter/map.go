@@ -2,6 +2,7 @@ package filter
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -53,6 +54,20 @@ func Get[T any](m any, path string) *T {
 		default:
 			return nil
 		}
+
+	case bool:
+		var out string
+		if s, ok := current.(string); ok {
+			out = s
+		} else {
+			out = fmt.Sprintf("%v", current)
+		}
+		pb, err := strconv.ParseBool(out)
+		if err != nil {
+			return nil
+		}
+		v := any(pb).(T)
+		return &v
 
 	default:
 		if v, ok := current.(T); ok {
