@@ -2,10 +2,11 @@ package heresphere
 
 import (
 	"context"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/library"
 	"stash-vr/internal/util"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type scanDocDto struct {
@@ -29,14 +30,14 @@ type scanDataDto struct {
 func buildScan(ctx context.Context, vds map[string]*library.VideoData, baseUrl string) (*scanDocDto, error) {
 	scanDoc := scanDocDto{ScanData: make([]scanDataDto, 0, len(vds))}
 	for _, vd := range vds {
-		scanData := videoDataToScanDataDto(vd, baseUrl)
+		scanData := videoDataToScanDataDto(ctx, vd, baseUrl)
 		scanDoc.ScanData = append(scanDoc.ScanData, scanData)
 	}
 	log.Ctx(ctx).Debug().Int("scenes", len(scanDoc.ScanData)).Msg("/scan")
 	return &scanDoc, nil
 }
 
-func videoDataToScanDataDto(vd *library.VideoData, baseUrl string) scanDataDto {
+func videoDataToScanDataDto(ctx context.Context, vd *library.VideoData, baseUrl string) scanDataDto {
 	id := vd.Id()
 	scanData := scanDataDto{
 		id:        id,
@@ -47,7 +48,7 @@ func videoDataToScanDataDto(vd *library.VideoData, baseUrl string) scanDataDto {
 		Tags:      getTags(vd),
 	}
 	if vd.SceneParts.Date != nil {
-		scanData.DateReleased = vd.SceneParts.Date
+		scanData.DateReleased = util.Ptr(util.NormalizeDate(*vd.SceneParts.Date))
 	}
 	if vd.SceneParts.Rating100 != nil {
 		scanData.Rating = util.Ptr(float32(*vd.SceneParts.Rating100) / 20.0)

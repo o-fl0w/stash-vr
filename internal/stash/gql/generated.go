@@ -10,28 +10,28 @@ import (
 	"github.com/Khan/genqlient/graphql"
 )
 
+type CircumcisedEnum string
+
+const (
+	CircumcisedEnumCut   CircumcisedEnum = "CUT"
+	CircumcisedEnumUncut CircumcisedEnum = "UNCUT"
+)
+
+var AllCircumcisedEnum = []CircumcisedEnum{
+	CircumcisedEnumCut,
+	CircumcisedEnumUncut,
+}
+
 type CircumcisionCriterionInput struct {
 	Modifier CriterionModifier `json:"modifier"`
-	Value    []CircumisedEnum  `json:"value"`
+	Value    []CircumcisedEnum `json:"value"`
 }
 
 // GetModifier returns CircumcisionCriterionInput.Modifier, and is useful for accessing the field via an interface.
 func (v *CircumcisionCriterionInput) GetModifier() CriterionModifier { return v.Modifier }
 
 // GetValue returns CircumcisionCriterionInput.Value, and is useful for accessing the field via an interface.
-func (v *CircumcisionCriterionInput) GetValue() []CircumisedEnum { return v.Value }
-
-type CircumisedEnum string
-
-const (
-	CircumisedEnumCut   CircumisedEnum = "CUT"
-	CircumisedEnumUncut CircumisedEnum = "UNCUT"
-)
-
-var AllCircumisedEnum = []CircumisedEnum{
-	CircumisedEnumCut,
-	CircumisedEnumUncut,
-}
+func (v *CircumcisionCriterionInput) GetValue() []CircumcisedEnum { return v.Value }
 
 type CriterionModifier string
 
@@ -107,6 +107,150 @@ func (v *DateCriterionInput) GetValue() string { return v.Value }
 
 // GetValue2 returns DateCriterionInput.Value2, and is useful for accessing the field via an interface.
 func (v *DateCriterionInput) GetValue2() *string { return v.Value2 }
+
+type DuplicationCriterionInput struct {
+	// Currently unimplemented. Intended for phash distance matching.
+	Distance   *int  `json:"distance"`
+	Duplicated *bool `json:"duplicated"`
+	// Filter by phash duplication
+	Phash *bool `json:"phash"`
+	// Filter by Stash ID duplication
+	Stash_id *bool `json:"stash_id"`
+	// Filter by title duplication
+	Title *bool `json:"title"`
+	// Filter by URL duplication
+	Url *bool `json:"url"`
+}
+
+// GetDistance returns DuplicationCriterionInput.Distance, and is useful for accessing the field via an interface.
+func (v *DuplicationCriterionInput) GetDistance() *int { return v.Distance }
+
+// GetDuplicated returns DuplicationCriterionInput.Duplicated, and is useful for accessing the field via an interface.
+func (v *DuplicationCriterionInput) GetDuplicated() *bool { return v.Duplicated }
+
+// GetPhash returns DuplicationCriterionInput.Phash, and is useful for accessing the field via an interface.
+func (v *DuplicationCriterionInput) GetPhash() *bool { return v.Phash }
+
+// GetStash_id returns DuplicationCriterionInput.Stash_id, and is useful for accessing the field via an interface.
+func (v *DuplicationCriterionInput) GetStash_id() *bool { return v.Stash_id }
+
+// GetTitle returns DuplicationCriterionInput.Title, and is useful for accessing the field via an interface.
+func (v *DuplicationCriterionInput) GetTitle() *bool { return v.Title }
+
+// GetUrl returns DuplicationCriterionInput.Url, and is useful for accessing the field via an interface.
+func (v *DuplicationCriterionInput) GetUrl() *bool { return v.Url }
+
+type FileDuplicationCriterionInput struct {
+	// Currently unimplemented. Intended for phash distance matching.
+	Distance   *int  `json:"distance"`
+	Duplicated *bool `json:"duplicated"`
+	// Filter by phash duplication
+	Phash *bool `json:"phash"`
+}
+
+// GetDistance returns FileDuplicationCriterionInput.Distance, and is useful for accessing the field via an interface.
+func (v *FileDuplicationCriterionInput) GetDistance() *int { return v.Distance }
+
+// GetDuplicated returns FileDuplicationCriterionInput.Duplicated, and is useful for accessing the field via an interface.
+func (v *FileDuplicationCriterionInput) GetDuplicated() *bool { return v.Duplicated }
+
+// GetPhash returns FileDuplicationCriterionInput.Phash, and is useful for accessing the field via an interface.
+func (v *FileDuplicationCriterionInput) GetPhash() *bool { return v.Phash }
+
+type FileFilterType struct {
+	AND      *FileFilterType       `json:"AND,omitempty"`
+	NOT      *FileFilterType       `json:"NOT,omitempty"`
+	OR       *FileFilterType       `json:"OR,omitempty"`
+	Basename *StringCriterionInput `json:"basename,omitempty"`
+	// Filter by creation time
+	Created_at *TimestampCriterionInput `json:"created_at,omitempty"`
+	Dir        *StringCriterionInput    `json:"dir,omitempty"`
+	// Filter files by duplication criteria (only phash applies to files)
+	Duplicated *FileDuplicationCriterionInput `json:"duplicated,omitempty"`
+	// Filter by related galleries that meet this criteria
+	Galleries_filter *GalleryFilterType `json:"galleries_filter,omitempty"`
+	Gallery_count    *IntCriterionInput `json:"gallery_count,omitempty"`
+	// find files based on hash
+	Hashes            []*FingerprintFilterInput `json:"hashes,omitempty"`
+	Image_count       *IntCriterionInput        `json:"image_count,omitempty"`
+	Image_file_filter *ImageFileFilterInput     `json:"image_file_filter,omitempty"`
+	// Filter by related images that meet this criteria
+	Images_filter *ImageFilterType `json:"images_filter,omitempty"`
+	// Filter by modification time
+	Mod_time      *TimestampCriterionInput         `json:"mod_time,omitempty"`
+	Parent_folder *HierarchicalMultiCriterionInput `json:"parent_folder,omitempty"`
+	Path          *StringCriterionInput            `json:"path,omitempty"`
+	Scene_count   *IntCriterionInput               `json:"scene_count,omitempty"`
+	// Filter by related scenes that meet this criteria
+	Scenes_filter *SceneFilterType `json:"scenes_filter,omitempty"`
+	// Filter by last update time
+	Updated_at        *TimestampCriterionInput `json:"updated_at,omitempty"`
+	Video_file_filter *VideoFileFilterInput    `json:"video_file_filter,omitempty"`
+	Zip_file          *MultiCriterionInput     `json:"zip_file,omitempty"`
+}
+
+// GetAND returns FileFilterType.AND, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetAND() *FileFilterType { return v.AND }
+
+// GetNOT returns FileFilterType.NOT, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetNOT() *FileFilterType { return v.NOT }
+
+// GetOR returns FileFilterType.OR, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetOR() *FileFilterType { return v.OR }
+
+// GetBasename returns FileFilterType.Basename, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetBasename() *StringCriterionInput { return v.Basename }
+
+// GetCreated_at returns FileFilterType.Created_at, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetCreated_at() *TimestampCriterionInput { return v.Created_at }
+
+// GetDir returns FileFilterType.Dir, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetDir() *StringCriterionInput { return v.Dir }
+
+// GetDuplicated returns FileFilterType.Duplicated, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetDuplicated() *FileDuplicationCriterionInput { return v.Duplicated }
+
+// GetGalleries_filter returns FileFilterType.Galleries_filter, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetGalleries_filter() *GalleryFilterType { return v.Galleries_filter }
+
+// GetGallery_count returns FileFilterType.Gallery_count, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetGallery_count() *IntCriterionInput { return v.Gallery_count }
+
+// GetHashes returns FileFilterType.Hashes, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetHashes() []*FingerprintFilterInput { return v.Hashes }
+
+// GetImage_count returns FileFilterType.Image_count, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetImage_count() *IntCriterionInput { return v.Image_count }
+
+// GetImage_file_filter returns FileFilterType.Image_file_filter, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetImage_file_filter() *ImageFileFilterInput { return v.Image_file_filter }
+
+// GetImages_filter returns FileFilterType.Images_filter, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetImages_filter() *ImageFilterType { return v.Images_filter }
+
+// GetMod_time returns FileFilterType.Mod_time, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetMod_time() *TimestampCriterionInput { return v.Mod_time }
+
+// GetParent_folder returns FileFilterType.Parent_folder, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetParent_folder() *HierarchicalMultiCriterionInput { return v.Parent_folder }
+
+// GetPath returns FileFilterType.Path, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetPath() *StringCriterionInput { return v.Path }
+
+// GetScene_count returns FileFilterType.Scene_count, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetScene_count() *IntCriterionInput { return v.Scene_count }
+
+// GetScenes_filter returns FileFilterType.Scenes_filter, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetScenes_filter() *SceneFilterType { return v.Scenes_filter }
+
+// GetUpdated_at returns FileFilterType.Updated_at, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetUpdated_at() *TimestampCriterionInput { return v.Updated_at }
+
+// GetVideo_file_filter returns FileFilterType.Video_file_filter, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetVideo_file_filter() *VideoFileFilterInput { return v.Video_file_filter }
+
+// GetZip_file returns FileFilterType.Zip_file, and is useful for accessing the field via an interface.
+func (v *FileFilterType) GetZip_file() *MultiCriterionInput { return v.Zip_file }
 
 type FilterMode string
 
@@ -1065,6 +1209,22 @@ type FindTagsResponse struct {
 // GetFindTags returns FindTagsResponse.FindTags, and is useful for accessing the field via an interface.
 func (v *FindTagsResponse) GetFindTags() *FindTagsFindTagsFindTagsResultType { return v.FindTags }
 
+type FingerprintFilterInput struct {
+	// Hamming distance - defaults to 0
+	Distance *int   `json:"distance"`
+	Type     string `json:"type"`
+	Value    string `json:"value"`
+}
+
+// GetDistance returns FingerprintFilterInput.Distance, and is useful for accessing the field via an interface.
+func (v *FingerprintFilterInput) GetDistance() *int { return v.Distance }
+
+// GetType returns FingerprintFilterInput.Type, and is useful for accessing the field via an interface.
+func (v *FingerprintFilterInput) GetType() string { return v.Type }
+
+// GetValue returns FingerprintFilterInput.Value, and is useful for accessing the field via an interface.
+func (v *FingerprintFilterInput) GetValue() string { return v.Value }
+
 type FloatCriterionInput struct {
 	Modifier CriterionModifier `json:"modifier"`
 	Value    float64           `json:"value"`
@@ -1080,6 +1240,68 @@ func (v *FloatCriterionInput) GetValue() float64 { return v.Value }
 // GetValue2 returns FloatCriterionInput.Value2, and is useful for accessing the field via an interface.
 func (v *FloatCriterionInput) GetValue2() *float64 { return v.Value2 }
 
+type FolderFilterType struct {
+	AND      *FolderFilterType     `json:"AND,omitempty"`
+	NOT      *FolderFilterType     `json:"NOT,omitempty"`
+	OR       *FolderFilterType     `json:"OR,omitempty"`
+	Basename *StringCriterionInput `json:"basename,omitempty"`
+	// Filter by creation time
+	Created_at *TimestampCriterionInput `json:"created_at,omitempty"`
+	// Filter by files that meet this criteria
+	Files_filter *FileFilterType `json:"files_filter,omitempty"`
+	// Filter by related galleries that meet this criteria
+	Galleries_filter *GalleryFilterType `json:"galleries_filter,omitempty"`
+	Gallery_count    *IntCriterionInput `json:"gallery_count,omitempty"`
+	// Filter by modification time
+	Mod_time      *TimestampCriterionInput         `json:"mod_time,omitempty"`
+	Parent_folder *HierarchicalMultiCriterionInput `json:"parent_folder,omitempty"`
+	Path          *StringCriterionInput            `json:"path,omitempty"`
+	// Filter by last update time
+	Updated_at *TimestampCriterionInput `json:"updated_at,omitempty"`
+	Zip_file   *MultiCriterionInput     `json:"zip_file,omitempty"`
+}
+
+// GetAND returns FolderFilterType.AND, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetAND() *FolderFilterType { return v.AND }
+
+// GetNOT returns FolderFilterType.NOT, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetNOT() *FolderFilterType { return v.NOT }
+
+// GetOR returns FolderFilterType.OR, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetOR() *FolderFilterType { return v.OR }
+
+// GetBasename returns FolderFilterType.Basename, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetBasename() *StringCriterionInput { return v.Basename }
+
+// GetCreated_at returns FolderFilterType.Created_at, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetCreated_at() *TimestampCriterionInput { return v.Created_at }
+
+// GetFiles_filter returns FolderFilterType.Files_filter, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetFiles_filter() *FileFilterType { return v.Files_filter }
+
+// GetGalleries_filter returns FolderFilterType.Galleries_filter, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetGalleries_filter() *GalleryFilterType { return v.Galleries_filter }
+
+// GetGallery_count returns FolderFilterType.Gallery_count, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetGallery_count() *IntCriterionInput { return v.Gallery_count }
+
+// GetMod_time returns FolderFilterType.Mod_time, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetMod_time() *TimestampCriterionInput { return v.Mod_time }
+
+// GetParent_folder returns FolderFilterType.Parent_folder, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetParent_folder() *HierarchicalMultiCriterionInput {
+	return v.Parent_folder
+}
+
+// GetPath returns FolderFilterType.Path, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetPath() *StringCriterionInput { return v.Path }
+
+// GetUpdated_at returns FolderFilterType.Updated_at, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetUpdated_at() *TimestampCriterionInput { return v.Updated_at }
+
+// GetZip_file returns FolderFilterType.Zip_file, and is useful for accessing the field via an interface.
+func (v *FolderFilterType) GetZip_file() *MultiCriterionInput { return v.Zip_file }
+
 type GalleryFilterType struct {
 	AND *GalleryFilterType `json:"AND,omitempty"`
 	NOT *GalleryFilterType `json:"NOT,omitempty"`
@@ -1091,12 +1313,17 @@ type GalleryFilterType struct {
 	// Filter by studio code
 	Code *StringCriterionInput `json:"code,omitempty"`
 	// Filter by creation time
-	Created_at *TimestampCriterionInput `json:"created_at,omitempty"`
+	Created_at    *TimestampCriterionInput     `json:"created_at,omitempty"`
+	Custom_fields []*CustomFieldCriterionInput `json:"custom_fields,omitempty"`
 	// Filter by date
 	Date    *DateCriterionInput   `json:"date,omitempty"`
 	Details *StringCriterionInput `json:"details,omitempty"`
 	// Filter by zip-file count
 	File_count *IntCriterionInput `json:"file_count,omitempty"`
+	// Filter by related files that meet this criteria
+	Files_filter *FileFilterType `json:"files_filter,omitempty"`
+	// Filter by related folders that meet this criteria
+	Folders_filter *FolderFilterType `json:"folders_filter,omitempty"`
 	// Filter to only include galleries that have chapters. `true` or `false`
 	Has_chapters *string            `json:"has_chapters"`
 	Id           *IntCriterionInput `json:"id,omitempty"`
@@ -1110,6 +1337,8 @@ type GalleryFilterType struct {
 	Is_zip *bool `json:"is_zip"`
 	// Filter by organized
 	Organized *bool `json:"organized"`
+	// Filter by parent folder of the zip or folder the gallery is in
+	Parent_folder *HierarchicalMultiCriterionInput `json:"parent_folder,omitempty"`
 	// Filter by path
 	Path *StringCriterionInput `json:"path,omitempty"`
 	// Filter galleries by performer age at time of gallery
@@ -1171,6 +1400,9 @@ func (v *GalleryFilterType) GetCode() *StringCriterionInput { return v.Code }
 // GetCreated_at returns GalleryFilterType.Created_at, and is useful for accessing the field via an interface.
 func (v *GalleryFilterType) GetCreated_at() *TimestampCriterionInput { return v.Created_at }
 
+// GetCustom_fields returns GalleryFilterType.Custom_fields, and is useful for accessing the field via an interface.
+func (v *GalleryFilterType) GetCustom_fields() []*CustomFieldCriterionInput { return v.Custom_fields }
+
 // GetDate returns GalleryFilterType.Date, and is useful for accessing the field via an interface.
 func (v *GalleryFilterType) GetDate() *DateCriterionInput { return v.Date }
 
@@ -1179,6 +1411,12 @@ func (v *GalleryFilterType) GetDetails() *StringCriterionInput { return v.Detail
 
 // GetFile_count returns GalleryFilterType.File_count, and is useful for accessing the field via an interface.
 func (v *GalleryFilterType) GetFile_count() *IntCriterionInput { return v.File_count }
+
+// GetFiles_filter returns GalleryFilterType.Files_filter, and is useful for accessing the field via an interface.
+func (v *GalleryFilterType) GetFiles_filter() *FileFilterType { return v.Files_filter }
+
+// GetFolders_filter returns GalleryFilterType.Folders_filter, and is useful for accessing the field via an interface.
+func (v *GalleryFilterType) GetFolders_filter() *FolderFilterType { return v.Folders_filter }
 
 // GetHas_chapters returns GalleryFilterType.Has_chapters, and is useful for accessing the field via an interface.
 func (v *GalleryFilterType) GetHas_chapters() *string { return v.Has_chapters }
@@ -1200,6 +1438,11 @@ func (v *GalleryFilterType) GetIs_zip() *bool { return v.Is_zip }
 
 // GetOrganized returns GalleryFilterType.Organized, and is useful for accessing the field via an interface.
 func (v *GalleryFilterType) GetOrganized() *bool { return v.Organized }
+
+// GetParent_folder returns GalleryFilterType.Parent_folder, and is useful for accessing the field via an interface.
+func (v *GalleryFilterType) GetParent_folder() *HierarchicalMultiCriterionInput {
+	return v.Parent_folder
+}
 
 // GetPath returns GalleryFilterType.Path, and is useful for accessing the field via an interface.
 func (v *GalleryFilterType) GetPath() *StringCriterionInput { return v.Path }
@@ -1305,6 +1548,8 @@ type GroupFilterType struct {
 	Containing_groups *HierarchicalMultiCriterionInput `json:"containing_groups,omitempty"`
 	// Filter by creation time
 	Created_at *TimestampCriterionInput `json:"created_at,omitempty"`
+	// Filter by custom fields
+	Custom_fields []*CustomFieldCriterionInput `json:"custom_fields,omitempty"`
 	// Filter by date
 	Date     *DateCriterionInput   `json:"date,omitempty"`
 	Director *StringCriterionInput `json:"director,omitempty"`
@@ -1313,9 +1558,13 @@ type GroupFilterType struct {
 	// Filter to only include groups missing this property
 	Is_missing *string               `json:"is_missing"`
 	Name       *StringCriterionInput `json:"name,omitempty"`
+	// Filter by o-counter
+	O_counter *IntCriterionInput `json:"o_counter,omitempty"`
 	// Filter to only include groups where performer appears in a scene
 	Performers *MultiCriterionInput `json:"performers,omitempty"`
 	Rating100  *IntCriterionInput   `json:"rating100,omitempty"`
+	// Filter by number of scenes the group has
+	Scene_count *IntCriterionInput `json:"scene_count,omitempty"`
 	// Filter by related scenes that meet this criteria
 	Scenes_filter *SceneFilterType `json:"scenes_filter,omitempty"`
 	// Filter to only include groups with this studio
@@ -1359,6 +1608,9 @@ func (v *GroupFilterType) GetContaining_groups() *HierarchicalMultiCriterionInpu
 // GetCreated_at returns GroupFilterType.Created_at, and is useful for accessing the field via an interface.
 func (v *GroupFilterType) GetCreated_at() *TimestampCriterionInput { return v.Created_at }
 
+// GetCustom_fields returns GroupFilterType.Custom_fields, and is useful for accessing the field via an interface.
+func (v *GroupFilterType) GetCustom_fields() []*CustomFieldCriterionInput { return v.Custom_fields }
+
 // GetDate returns GroupFilterType.Date, and is useful for accessing the field via an interface.
 func (v *GroupFilterType) GetDate() *DateCriterionInput { return v.Date }
 
@@ -1374,11 +1626,17 @@ func (v *GroupFilterType) GetIs_missing() *string { return v.Is_missing }
 // GetName returns GroupFilterType.Name, and is useful for accessing the field via an interface.
 func (v *GroupFilterType) GetName() *StringCriterionInput { return v.Name }
 
+// GetO_counter returns GroupFilterType.O_counter, and is useful for accessing the field via an interface.
+func (v *GroupFilterType) GetO_counter() *IntCriterionInput { return v.O_counter }
+
 // GetPerformers returns GroupFilterType.Performers, and is useful for accessing the field via an interface.
 func (v *GroupFilterType) GetPerformers() *MultiCriterionInput { return v.Performers }
 
 // GetRating100 returns GroupFilterType.Rating100, and is useful for accessing the field via an interface.
 func (v *GroupFilterType) GetRating100() *IntCriterionInput { return v.Rating100 }
+
+// GetScene_count returns GroupFilterType.Scene_count, and is useful for accessing the field via an interface.
+func (v *GroupFilterType) GetScene_count() *IntCriterionInput { return v.Scene_count }
 
 // GetScenes_filter returns GroupFilterType.Scenes_filter, and is useful for accessing the field via an interface.
 func (v *GroupFilterType) GetScenes_filter() *SceneFilterType { return v.Scenes_filter }
@@ -1429,6 +1687,21 @@ func (v *HierarchicalMultiCriterionInput) GetModifier() CriterionModifier { retu
 // GetValue returns HierarchicalMultiCriterionInput.Value, and is useful for accessing the field via an interface.
 func (v *HierarchicalMultiCriterionInput) GetValue() []string { return v.Value }
 
+type ImageFileFilterInput struct {
+	Format      *StringCriterionInput      `json:"format,omitempty"`
+	Orientation *OrientationCriterionInput `json:"orientation,omitempty"`
+	Resolution  *ResolutionCriterionInput  `json:"resolution,omitempty"`
+}
+
+// GetFormat returns ImageFileFilterInput.Format, and is useful for accessing the field via an interface.
+func (v *ImageFileFilterInput) GetFormat() *StringCriterionInput { return v.Format }
+
+// GetOrientation returns ImageFileFilterInput.Orientation, and is useful for accessing the field via an interface.
+func (v *ImageFileFilterInput) GetOrientation() *OrientationCriterionInput { return v.Orientation }
+
+// GetResolution returns ImageFileFilterInput.Resolution, and is useful for accessing the field via an interface.
+func (v *ImageFileFilterInput) GetResolution() *ResolutionCriterionInput { return v.Resolution }
+
 type ImageFilterType struct {
 	AND *ImageFilterType `json:"AND,omitempty"`
 	NOT *ImageFilterType `json:"NOT,omitempty"`
@@ -1439,11 +1712,15 @@ type ImageFilterType struct {
 	Code *StringCriterionInput `json:"code,omitempty"`
 	// Filter by creation time
 	Created_at *TimestampCriterionInput `json:"created_at,omitempty"`
+	// Filter by custom fields
+	Custom_fields []*CustomFieldCriterionInput `json:"custom_fields,omitempty"`
 	// Filter by date
 	Date    *DateCriterionInput   `json:"date,omitempty"`
 	Details *StringCriterionInput `json:"details,omitempty"`
 	// Filter by file count
 	File_count *IntCriterionInput `json:"file_count,omitempty"`
+	// Filter by related files that meet this criteria
+	Files_filter *FileFilterType `json:"files_filter,omitempty"`
 	// Filter to only include images with these galleries
 	Galleries *MultiCriterionInput `json:"galleries,omitempty"`
 	// Filter by related galleries that meet this criteria
@@ -1472,6 +1749,8 @@ type ImageFilterType struct {
 	Performers *MultiCriterionInput `json:"performers,omitempty"`
 	// Filter by related performers that meet this criteria
 	Performers_filter *PerformerFilterType `json:"performers_filter,omitempty"`
+	// Filter by file phash distance
+	Phash_distance *PhashDistanceCriterionInput `json:"phash_distance,omitempty"`
 	// Filter by photographer
 	Photographer *StringCriterionInput `json:"photographer,omitempty"`
 	Rating100    *IntCriterionInput    `json:"rating100,omitempty"`
@@ -1512,6 +1791,9 @@ func (v *ImageFilterType) GetCode() *StringCriterionInput { return v.Code }
 // GetCreated_at returns ImageFilterType.Created_at, and is useful for accessing the field via an interface.
 func (v *ImageFilterType) GetCreated_at() *TimestampCriterionInput { return v.Created_at }
 
+// GetCustom_fields returns ImageFilterType.Custom_fields, and is useful for accessing the field via an interface.
+func (v *ImageFilterType) GetCustom_fields() []*CustomFieldCriterionInput { return v.Custom_fields }
+
 // GetDate returns ImageFilterType.Date, and is useful for accessing the field via an interface.
 func (v *ImageFilterType) GetDate() *DateCriterionInput { return v.Date }
 
@@ -1520,6 +1802,9 @@ func (v *ImageFilterType) GetDetails() *StringCriterionInput { return v.Details 
 
 // GetFile_count returns ImageFilterType.File_count, and is useful for accessing the field via an interface.
 func (v *ImageFilterType) GetFile_count() *IntCriterionInput { return v.File_count }
+
+// GetFiles_filter returns ImageFilterType.Files_filter, and is useful for accessing the field via an interface.
+func (v *ImageFilterType) GetFiles_filter() *FileFilterType { return v.Files_filter }
 
 // GetGalleries returns ImageFilterType.Galleries, and is useful for accessing the field via an interface.
 func (v *ImageFilterType) GetGalleries() *MultiCriterionInput { return v.Galleries }
@@ -1564,6 +1849,9 @@ func (v *ImageFilterType) GetPerformers() *MultiCriterionInput { return v.Perfor
 
 // GetPerformers_filter returns ImageFilterType.Performers_filter, and is useful for accessing the field via an interface.
 func (v *ImageFilterType) GetPerformers_filter() *PerformerFilterType { return v.Performers_filter }
+
+// GetPhash_distance returns ImageFilterType.Phash_distance, and is useful for accessing the field via an interface.
+func (v *ImageFilterType) GetPhash_distance() *PhashDistanceCriterionInput { return v.Phash_distance }
 
 // GetPhotographer returns ImageFilterType.Photographer, and is useful for accessing the field via an interface.
 func (v *ImageFilterType) GetPhotographer() *StringCriterionInput { return v.Photographer }
@@ -1760,18 +2048,6 @@ var AllOrientationEnum = []OrientationEnum{
 	OrientationEnumSquare,
 }
 
-type PHashDuplicationCriterionInput struct {
-	// Currently unimplemented
-	Distance   *int  `json:"distance"`
-	Duplicated *bool `json:"duplicated"`
-}
-
-// GetDistance returns PHashDuplicationCriterionInput.Distance, and is useful for accessing the field via an interface.
-func (v *PHashDuplicationCriterionInput) GetDistance() *int { return v.Distance }
-
-// GetDuplicated returns PHashDuplicationCriterionInput.Duplicated, and is useful for accessing the field via an interface.
-func (v *PHashDuplicationCriterionInput) GetDuplicated() *bool { return v.Duplicated }
-
 type PerformerFilterType struct {
 	AND *PerformerFilterType `json:"AND,omitempty"`
 	NOT *PerformerFilterType `json:"NOT,omitempty"`
@@ -1784,9 +2060,13 @@ type PerformerFilterType struct {
 	Birth_year *IntCriterionInput `json:"birth_year,omitempty"`
 	// Filter by birthdate
 	Birthdate *DateCriterionInput `json:"birthdate,omitempty"`
-	// Filter by career length
+	// Filter by career end
+	Career_end *DateCriterionInput `json:"career_end,omitempty"`
+	// Deprecated: use career_start and career_end. This filter is non-functional.
 	Career_length *StringCriterionInput `json:"career_length,omitempty"`
-	// Filter by ciricumcision
+	// Filter by career start
+	Career_start *DateCriterionInput `json:"career_start,omitempty"`
+	// Filter by circumcision
 	Circumcised *CircumcisionCriterionInput `json:"circumcised,omitempty"`
 	// Filter by country
 	Country *StringCriterionInput `json:"country,omitempty"`
@@ -1827,6 +2107,10 @@ type PerformerFilterType struct {
 	Images_filter *ImageFilterType `json:"images_filter,omitempty"`
 	// Filter to only include performers missing this property
 	Is_missing *string `json:"is_missing"`
+	// Filter by marker count (via scene)
+	Marker_count *IntCriterionInput `json:"marker_count,omitempty"`
+	// Filter by related scene markers (via scene) that meet this criteria
+	Markers_filter *SceneMarkerFilterType `json:"markers_filter,omitempty"`
 	// Filter by measurements
 	Measurements *StringCriterionInput `json:"measurements,omitempty"`
 	Name         *StringCriterionInput `json:"name,omitempty"`
@@ -1847,6 +2131,8 @@ type PerformerFilterType struct {
 	Scenes_filter *SceneFilterType `json:"scenes_filter,omitempty"`
 	// Filter by StashID
 	Stash_id_endpoint *StashIDCriterionInput `json:"stash_id_endpoint,omitempty"`
+	// Filter by StashIDs
+	Stash_ids_endpoint *StashIDsCriterionInput `json:"stash_ids_endpoint,omitempty"`
 	// Filter by studios where performer appears in scene/image/gallery
 	Studios *HierarchicalMultiCriterionInput `json:"studios,omitempty"`
 	// Filter by tag count
@@ -1886,8 +2172,14 @@ func (v *PerformerFilterType) GetBirth_year() *IntCriterionInput { return v.Birt
 // GetBirthdate returns PerformerFilterType.Birthdate, and is useful for accessing the field via an interface.
 func (v *PerformerFilterType) GetBirthdate() *DateCriterionInput { return v.Birthdate }
 
+// GetCareer_end returns PerformerFilterType.Career_end, and is useful for accessing the field via an interface.
+func (v *PerformerFilterType) GetCareer_end() *DateCriterionInput { return v.Career_end }
+
 // GetCareer_length returns PerformerFilterType.Career_length, and is useful for accessing the field via an interface.
 func (v *PerformerFilterType) GetCareer_length() *StringCriterionInput { return v.Career_length }
+
+// GetCareer_start returns PerformerFilterType.Career_start, and is useful for accessing the field via an interface.
+func (v *PerformerFilterType) GetCareer_start() *DateCriterionInput { return v.Career_start }
 
 // GetCircumcised returns PerformerFilterType.Circumcised, and is useful for accessing the field via an interface.
 func (v *PerformerFilterType) GetCircumcised() *CircumcisionCriterionInput { return v.Circumcised }
@@ -1955,6 +2247,12 @@ func (v *PerformerFilterType) GetImages_filter() *ImageFilterType { return v.Ima
 // GetIs_missing returns PerformerFilterType.Is_missing, and is useful for accessing the field via an interface.
 func (v *PerformerFilterType) GetIs_missing() *string { return v.Is_missing }
 
+// GetMarker_count returns PerformerFilterType.Marker_count, and is useful for accessing the field via an interface.
+func (v *PerformerFilterType) GetMarker_count() *IntCriterionInput { return v.Marker_count }
+
+// GetMarkers_filter returns PerformerFilterType.Markers_filter, and is useful for accessing the field via an interface.
+func (v *PerformerFilterType) GetMarkers_filter() *SceneMarkerFilterType { return v.Markers_filter }
+
 // GetMeasurements returns PerformerFilterType.Measurements, and is useful for accessing the field via an interface.
 func (v *PerformerFilterType) GetMeasurements() *StringCriterionInput { return v.Measurements }
 
@@ -1988,6 +2286,11 @@ func (v *PerformerFilterType) GetScenes_filter() *SceneFilterType { return v.Sce
 // GetStash_id_endpoint returns PerformerFilterType.Stash_id_endpoint, and is useful for accessing the field via an interface.
 func (v *PerformerFilterType) GetStash_id_endpoint() *StashIDCriterionInput {
 	return v.Stash_id_endpoint
+}
+
+// GetStash_ids_endpoint returns PerformerFilterType.Stash_ids_endpoint, and is useful for accessing the field via an interface.
+func (v *PerformerFilterType) GetStash_ids_endpoint() *StashIDsCriterionInput {
+	return v.Stash_ids_endpoint
 }
 
 // GetStudios returns PerformerFilterType.Studios, and is useful for accessing the field via an interface.
@@ -2202,17 +2505,20 @@ type SceneFilterType struct {
 	Checksum *StringCriterionInput `json:"checksum,omitempty"`
 	Code     *StringCriterionInput `json:"code,omitempty"`
 	// Filter by creation time
-	Created_at *TimestampCriterionInput `json:"created_at,omitempty"`
+	Created_at    *TimestampCriterionInput     `json:"created_at,omitempty"`
+	Custom_fields []*CustomFieldCriterionInput `json:"custom_fields,omitempty"`
 	// Filter by date
 	Date     *DateCriterionInput   `json:"date,omitempty"`
 	Details  *StringCriterionInput `json:"details,omitempty"`
 	Director *StringCriterionInput `json:"director,omitempty"`
-	// Filter Scenes that have an exact phash match available
-	Duplicated *PHashDuplicationCriterionInput `json:"duplicated,omitempty"`
+	// Filter Scenes by duplication criteria
+	Duplicated *DuplicationCriterionInput `json:"duplicated,omitempty"`
 	// Filter by duration (in seconds)
 	Duration *IntCriterionInput `json:"duration,omitempty"`
 	// Filter by file count
 	File_count *IntCriterionInput `json:"file_count,omitempty"`
+	// Filter by related files that meet this criteria
+	Files_filter *FileFilterType `json:"files_filter,omitempty"`
 	// Filter by frame rate
 	Framerate *IntCriterionInput `json:"framerate,omitempty"`
 	// Filter to only include scenes with this gallery
@@ -2275,8 +2581,12 @@ type SceneFilterType struct {
 	Resolution *ResolutionCriterionInput `json:"resolution,omitempty"`
 	// Filter by resume time
 	Resume_time *IntCriterionInput `json:"resume_time,omitempty"`
+	// Filter by StashID count
+	Stash_id_count *IntCriterionInput `json:"stash_id_count,omitempty"`
 	// Filter by StashID
 	Stash_id_endpoint *StashIDCriterionInput `json:"stash_id_endpoint,omitempty"`
+	// Filter by StashIDs
+	Stash_ids_endpoint *StashIDsCriterionInput `json:"stash_ids_endpoint,omitempty"`
 	// Filter to only include scenes with this studio
 	Studios *HierarchicalMultiCriterionInput `json:"studios,omitempty"`
 	// Filter by related studios that meet this criteria
@@ -2323,6 +2633,9 @@ func (v *SceneFilterType) GetCode() *StringCriterionInput { return v.Code }
 // GetCreated_at returns SceneFilterType.Created_at, and is useful for accessing the field via an interface.
 func (v *SceneFilterType) GetCreated_at() *TimestampCriterionInput { return v.Created_at }
 
+// GetCustom_fields returns SceneFilterType.Custom_fields, and is useful for accessing the field via an interface.
+func (v *SceneFilterType) GetCustom_fields() []*CustomFieldCriterionInput { return v.Custom_fields }
+
 // GetDate returns SceneFilterType.Date, and is useful for accessing the field via an interface.
 func (v *SceneFilterType) GetDate() *DateCriterionInput { return v.Date }
 
@@ -2333,13 +2646,16 @@ func (v *SceneFilterType) GetDetails() *StringCriterionInput { return v.Details 
 func (v *SceneFilterType) GetDirector() *StringCriterionInput { return v.Director }
 
 // GetDuplicated returns SceneFilterType.Duplicated, and is useful for accessing the field via an interface.
-func (v *SceneFilterType) GetDuplicated() *PHashDuplicationCriterionInput { return v.Duplicated }
+func (v *SceneFilterType) GetDuplicated() *DuplicationCriterionInput { return v.Duplicated }
 
 // GetDuration returns SceneFilterType.Duration, and is useful for accessing the field via an interface.
 func (v *SceneFilterType) GetDuration() *IntCriterionInput { return v.Duration }
 
 // GetFile_count returns SceneFilterType.File_count, and is useful for accessing the field via an interface.
 func (v *SceneFilterType) GetFile_count() *IntCriterionInput { return v.File_count }
+
+// GetFiles_filter returns SceneFilterType.Files_filter, and is useful for accessing the field via an interface.
+func (v *SceneFilterType) GetFiles_filter() *FileFilterType { return v.Files_filter }
 
 // GetFramerate returns SceneFilterType.Framerate, and is useful for accessing the field via an interface.
 func (v *SceneFilterType) GetFramerate() *IntCriterionInput { return v.Framerate }
@@ -2439,8 +2755,16 @@ func (v *SceneFilterType) GetResolution() *ResolutionCriterionInput { return v.R
 // GetResume_time returns SceneFilterType.Resume_time, and is useful for accessing the field via an interface.
 func (v *SceneFilterType) GetResume_time() *IntCriterionInput { return v.Resume_time }
 
+// GetStash_id_count returns SceneFilterType.Stash_id_count, and is useful for accessing the field via an interface.
+func (v *SceneFilterType) GetStash_id_count() *IntCriterionInput { return v.Stash_id_count }
+
 // GetStash_id_endpoint returns SceneFilterType.Stash_id_endpoint, and is useful for accessing the field via an interface.
 func (v *SceneFilterType) GetStash_id_endpoint() *StashIDCriterionInput { return v.Stash_id_endpoint }
+
+// GetStash_ids_endpoint returns SceneFilterType.Stash_ids_endpoint, and is useful for accessing the field via an interface.
+func (v *SceneFilterType) GetStash_ids_endpoint() *StashIDsCriterionInput {
+	return v.Stash_ids_endpoint
+}
 
 // GetStudios returns SceneFilterType.Studios, and is useful for accessing the field via an interface.
 func (v *SceneFilterType) GetStudios() *HierarchicalMultiCriterionInput { return v.Studios }
@@ -2532,7 +2856,7 @@ type SceneMarkerFilterType struct {
 	Duration *FloatCriterionInput `json:"duration,omitempty"`
 	// Filter to only include scene markers with these performers
 	Performers *MultiCriterionInput `json:"performers,omitempty"`
-	// Filter by cscene reation time
+	// Filter by scene creation time
 	Scene_created_at *TimestampCriterionInput `json:"scene_created_at,omitempty"`
 	// Filter by scene date
 	Scene_date *DateCriterionInput `json:"scene_date,omitempty"`
@@ -2540,7 +2864,7 @@ type SceneMarkerFilterType struct {
 	Scene_filter *SceneFilterType `json:"scene_filter,omitempty"`
 	// Filter to only include scene markers attached to a scene with these tags
 	Scene_tags *HierarchicalMultiCriterionInput `json:"scene_tags,omitempty"`
-	// Filter by lscene ast update time
+	// Filter by scene last update time
 	Scene_updated_at *TimestampCriterionInput `json:"scene_updated_at,omitempty"`
 	// Filter to only include scene markers from these scenes
 	Scenes *MultiCriterionInput `json:"scenes,omitempty"`
@@ -3092,7 +3416,7 @@ var AllSortDirectionEnum = []SortDirectionEnum{
 
 type StashIDCriterionInput struct {
 	// If present, this value is treated as a predicate.
-	// That is, it will filter based on stash_ids with the matching endpoint
+	// That is, it will filter based on stash_id with the matching endpoint
 	Endpoint *string           `json:"endpoint"`
 	Modifier CriterionModifier `json:"modifier"`
 	Stash_id *string           `json:"stash_id"`
@@ -3106,6 +3430,23 @@ func (v *StashIDCriterionInput) GetModifier() CriterionModifier { return v.Modif
 
 // GetStash_id returns StashIDCriterionInput.Stash_id, and is useful for accessing the field via an interface.
 func (v *StashIDCriterionInput) GetStash_id() *string { return v.Stash_id }
+
+type StashIDsCriterionInput struct {
+	// If present, this value is treated as a predicate.
+	// That is, it will filter based on stash_ids with the matching endpoint
+	Endpoint  *string           `json:"endpoint"`
+	Modifier  CriterionModifier `json:"modifier"`
+	Stash_ids []*string         `json:"stash_ids"`
+}
+
+// GetEndpoint returns StashIDsCriterionInput.Endpoint, and is useful for accessing the field via an interface.
+func (v *StashIDsCriterionInput) GetEndpoint() *string { return v.Endpoint }
+
+// GetModifier returns StashIDsCriterionInput.Modifier, and is useful for accessing the field via an interface.
+func (v *StashIDsCriterionInput) GetModifier() CriterionModifier { return v.Modifier }
+
+// GetStash_ids returns StashIDsCriterionInput.Stash_ids, and is useful for accessing the field via an interface.
+func (v *StashIDsCriterionInput) GetStash_ids() []*string { return v.Stash_ids }
 
 type StringCriterionInput struct {
 	Modifier CriterionModifier `json:"modifier"`
@@ -3127,14 +3468,19 @@ type StudioFilterType struct {
 	// Filter by subsidiary studio count
 	Child_count *IntCriterionInput `json:"child_count,omitempty"`
 	// Filter by creation time
-	Created_at *TimestampCriterionInput `json:"created_at,omitempty"`
-	Details    *StringCriterionInput    `json:"details,omitempty"`
+	Created_at    *TimestampCriterionInput     `json:"created_at,omitempty"`
+	Custom_fields []*CustomFieldCriterionInput `json:"custom_fields,omitempty"`
+	Details       *StringCriterionInput        `json:"details,omitempty"`
 	// Filter by favorite
 	Favorite *bool `json:"favorite"`
 	// Filter by related galleries that meet this criteria
 	Galleries_filter *GalleryFilterType `json:"galleries_filter,omitempty"`
 	// Filter by gallery count
 	Gallery_count *IntCriterionInput `json:"gallery_count,omitempty"`
+	// Filter by group count
+	Group_count *IntCriterionInput `json:"group_count,omitempty"`
+	// Filter by related groups that meet this criteria
+	Groups_filter *GroupFilterType `json:"groups_filter,omitempty"`
 	// Filter by autotag ignore value
 	Ignore_auto_tag *bool `json:"ignore_auto_tag"`
 	// Filter by image count
@@ -3144,6 +3490,8 @@ type StudioFilterType struct {
 	// Filter to only include studios missing this property
 	Is_missing *string               `json:"is_missing"`
 	Name       *StringCriterionInput `json:"name,omitempty"`
+	// Filter by organized
+	Organized *bool `json:"organized"`
 	// Filter to only include studios with this parent studio
 	Parents   *MultiCriterionInput `json:"parents,omitempty"`
 	Rating100 *IntCriterionInput   `json:"rating100,omitempty"`
@@ -3153,6 +3501,8 @@ type StudioFilterType struct {
 	Scenes_filter *SceneFilterType `json:"scenes_filter,omitempty"`
 	// Filter by StashID
 	Stash_id_endpoint *StashIDCriterionInput `json:"stash_id_endpoint,omitempty"`
+	// Filter by StashIDs
+	Stash_ids_endpoint *StashIDsCriterionInput `json:"stash_ids_endpoint,omitempty"`
 	// Filter by tag count
 	Tag_count *IntCriterionInput `json:"tag_count,omitempty"`
 	// Filter to only include studios with these tags
@@ -3181,6 +3531,9 @@ func (v *StudioFilterType) GetChild_count() *IntCriterionInput { return v.Child_
 // GetCreated_at returns StudioFilterType.Created_at, and is useful for accessing the field via an interface.
 func (v *StudioFilterType) GetCreated_at() *TimestampCriterionInput { return v.Created_at }
 
+// GetCustom_fields returns StudioFilterType.Custom_fields, and is useful for accessing the field via an interface.
+func (v *StudioFilterType) GetCustom_fields() []*CustomFieldCriterionInput { return v.Custom_fields }
+
 // GetDetails returns StudioFilterType.Details, and is useful for accessing the field via an interface.
 func (v *StudioFilterType) GetDetails() *StringCriterionInput { return v.Details }
 
@@ -3192,6 +3545,12 @@ func (v *StudioFilterType) GetGalleries_filter() *GalleryFilterType { return v.G
 
 // GetGallery_count returns StudioFilterType.Gallery_count, and is useful for accessing the field via an interface.
 func (v *StudioFilterType) GetGallery_count() *IntCriterionInput { return v.Gallery_count }
+
+// GetGroup_count returns StudioFilterType.Group_count, and is useful for accessing the field via an interface.
+func (v *StudioFilterType) GetGroup_count() *IntCriterionInput { return v.Group_count }
+
+// GetGroups_filter returns StudioFilterType.Groups_filter, and is useful for accessing the field via an interface.
+func (v *StudioFilterType) GetGroups_filter() *GroupFilterType { return v.Groups_filter }
 
 // GetIgnore_auto_tag returns StudioFilterType.Ignore_auto_tag, and is useful for accessing the field via an interface.
 func (v *StudioFilterType) GetIgnore_auto_tag() *bool { return v.Ignore_auto_tag }
@@ -3208,6 +3567,9 @@ func (v *StudioFilterType) GetIs_missing() *string { return v.Is_missing }
 // GetName returns StudioFilterType.Name, and is useful for accessing the field via an interface.
 func (v *StudioFilterType) GetName() *StringCriterionInput { return v.Name }
 
+// GetOrganized returns StudioFilterType.Organized, and is useful for accessing the field via an interface.
+func (v *StudioFilterType) GetOrganized() *bool { return v.Organized }
+
 // GetParents returns StudioFilterType.Parents, and is useful for accessing the field via an interface.
 func (v *StudioFilterType) GetParents() *MultiCriterionInput { return v.Parents }
 
@@ -3222,6 +3584,11 @@ func (v *StudioFilterType) GetScenes_filter() *SceneFilterType { return v.Scenes
 
 // GetStash_id_endpoint returns StudioFilterType.Stash_id_endpoint, and is useful for accessing the field via an interface.
 func (v *StudioFilterType) GetStash_id_endpoint() *StashIDCriterionInput { return v.Stash_id_endpoint }
+
+// GetStash_ids_endpoint returns StudioFilterType.Stash_ids_endpoint, and is useful for accessing the field via an interface.
+func (v *StudioFilterType) GetStash_ids_endpoint() *StashIDsCriterionInput {
+	return v.Stash_ids_endpoint
+}
 
 // GetTag_count returns StudioFilterType.Tag_count, and is useful for accessing the field via an interface.
 func (v *StudioFilterType) GetTag_count() *IntCriterionInput { return v.Tag_count }
@@ -3257,12 +3624,13 @@ type TagFilterType struct {
 	OR  *TagFilterType `json:"OR,omitempty"`
 	// Filter by tag aliases
 	Aliases *StringCriterionInput `json:"aliases,omitempty"`
-	// Filter by number f child tags the tag has
+	// Filter by number of child tags the tag has
 	Child_count *IntCriterionInput `json:"child_count,omitempty"`
 	// Filter by child tags
 	Children *HierarchicalMultiCriterionInput `json:"children,omitempty"`
 	// Filter by creation time
-	Created_at *TimestampCriterionInput `json:"created_at,omitempty"`
+	Created_at    *TimestampCriterionInput     `json:"created_at,omitempty"`
+	Custom_fields []*CustomFieldCriterionInput `json:"custom_fields,omitempty"`
 	// Filter by tag description
 	Description *StringCriterionInput `json:"description,omitempty"`
 	// Filter by favorite
@@ -3273,6 +3641,8 @@ type TagFilterType struct {
 	Gallery_count *IntCriterionInput `json:"gallery_count,omitempty"`
 	// Filter by number of group with this tag
 	Group_count *IntCriterionInput `json:"group_count,omitempty"`
+	// Filter by related groups that meet this criteria
+	Groups_filter *GroupFilterType `json:"groups_filter,omitempty"`
 	// Filter by autotag ignore value
 	Ignore_auto_tag *bool `json:"ignore_auto_tag"`
 	// Filter by number of images with this tag
@@ -3283,6 +3653,8 @@ type TagFilterType struct {
 	Is_missing *string `json:"is_missing"`
 	// Filter by number of markers with this tag
 	Marker_count *IntCriterionInput `json:"marker_count,omitempty"`
+	// Filter by related scene markers that meet this criteria
+	Markers_filter *SceneMarkerFilterType `json:"markers_filter,omitempty"`
 	// Filter by number of movies with this tag
 	Movie_count *IntCriterionInput `json:"movie_count,omitempty"`
 	// Filter by tag name
@@ -3293,14 +3665,22 @@ type TagFilterType struct {
 	Parents *HierarchicalMultiCriterionInput `json:"parents,omitempty"`
 	// Filter by number of performers with this tag
 	Performer_count *IntCriterionInput `json:"performer_count,omitempty"`
+	// Filter by related performers that meet this criteria
+	Performers_filter *PerformerFilterType `json:"performers_filter,omitempty"`
 	// Filter by number of scenes with this tag
 	Scene_count *IntCriterionInput `json:"scene_count,omitempty"`
 	// Filter by related scenes that meet this criteria
 	Scenes_filter *SceneFilterType `json:"scenes_filter,omitempty"`
 	// Filter by tag sort_name
 	Sort_name *StringCriterionInput `json:"sort_name,omitempty"`
+	// Filter by StashID
+	Stash_id_endpoint *StashIDCriterionInput `json:"stash_id_endpoint,omitempty"`
+	// Filter by StashID
+	Stash_ids_endpoint *StashIDsCriterionInput `json:"stash_ids_endpoint,omitempty"`
 	// Filter by number of studios with this tag
 	Studio_count *IntCriterionInput `json:"studio_count,omitempty"`
+	// Filter by related studios that meet this criteria
+	Studios_filter *StudioFilterType `json:"studios_filter,omitempty"`
 	// Filter by last update time
 	Updated_at *TimestampCriterionInput `json:"updated_at,omitempty"`
 }
@@ -3326,6 +3706,9 @@ func (v *TagFilterType) GetChildren() *HierarchicalMultiCriterionInput { return 
 // GetCreated_at returns TagFilterType.Created_at, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetCreated_at() *TimestampCriterionInput { return v.Created_at }
 
+// GetCustom_fields returns TagFilterType.Custom_fields, and is useful for accessing the field via an interface.
+func (v *TagFilterType) GetCustom_fields() []*CustomFieldCriterionInput { return v.Custom_fields }
+
 // GetDescription returns TagFilterType.Description, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetDescription() *StringCriterionInput { return v.Description }
 
@@ -3340,6 +3723,9 @@ func (v *TagFilterType) GetGallery_count() *IntCriterionInput { return v.Gallery
 
 // GetGroup_count returns TagFilterType.Group_count, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetGroup_count() *IntCriterionInput { return v.Group_count }
+
+// GetGroups_filter returns TagFilterType.Groups_filter, and is useful for accessing the field via an interface.
+func (v *TagFilterType) GetGroups_filter() *GroupFilterType { return v.Groups_filter }
 
 // GetIgnore_auto_tag returns TagFilterType.Ignore_auto_tag, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetIgnore_auto_tag() *bool { return v.Ignore_auto_tag }
@@ -3356,6 +3742,9 @@ func (v *TagFilterType) GetIs_missing() *string { return v.Is_missing }
 // GetMarker_count returns TagFilterType.Marker_count, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetMarker_count() *IntCriterionInput { return v.Marker_count }
 
+// GetMarkers_filter returns TagFilterType.Markers_filter, and is useful for accessing the field via an interface.
+func (v *TagFilterType) GetMarkers_filter() *SceneMarkerFilterType { return v.Markers_filter }
+
 // GetMovie_count returns TagFilterType.Movie_count, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetMovie_count() *IntCriterionInput { return v.Movie_count }
 
@@ -3371,6 +3760,9 @@ func (v *TagFilterType) GetParents() *HierarchicalMultiCriterionInput { return v
 // GetPerformer_count returns TagFilterType.Performer_count, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetPerformer_count() *IntCriterionInput { return v.Performer_count }
 
+// GetPerformers_filter returns TagFilterType.Performers_filter, and is useful for accessing the field via an interface.
+func (v *TagFilterType) GetPerformers_filter() *PerformerFilterType { return v.Performers_filter }
+
 // GetScene_count returns TagFilterType.Scene_count, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetScene_count() *IntCriterionInput { return v.Scene_count }
 
@@ -3380,8 +3772,17 @@ func (v *TagFilterType) GetScenes_filter() *SceneFilterType { return v.Scenes_fi
 // GetSort_name returns TagFilterType.Sort_name, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetSort_name() *StringCriterionInput { return v.Sort_name }
 
+// GetStash_id_endpoint returns TagFilterType.Stash_id_endpoint, and is useful for accessing the field via an interface.
+func (v *TagFilterType) GetStash_id_endpoint() *StashIDCriterionInput { return v.Stash_id_endpoint }
+
+// GetStash_ids_endpoint returns TagFilterType.Stash_ids_endpoint, and is useful for accessing the field via an interface.
+func (v *TagFilterType) GetStash_ids_endpoint() *StashIDsCriterionInput { return v.Stash_ids_endpoint }
+
 // GetStudio_count returns TagFilterType.Studio_count, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetStudio_count() *IntCriterionInput { return v.Studio_count }
+
+// GetStudios_filter returns TagFilterType.Studios_filter, and is useful for accessing the field via an interface.
+func (v *TagFilterType) GetStudios_filter() *StudioFilterType { return v.Studios_filter }
 
 // GetUpdated_at returns TagFilterType.Updated_at, and is useful for accessing the field via an interface.
 func (v *TagFilterType) GetUpdated_at() *TimestampCriterionInput { return v.Updated_at }
@@ -3564,6 +3965,54 @@ type VersionVersion struct {
 
 // GetVersion returns VersionVersion.Version, and is useful for accessing the field via an interface.
 func (v *VersionVersion) GetVersion() *string { return v.Version }
+
+type VideoFileFilterInput struct {
+	Audio_codec *StringCriterionInput `json:"audio_codec,omitempty"`
+	Bitrate     *IntCriterionInput    `json:"bitrate,omitempty"`
+	Captions    *StringCriterionInput `json:"captions,omitempty"`
+	// in seconds
+	Duration          *IntCriterionInput         `json:"duration,omitempty"`
+	Format            *StringCriterionInput      `json:"format,omitempty"`
+	Framerate         *IntCriterionInput         `json:"framerate,omitempty"`
+	Interactive       *bool                      `json:"interactive"`
+	Interactive_speed *IntCriterionInput         `json:"interactive_speed,omitempty"`
+	Orientation       *OrientationCriterionInput `json:"orientation,omitempty"`
+	Resolution        *ResolutionCriterionInput  `json:"resolution,omitempty"`
+	Video_codec       *StringCriterionInput      `json:"video_codec,omitempty"`
+}
+
+// GetAudio_codec returns VideoFileFilterInput.Audio_codec, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetAudio_codec() *StringCriterionInput { return v.Audio_codec }
+
+// GetBitrate returns VideoFileFilterInput.Bitrate, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetBitrate() *IntCriterionInput { return v.Bitrate }
+
+// GetCaptions returns VideoFileFilterInput.Captions, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetCaptions() *StringCriterionInput { return v.Captions }
+
+// GetDuration returns VideoFileFilterInput.Duration, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetDuration() *IntCriterionInput { return v.Duration }
+
+// GetFormat returns VideoFileFilterInput.Format, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetFormat() *StringCriterionInput { return v.Format }
+
+// GetFramerate returns VideoFileFilterInput.Framerate, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetFramerate() *IntCriterionInput { return v.Framerate }
+
+// GetInteractive returns VideoFileFilterInput.Interactive, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetInteractive() *bool { return v.Interactive }
+
+// GetInteractive_speed returns VideoFileFilterInput.Interactive_speed, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetInteractive_speed() *IntCriterionInput { return v.Interactive_speed }
+
+// GetOrientation returns VideoFileFilterInput.Orientation, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetOrientation() *OrientationCriterionInput { return v.Orientation }
+
+// GetResolution returns VideoFileFilterInput.Resolution, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetResolution() *ResolutionCriterionInput { return v.Resolution }
+
+// GetVideo_codec returns VideoFileFilterInput.Video_codec, and is useful for accessing the field via an interface.
+func (v *VideoFileFilterInput) GetVideo_codec() *StringCriterionInput { return v.Video_codec }
 
 // __FindPerformerByNameInput is used internally by genqlient
 type __FindPerformerByNameInput struct {

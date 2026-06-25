@@ -183,14 +183,13 @@ func parseStashIDCriterionInput(c map[string]any) *gql.StashIDCriterionInput {
 	return &out
 }
 
-func parsePHashDuplicationCriterionInput(c map[string]any) *gql.PHashDuplicationCriterionInput {
-	out := gql.PHashDuplicationCriterionInput{}
+func parseDuplicationCriterionInput(c map[string]any) *gql.DuplicationCriterionInput {
+	out := gql.DuplicationCriterionInput{}
 
-	duplicated := Get[string](c, "value")
-	if duplicated != nil {
-		d, _ := strconv.ParseBool(*duplicated)
-		out.Duplicated = &d
-	}
+	out.Phash = Get[bool](c, "value.phash")
+	out.Stash_id = Get[bool](c, "value.stash_id")
+	out.Title = Get[bool](c, "value.title")
+	out.Url = Get[bool](c, "value.url")
 
 	return &out
 }

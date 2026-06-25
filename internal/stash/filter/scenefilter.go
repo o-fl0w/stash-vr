@@ -3,9 +3,10 @@ package filter
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"stash-vr/internal/stash/gql"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Filter struct {
@@ -71,7 +72,7 @@ func setSceneFilterCriterion(ctx context.Context, criterionType string, criterio
 	case "director":
 		sceneFilter.Director = parseStringCriterionInput(criterionValue)
 	case "duplicated":
-		sceneFilter.Duplicated = parsePHashDuplicationCriterionInput(criterionValue)
+		sceneFilter.Duplicated = parseDuplicationCriterionInput(criterionValue)
 	case "duration":
 		sceneFilter.Duration = parseIntCriterionInput(criterionValue)
 	case "file_count":
