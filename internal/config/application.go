@@ -10,6 +10,7 @@ import (
 const (
 	envKeyListenAddress      = "LISTEN_ADDRESS"
 	envKeyStashGraphQLUrl    = "STASH_GRAPHQL_URL"
+	envKeyStashBaseUrl       = "STASH_BASE_URL"
 	envKeyStashApiKey        = "STASH_API_KEY"
 	envKeyFavoriteTag        = "FAVORITE_TAG"
 	envKeyLogLevel           = "LOG_LEVEL"
@@ -25,6 +26,7 @@ const (
 type ApplicationConfig struct {
 	ListenAddress      string
 	StashGraphQLUrl    string
+	StashBaseUrl       string
 	StashApiKey        string
 	FavoriteTag        string
 	LogLevel           string
@@ -45,6 +47,9 @@ func Init() {
 
 	pflag.String(envKeyStashGraphQLUrl, "http://localhost:9999/graphql", "Url to Stash graphql")
 	_ = viper.BindPFlag(envKeyStashGraphQLUrl, pflag.Lookup(envKeyStashGraphQLUrl))
+
+	pflag.String(envKeyStashBaseUrl, "", "Base URL of Stash as reachable by clients (e.g. https://stash.example.com). When set, rewrites the origin of all Stash media URLs returned to clients, overriding the host/port embedded in the GraphQL response. Use this when stash-vr connects to Stash via an internal URL but clients must reach Stash through a reverse proxy.")
+	_ = viper.BindPFlag(envKeyStashBaseUrl, pflag.Lookup(envKeyStashBaseUrl))
 
 	pflag.String(envKeyStashApiKey, "", "Stash API key")
 	_ = viper.BindPFlag(envKeyStashApiKey, pflag.Lookup(envKeyStashApiKey))
@@ -90,6 +95,7 @@ func Init() {
 
 	applicationConfig.ListenAddress = viper.GetString(envKeyListenAddress)
 	applicationConfig.StashGraphQLUrl = viper.GetString(envKeyStashGraphQLUrl)
+	applicationConfig.StashBaseUrl = viper.GetString(envKeyStashBaseUrl)
 	applicationConfig.StashApiKey = viper.GetString(envKeyStashApiKey)
 	applicationConfig.FavoriteTag = viper.GetString(envKeyFavoriteTag)
 	applicationConfig.LogLevel = strings.ToLower(viper.GetString(envKeyLogLevel))
