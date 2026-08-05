@@ -24,7 +24,11 @@ func CoverHandler(libraryService *library.Service) http.HandlerFunc {
 		}
 
 		p := vd.SceneParts.Paths
-		cover, err := buildHeatmapCover(ctx, stash.ApiKeyed(*p.Screenshot), stash.ApiKeyed(*p.Interactive_heatmap))
+		if p.Screenshot == nil || p.Interactive_heatmap == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		cover, err := buildHeatmapCover(ctx, stash.InternalUrl(*p.Screenshot), stash.InternalUrl(*p.Interactive_heatmap))
 		if err != nil {
 			log.Ctx(ctx).Err(err).Msg("buildHeatmapCover")
 			if errors.Is(err, errImageNotFound) {
@@ -32,6 +36,10 @@ func CoverHandler(libraryService *library.Service) http.HandlerFunc {
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
 			}
+			return
+		}
+		if cover == nil {
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		err = jpeg.Encode(w, cover, nil)

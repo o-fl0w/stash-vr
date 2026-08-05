@@ -75,16 +75,22 @@ func buildHeatmapCover(ctx context.Context, coverUrl string, heatmapUrl string) 
 		return nil
 	})
 
+	err := g.Wait()
+
+	// Drain channels after goroutines have finished.
 	cover := <-chCover
 	heatmap := <-chHeatmap
 
-	err := g.Wait()
 	if err != nil {
 		if errors.Is(err, errScreenshotImageNotFound) {
+			// Cover fetch failed — nothing useful to return.
 			return nil, err
-		} else {
-			return cover, nil
 		}
+		// Heatmap fetch failed — return cover alone if we have it.
+		if cover == nil {
+			return nil, err
+		}
+		return cover, nil
 	}
 
 	heatmapCover := overlay(cover, heatmap)

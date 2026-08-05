@@ -35,7 +35,7 @@ func RebaseUrl(rawUrl string) string {
 
 // ApiKeyed appends the configured Stash API key to the URL as a query
 // parameter. The URL origin is first rewritten via RebaseUrl if STASH_BASE_URL
-// is configured.
+// is configured. Use this for URLs that will be sent to clients.
 func ApiKeyed(rawUrl string) string {
 	u := RebaseUrl(rawUrl)
 
@@ -48,4 +48,20 @@ func ApiKeyed(rawUrl string) string {
 	}
 
 	return u + "?apikey=" + apiKey
+}
+
+// InternalUrl appends the configured Stash API key to the URL as a query
+// parameter WITHOUT rebasing to STASH_BASE_URL. Use this for server-side
+// fetches made by stash-vr itself (e.g. fetching images to composite),
+// where the public-facing URL may not be reachable from inside the container.
+func InternalUrl(rawUrl string) string {
+	apiKey := config.Application().StashApiKey
+	if apiKey == "" || strings.Contains(rawUrl, "apikey") {
+		return rawUrl
+	}
+	if strings.Contains(rawUrl, "?") {
+		return rawUrl + "&apikey=" + apiKey
+	}
+
+	return rawUrl + "?apikey=" + apiKey
 }
