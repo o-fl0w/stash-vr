@@ -65,7 +65,7 @@ func (libraryService *Service) ancestors(tagId string) []Tag {
 }
 
 func (libraryService *Service) decorateTags(vd *VideoData) {
-	slices.DeleteFunc(vd.SceneParts.Tags, func(tag *gql.TagPartsArrayTagsTag) bool {
+	vd.SceneParts.Tags = slices.DeleteFunc(vd.SceneParts.Tags, func(tag *gql.TagPartsArrayTagsTag) bool {
 		return tag.Sort_name == config.Application().ExcludeSortName
 	})
 
