@@ -42,6 +42,7 @@ type encodingDto struct {
 type videoSourceDto struct {
 	Resolution int    `json:"resolution"`
 	Url        string `json:"url"`
+	Label      string `json:"label,omitempty"`
 }
 
 func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error) {
@@ -79,7 +80,7 @@ func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error
 }
 
 func setStreamSources(vd *library.VideoData, dto *videoDataDto) {
-	streams := []stash.Stream{stash.GetTranscodingStream(vd.SceneParts), stash.GetDirectStream(vd.SceneParts)}
+	streams := append(stash.GetTranscodingStreams(vd.SceneParts), stash.GetDirectStream(vd.SceneParts))
 	dto.Encodings = make([]encodingDto, len(streams))
 	for i, stream := range streams {
 		dto.Encodings[i] = encodingDto{
@@ -89,7 +90,8 @@ func setStreamSources(vd *library.VideoData, dto *videoDataDto) {
 		for j, source := range stream.Sources {
 			dto.Encodings[i].VideoSources[j] = videoSourceDto{
 				Resolution: source.Resolution,
-				Url:        source.Url,
+				Url:        stash.RebaseUrl(source.Url),
+				Label:      source.Label,
 			}
 		}
 	}

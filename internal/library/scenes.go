@@ -28,9 +28,22 @@ func (libraryService *Service) GetScenes(ctx context.Context) (map[string]*Video
 				return nil, err
 			}
 
+			// Build a set of IDs that came back with data.
+			returned := make(map[string]struct{}, len(vds))
+			for _, vd := range vds {
+				returned[vd.Id()] = struct{}{}
+			}
+
 			libraryService.muVdCache.Lock()
 			for _, vd := range vds {
 				libraryService.vdCache[vd.Id()] = vd
+			}
+			// Remove nil sentinels for scenes that were fetched but had no files.
+			for _, id := range toFetch {
+				key := strconv.Itoa(id)
+				if _, ok := returned[key]; !ok {
+					delete(libraryService.vdCache, key)
+				}
 			}
 			libraryService.muVdCache.Unlock()
 			elapsed := time.Since(start)
@@ -61,6 +74,9 @@ func (libraryService *Service) GetScene(ctx context.Context, id string, forceFet
 	if err != nil {
 		return nil, err
 	}
+	if len(vds) == 0 {
+		return nil, fmt.Errorf("scene %s not found or has no files", id)
+	}
 
 	libraryService.muVdCache.Lock()
 	libraryService.vdCache[id] = vds[0]
@@ -74,11 +90,15 @@ func (libraryService *Service) fetchVideoData(ctx context.Context, sceneIds []in
 	if err != nil {
 		return nil, fmt.Errorf("FindScenes: %w", err)
 	}
-	vds := make([]*VideoData, len(resp.FindScenes.Scenes))
-	for i, s := range resp.FindScenes.Scenes {
+	vds := make([]*VideoData, 0, len(resp.FindScenes.Scenes))
+	for _, s := range resp.FindScenes.Scenes {
+		if len(s.SceneParts.Files) == 0 {
+			log.Ctx(ctx).Trace().Str("id", s.SceneParts.Id).Msg("Skipping scene with no files")
+			continue
+		}
 		vd := VideoData{SceneParts: &s.SceneParts}
 		libraryService.decorateTags(&vd)
-		vds[i] = &vd
+		vds = append(vds, &vd)
 	}
 	return vds, nil
 }

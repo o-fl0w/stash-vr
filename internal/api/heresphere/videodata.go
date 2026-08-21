@@ -51,6 +51,7 @@ type mediaDto struct {
 type sourceDto struct {
 	Resolution int    `json:"resolution,omitempty"`
 	Url        string `json:"url,omitempty"`
+	Label      string `json:"label,omitempty"`
 }
 
 type scriptDto struct {
@@ -207,7 +208,7 @@ func set3DFormat(vd *library.VideoData, dto *videoDataDto) {
 }
 
 func setMediaSources(vd *library.VideoData, dto *videoDataDto) {
-	streams := []stash.Stream{stash.GetDirectStream(vd.SceneParts), stash.GetTranscodingStream(vd.SceneParts)}
+	streams := append([]stash.Stream{stash.GetDirectStream(vd.SceneParts)}, stash.GetTranscodingStreams(vd.SceneParts)...)
 	for _, stream := range streams {
 		e := mediaDto{
 			Name: stream.Name,
@@ -215,7 +216,8 @@ func setMediaSources(vd *library.VideoData, dto *videoDataDto) {
 		for _, s := range stream.Sources {
 			vs := sourceDto{
 				Resolution: s.Resolution,
-				Url:        s.Url,
+				Url:        stash.RebaseUrl(s.Url),
+				Label:      s.Label,
 			}
 			e.Sources = append(e.Sources, vs)
 		}

@@ -9,7 +9,17 @@ services:
     volumes:
       - /path/in/host:/config
     environment:
+      ## URL stash-vr uses to connect to the Stash GraphQL API (server-side, internal).
+      ## This can be the direct container address even when both are behind a reverse proxy.
       STASH_GRAPHQL_URL: "http://localhost:9999/graphql"
+
+      ## Base URL that VR clients use to reach Stash (client-side, public-facing).
+      ## Set this when stash-vr reaches Stash via an internal URL (STASH_GRAPHQL_URL)
+      ## but clients cannot reach that address and must go through a reverse proxy instead.
+      ## All media/stream URLs returned to clients will have their origin rewritten to this value.
+      ## Example: clients connect via https://stash.example.com instead of http://stash:9999
+      #STASH_BASE_URL: "https://stash.example.com"
+
       #STASH_API_KEY: "xxx"
 
       ## For configurations in status page to persist a path must be provided that Stash-VR has write access to.
