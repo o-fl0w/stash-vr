@@ -57,3 +57,12 @@ mutation SceneUpdateOrganized($id: ID!, $isOrganized: Boolean){
 mutation SceneAddPlayDurationSeconds($id: ID!, $seconds: Float){
     sceneSaveActivity(id: $id, playDuration: $seconds)
 }
+
+mutation SceneUpdatePrimaryFile($id: ID!, $primary_file_id: ID!) {
+    sceneUpdate(input: {
+        id: $id,
+        primary_file_id: $primary_file_id
+    }) {
+        id
+    }
+}

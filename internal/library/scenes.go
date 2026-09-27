@@ -30,7 +30,7 @@ func (libraryService *Service) GetScenes(ctx context.Context) (map[string]*Video
 
 			libraryService.muVdCache.Lock()
 			for _, vd := range vds {
-				libraryService.vdCache[vd.Id()] = vd
+				libraryService.vdCache[vd.SceneId()] = vd
 			}
 			libraryService.muVdCache.Unlock()
 			elapsed := time.Since(start)

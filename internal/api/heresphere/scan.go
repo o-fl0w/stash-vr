@@ -3,6 +3,7 @@ package heresphere
 import (
 	"context"
 	"stash-vr/internal/library"
+	"stash-vr/internal/multipart"
 	"stash-vr/internal/util"
 	"time"
 
@@ -28,24 +29,25 @@ type scanDataDto struct {
 }
 
 func buildScan(ctx context.Context, vds map[string]*library.VideoData, baseUrl string) (*scanDocDto, error) {
-	scanDoc := scanDocDto{ScanData: make([]scanDataDto, 0, len(vds))}
+	scanDoc := scanDocDto{ScanData: make([]scanDataDto, 0)}
 	for _, vd := range vds {
-		scanData := videoDataToScanDataDto(ctx, vd, baseUrl)
-		scanDoc.ScanData = append(scanDoc.ScanData, scanData)
+		for _, item := range multipart.GetPlaybackItems(vd.SceneId(), vd.SceneParts.Files) {
+			scanData := videoDataToScanDataDto(ctx, vd, baseUrl, item)
+			scanDoc.ScanData = append(scanDoc.ScanData, scanData)
+		}
 	}
 	log.Ctx(ctx).Debug().Int("scenes", len(scanDoc.ScanData)).Msg("/scan")
 	return &scanDoc, nil
 }
 
-func videoDataToScanDataDto(ctx context.Context, vd *library.VideoData, baseUrl string) scanDataDto {
-	id := vd.Id()
+func videoDataToScanDataDto(ctx context.Context, vd *library.VideoData, baseUrl string, item multipart.PlaybackItem) scanDataDto {
 	scanData := scanDataDto{
-		id:        id,
-		Link:      getVideoDataUrl(baseUrl, id),
-		Title:     vd.Title(),
+		id:        item.VideoId,
+		Link:      getVideoDataUrl(baseUrl, item.VideoId),
+		Title:     multipart.FormatTitle(vd.Title(), item.Label),
 		DateAdded: vd.SceneParts.Created_at.Format(time.DateOnly),
-		Duration:  vd.SceneParts.Files[0].Duration,
-		Tags:      getTags(vd),
+		Duration:  item.File.Duration * 1000,
+		Tags:      getTags(vd, item.File),
 	}
 	if vd.SceneParts.Date != nil {
 		scanData.DateReleased = util.Ptr(util.NormalizeDate(*vd.SceneParts.Date))

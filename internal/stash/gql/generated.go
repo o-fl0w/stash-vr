@@ -3164,12 +3164,16 @@ func (v *ScenePartsCaptionsVideoCaption) GetLanguage_code() string { return v.La
 
 // ScenePartsFilesVideoFile includes the requested fields of the GraphQL type VideoFile.
 type ScenePartsFilesVideoFile struct {
+	Id          string  `json:"id"`
 	Basename    string  `json:"basename"`
 	Duration    float64 `json:"duration"`
 	Path        string  `json:"path"`
 	Height      int     `json:"height"`
 	Video_codec string  `json:"video_codec"`
 }
+
+// GetId returns ScenePartsFilesVideoFile.Id, and is useful for accessing the field via an interface.
+func (v *ScenePartsFilesVideoFile) GetId() string { return v.Id }
 
 // GetBasename returns ScenePartsFilesVideoFile.Basename, and is useful for accessing the field via an interface.
 func (v *ScenePartsFilesVideoFile) GetBasename() string { return v.Basename }
@@ -3365,6 +3369,24 @@ func (v *SceneUpdateOrganizedSceneUpdateScene) GetId() string { return v.Id }
 
 // GetOrganized returns SceneUpdateOrganizedSceneUpdateScene.Organized, and is useful for accessing the field via an interface.
 func (v *SceneUpdateOrganizedSceneUpdateScene) GetOrganized() bool { return v.Organized }
+
+// SceneUpdatePrimaryFileResponse is returned by SceneUpdatePrimaryFile on success.
+type SceneUpdatePrimaryFileResponse struct {
+	SceneUpdate *SceneUpdatePrimaryFileSceneUpdateScene `json:"sceneUpdate"`
+}
+
+// GetSceneUpdate returns SceneUpdatePrimaryFileResponse.SceneUpdate, and is useful for accessing the field via an interface.
+func (v *SceneUpdatePrimaryFileResponse) GetSceneUpdate() *SceneUpdatePrimaryFileSceneUpdateScene {
+	return v.SceneUpdate
+}
+
+// SceneUpdatePrimaryFileSceneUpdateScene includes the requested fields of the GraphQL type Scene.
+type SceneUpdatePrimaryFileSceneUpdateScene struct {
+	Id string `json:"id"`
+}
+
+// GetId returns SceneUpdatePrimaryFileSceneUpdateScene.Id, and is useful for accessing the field via an interface.
+func (v *SceneUpdatePrimaryFileSceneUpdateScene) GetId() string { return v.Id }
 
 // SceneUpdateRating100Response is returned by SceneUpdateRating100 on success.
 type SceneUpdateRating100Response struct {
@@ -4218,6 +4240,18 @@ func (v *__SceneUpdateOrganizedInput) GetId() string { return v.Id }
 // GetIsOrganized returns __SceneUpdateOrganizedInput.IsOrganized, and is useful for accessing the field via an interface.
 func (v *__SceneUpdateOrganizedInput) GetIsOrganized() *bool { return v.IsOrganized }
 
+// __SceneUpdatePrimaryFileInput is used internally by genqlient
+type __SceneUpdatePrimaryFileInput struct {
+	Id              string `json:"id"`
+	Primary_file_id string `json:"primary_file_id"`
+}
+
+// GetId returns __SceneUpdatePrimaryFileInput.Id, and is useful for accessing the field via an interface.
+func (v *__SceneUpdatePrimaryFileInput) GetId() string { return v.Id }
+
+// GetPrimary_file_id returns __SceneUpdatePrimaryFileInput.Primary_file_id, and is useful for accessing the field via an interface.
+func (v *__SceneUpdatePrimaryFileInput) GetPrimary_file_id() string { return v.Primary_file_id }
+
 // __SceneUpdateRating100Input is used internally by genqlient
 type __SceneUpdateRating100Input struct {
 	Id     string `json:"id"`
@@ -4618,6 +4652,7 @@ fragment SceneParts on Scene {
 	created_at
 	date
 	files {
+		id
 		basename
 		duration
 		path
@@ -5216,6 +5251,42 @@ func SceneUpdateOrganized(
 	}
 
 	data_ = &SceneUpdateOrganizedResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by SceneUpdatePrimaryFile.
+const SceneUpdatePrimaryFile_Operation = `
+mutation SceneUpdatePrimaryFile ($id: ID!, $primary_file_id: ID!) {
+	sceneUpdate(input: {id:$id,primary_file_id:$primary_file_id}) {
+		id
+	}
+}
+`
+
+func SceneUpdatePrimaryFile(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id string,
+	primary_file_id string,
+) (data_ *SceneUpdatePrimaryFileResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "SceneUpdatePrimaryFile",
+		Query:  SceneUpdatePrimaryFile_Operation,
+		Variables: &__SceneUpdatePrimaryFileInput{
+			Id:              id,
+			Primary_file_id: primary_file_id,
+		},
+	}
+
+	data_ = &SceneUpdatePrimaryFileResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

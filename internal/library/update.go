@@ -243,3 +243,11 @@ func (libraryService *Service) AddPlayDuration(ctx context.Context, id string, d
 	}
 	return nil
 }
+
+func (libraryService *Service) SetPrimaryFile(ctx context.Context, sceneId string, fileId string) error {
+	_, err := gql.SceneUpdatePrimaryFile(ctx, libraryService.StashClient, sceneId, fileId)
+	if err != nil {
+		return fmt.Errorf("SceneUpdatePrimaryFile: %w", err)
+	}
+	return nil
+}

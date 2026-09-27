@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/library"
+	"stash-vr/internal/multipart"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 	"strings"
@@ -35,15 +36,14 @@ func (h *httpHandler) indexHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	go func() {
-		ctx := context.Background()
-		_, err := h.libraryService.GetScenes(ctx)
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("failed to get scenes")
-		}
-	}()
+	vds, err := h.libraryService.GetScenes(ctx)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to get scenes")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	dto, err := buildIndex(sections, baseUrl)
+	dto, err := buildIndex(sections, vds, baseUrl)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to build index")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -90,27 +90,42 @@ func (h *httpHandler) videoDataHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	if vdReq, err := internal.UnmarshalBody[videoDataRequestDto](req); err != nil {
-		log.Ctx(ctx).Warn().Err(err).Msg("Failed to parse request body")
+	sceneId, fileId := multipart.ParseVideoId(videoId)
+
+	vdReq, reqErr := internal.UnmarshalBody[videoDataRequestDto](req)
+	if reqErr != nil {
+		log.Ctx(ctx).Warn().Err(reqErr).Msg("Failed to parse request body")
 	} else {
 		if vdReq.DeleteFile != nil && *vdReq.DeleteFile {
-			if err = h.libraryService.Delete(ctx, videoId); err != nil {
+			if err = h.libraryService.Delete(ctx, sceneId); err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to delete scene")
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 			return
 		}
 
-		go h.processUpdates(videoId, vdReq)
+		go h.processUpdates(sceneId, vdReq)
 	}
 
-	vd, err := h.libraryService.GetScene(ctx, videoId, false)
+	vd, err := h.libraryService.GetScene(ctx, sceneId, false)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to get scene")
+		log.Ctx(ctx).Error().Err(err).Msg("failed to get scene data")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	dto, err := buildVideoData(ctx, vd, baseUrl)
+
+	if reqErr == nil && vdReq.NeedsMediaSource != nil && *vdReq.NeedsMediaSource {
+		if fileId != "" && len(vd.SceneParts.Files) > 0 && vd.SceneParts.Files[0].Id != fileId {
+			log.Ctx(ctx).Info().Str("scene", sceneId).Str("file", fileId).Msg("Switching Primary File for Multi-part Scene")
+			if err := h.libraryService.SetPrimaryFile(ctx, sceneId, fileId); err == nil {
+				vd, _ = h.libraryService.GetScene(ctx, sceneId, true) // Force refetch
+			}
+		}
+	}
+
+	activeItem := multipart.TargetItem(sceneId, vd.SceneParts.Files, fileId)
+
+	dto, err := buildVideoData(ctx, vd, baseUrl, activeItem)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to build video data")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -262,7 +277,9 @@ func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 
 	parts := strings.Split(ev.Id, "/")
 	videoId := parts[len(parts)-1]
-	vd, err := h.libraryService.GetScene(ctx, videoId, false)
+	sceneId, fileId := multipart.ParseVideoId(videoId)
+
+	vd, err := h.libraryService.GetScene(ctx, fileId, false)
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msg("Failed to get scene from event")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -274,10 +291,10 @@ func (h *httpHandler) eventsHandler(w http.ResponseWriter, req *http.Request) {
 	switch ev.Event {
 	case evPlay:
 		if h.ps == nil {
-			h.ps = newPlayback(vd)
-		} else if h.ps.videoId != videoId {
+			h.ps = newPlayback(vd, fileId)
+		} else if h.ps.sceneId != sceneId || h.ps.fileId != fileId {
 			h.ps.handleStop(ctx, h.libraryService, minPlayFraction)
-			h.ps = newPlayback(vd)
+			h.ps = newPlayback(vd, fileId)
 		} else {
 			h.ps.handleResume()
 		}

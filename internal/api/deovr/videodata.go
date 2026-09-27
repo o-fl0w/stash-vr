@@ -2,9 +2,11 @@ package deovr
 
 import (
 	"fmt"
+	"net/url"
 	"stash-vr/internal/api/heatmap"
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/library"
+	"stash-vr/internal/multipart"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 	"strings"
@@ -44,24 +46,23 @@ type videoSourceDto struct {
 	Url        string `json:"url"`
 }
 
-func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error) {
-	videoId := vd.Id()
+func buildVideoData(vd *library.VideoData, baseUrl string, item multipart.PlaybackItem) (*videoDataDto, error) {
 	if len(vd.SceneParts.Files) == 0 {
-		return nil, fmt.Errorf("scene %s has no files", videoId)
+		return nil, fmt.Errorf("scene %s has no files", vd.SceneId())
 	}
 
 	dto := videoDataDto{
 		Authorized:  "1",
 		FullAccess:  true,
-		Title:       vd.Title(),
-		Id:          videoId,
-		VideoLength: int(vd.SceneParts.Files[0].Duration),
+		Title:       multipart.FormatTitle(vd.Title(), item.Label),
+		Id:          multipart.HashVideoId(item.VideoId),
+		VideoLength: int(item.File.Duration),
 		SkipIntro:   0,
 	}
 
 	if vd.SceneParts.Paths.Screenshot != nil {
 		if vd.SceneParts.Interactive && vd.SceneParts.Paths.Interactive_heatmap != nil {
-			dto.ThumbnailUrl = util.Ptr(heatmap.GetCoverUrl(baseUrl, videoId))
+			dto.ThumbnailUrl = util.Ptr(heatmap.GetCoverUrl(baseUrl, vd.SceneId()))
 		} else {
 			dto.ThumbnailUrl = util.Ptr(stash.ApiKeyed(*vd.SceneParts.Paths.Screenshot))
 		}
@@ -71,14 +72,14 @@ func buildVideoData(vd *library.VideoData, baseUrl string) (*videoDataDto, error
 		dto.VideoPreview = util.Ptr(stash.ApiKeyed(*vd.SceneParts.Paths.Preview))
 	}
 
-	setStreamSources(vd, &dto)
+	setStreamSources(vd, &dto, item.FileId, baseUrl, item)
 	setMarkers(vd, &dto)
 	set3DFormat(vd, &dto)
 
 	return &dto, nil
 }
 
-func setStreamSources(vd *library.VideoData, dto *videoDataDto) {
+func setStreamSources(vd *library.VideoData, dto *videoDataDto, fileId string, baseUrl string, item multipart.PlaybackItem) {
 	streams := []stash.Stream{stash.GetTranscodingStream(vd.SceneParts), stash.GetDirectStream(vd.SceneParts)}
 	dto.Encodings = make([]encodingDto, len(streams))
 	for i, stream := range streams {
@@ -87,9 +88,11 @@ func setStreamSources(vd *library.VideoData, dto *videoDataDto) {
 			VideoSources: make([]videoSourceDto, len(stream.Sources)),
 		}
 		for j, source := range stream.Sources {
+			redirectUrl := fmt.Sprintf("%s/deovr/play/%s?url=%s", baseUrl, item.VideoId, url.QueryEscape(source.Url))
+
 			dto.Encodings[i].VideoSources[j] = videoSourceDto{
 				Resolution: source.Resolution,
-				Url:        source.Url,
+				Url:        redirectUrl,
 			}
 		}
 	}

@@ -13,6 +13,6 @@ func (vd VideoData) Title() string {
 	return util.FirstNonEmpty(vd.SceneParts.Title, &vd.SceneParts.Files[0].Basename)
 }
 
-func (vd VideoData) Id() string {
+func (vd VideoData) SceneId() string {
 	return vd.SceneParts.Id
 }

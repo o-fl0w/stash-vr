@@ -3,15 +3,19 @@ package heresphere
 import (
 	"context"
 	"stash-vr/internal/library"
+	"stash-vr/internal/multipart"
 	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
-func newPlayback(vd *library.VideoData) *playbackState {
+func newPlayback(vd *library.VideoData, fileId string) *playbackState {
+	targetItem := multipart.TargetItem(vd.SceneId(), vd.SceneParts.Files, fileId)
+
 	return &playbackState{
-		videoId:       vd.Id(),
-		videoDuration: vd.SceneParts.Files[0].Duration,
+		sceneId:       vd.SceneId(),
+		fileId:        fileId,
+		videoDuration: targetItem.File.Duration,
 		lastPlayTime:  time.Now(),
 		isPlaying:     true,
 	}
@@ -24,13 +28,13 @@ func (ps *playbackState) handleStop(ctx context.Context, libraryService *library
 		if !ps.thresholdReached && minPlayFraction != nil && ps.accumulatedPlayTime.Seconds() >= ps.videoDuration*(*minPlayFraction) {
 			ps.thresholdReached = true
 			log.Ctx(ctx).Debug().Str("total play time", ps.accumulatedPlayTime.Round(time.Second).String()).Msg("Incrementing play count")
-			err := libraryService.IncrementPlayCount(ctx, ps.videoId)
+			err := libraryService.IncrementPlayCount(ctx, ps.sceneId)
 			if err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Failed to increment play count")
 			}
 		}
 		log.Ctx(ctx).Debug().Str("duration", currentPlayDuration.Round(time.Second).String()).Msg("Adding play duration")
-		err := libraryService.AddPlayDuration(ctx, ps.videoId, currentPlayDuration)
+		err := libraryService.AddPlayDuration(ctx, ps.sceneId, currentPlayDuration)
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to add play duration")
 		}
@@ -46,7 +50,8 @@ func (ps *playbackState) handleResume() {
 }
 
 type playbackState struct {
-	videoId       string
+	sceneId       string
+	fileId        string
 	videoDuration float64
 
 	accumulatedPlayTime time.Duration

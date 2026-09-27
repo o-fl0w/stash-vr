@@ -7,6 +7,7 @@ import (
 	"stash-vr/internal/api/internal"
 	"stash-vr/internal/config"
 	"stash-vr/internal/library"
+	"stash-vr/internal/multipart"
 	"stash-vr/internal/stash"
 	"stash-vr/internal/util"
 	"time"
@@ -64,26 +65,25 @@ type subtitleDto struct {
 	Url      string `json:"url,omitempty"`
 }
 
-func buildVideoData(ctx context.Context, vd *library.VideoData, baseUrl string) (*videoDataDto, error) {
-	videoId := vd.Id()
+func buildVideoData(ctx context.Context, vd *library.VideoData, baseUrl string, item multipart.PlaybackItem) (*videoDataDto, error) {
 	if len(vd.SceneParts.Files) == 0 {
-		return nil, fmt.Errorf("scene %s has no files", videoId)
+		return nil, fmt.Errorf("scene %s has no files", vd.SceneId())
 	}
 
 	dto := videoDataDto{
 		Access:        1,
-		Title:         vd.Title(),
+		Title:         multipart.FormatTitle(vd.Title(), item.Label),
 		DateAdded:     vd.SceneParts.Created_at.Format(time.DateOnly),
-		Duration:      vd.SceneParts.Files[0].Duration * 1000,
+		Duration:      item.File.Duration * 1000,
 		WriteFavorite: util.Ptr(true),
 		WriteRating:   util.Ptr(true),
 		WriteTags:     util.Ptr(true),
-		EventServer:   util.Ptr(getEventsUrl(baseUrl, videoId)),
+		EventServer:   util.Ptr(getEventsUrl(baseUrl, item.VideoId)),
 	}
 
 	if vd.SceneParts.Paths.Screenshot != nil {
 		if vd.SceneParts.Interactive && vd.SceneParts.Paths.Interactive_heatmap != nil {
-			dto.ThumbnailImage = util.Ptr(heatmap.GetCoverUrl(baseUrl, videoId))
+			dto.ThumbnailImage = util.Ptr(heatmap.GetCoverUrl(baseUrl, vd.SceneId()))
 		} else {
 			dto.ThumbnailImage = util.Ptr(stash.ApiKeyed(*vd.SceneParts.Paths.Screenshot))
 		}
@@ -113,20 +113,17 @@ func buildVideoData(ctx context.Context, vd *library.VideoData, baseUrl string) 
 		dto.IsFavorite = util.Ptr(true)
 	}
 
-	setMediaSources(vd, &dto)
-
+	setMediaSources(vd, &dto, item.FileId)
 	set3DFormat(vd, &dto)
-
 	setScripts(vd, &dto)
-
 	setSubtitles(vd, &dto)
 
-	dto.Tags = getTags(vd)
+	dto.Tags = getTags(vd, item.File)
 
 	log.Ctx(ctx).Debug().
 		Str("thumbImage", *dto.ThumbnailImage).
 		Str("thumbVideo", *dto.ThumbnailVideo).
-		Str("codec", vd.SceneParts.Files[0].Video_codec).
+		Str("codec", item.File.Video_codec).
 		Interface("media", dto.Media).Send()
 
 	return &dto, nil
@@ -206,16 +203,21 @@ func set3DFormat(vd *library.VideoData, dto *videoDataDto) {
 	}
 }
 
-func setMediaSources(vd *library.VideoData, dto *videoDataDto) {
+func setMediaSources(vd *library.VideoData, dto *videoDataDto, fileId string) {
 	streams := []stash.Stream{stash.GetDirectStream(vd.SceneParts), stash.GetTranscodingStream(vd.SceneParts)}
 	for _, stream := range streams {
 		e := mediaDto{
 			Name: stream.Name,
 		}
 		for _, s := range stream.Sources {
+			uniqueUrl := s.Url
+			if fileId != "" {
+				uniqueUrl = multipart.AppendQueryParam(uniqueUrl, "fileId", fileId)
+			}
+
 			vs := sourceDto{
 				Resolution: s.Resolution,
-				Url:        s.Url,
+				Url:        uniqueUrl,
 			}
 			e.Sources = append(e.Sources, vs)
 		}

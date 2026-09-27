@@ -8,33 +8,35 @@ import (
 )
 
 const (
-	envKeyListenAddress      = "LISTEN_ADDRESS"
-	envKeyStashGraphQLUrl    = "STASH_GRAPHQL_URL"
-	envKeyStashApiKey        = "STASH_API_KEY"
-	envKeyFavoriteTag        = "FAVORITE_TAG"
-	envKeyLogLevel           = "LOG_LEVEL"
-	envKeyDisableLogColor    = "DISABLE_LOG_COLOR"
-	envKeyDisableRedact      = "DISABLE_REDACT"
-	envKeyForceHTTPS         = "FORCE_HTTPS"
-	envKeyHeatmapHeightPx    = "HEATMAP_HEIGHT_PX"
-	envKeyExcludeSortName    = "EXCLUDE_SORT_NAME"
-	envKeyUserConfigPath     = "CONFIG_PATH"
-	envKeyGenerateSummaryIds = "GENERATE_SUMMARY_IDS"
+	envKeyListenAddress        = "LISTEN_ADDRESS"
+	envKeyStashGraphQLUrl      = "STASH_GRAPHQL_URL"
+	envKeyStashApiKey          = "STASH_API_KEY"
+	envKeyFavoriteTag          = "FAVORITE_TAG"
+	envKeyLogLevel             = "LOG_LEVEL"
+	envKeyDisableLogColor      = "DISABLE_LOG_COLOR"
+	envKeyDisableRedact        = "DISABLE_REDACT"
+	envKeyEnablePartsExpansion = "ENABLE_PARTS_EXPANSION"
+	envKeyForceHTTPS           = "FORCE_HTTPS"
+	envKeyHeatmapHeightPx      = "HEATMAP_HEIGHT_PX"
+	envKeyExcludeSortName      = "EXCLUDE_SORT_NAME"
+	envKeyUserConfigPath       = "CONFIG_PATH"
+	envKeyGenerateSummaryIds   = "GENERATE_SUMMARY_IDS"
 )
 
 type ApplicationConfig struct {
-	ListenAddress      string
-	StashGraphQLUrl    string
-	StashApiKey        string
-	FavoriteTag        string
-	LogLevel           string
-	DisableLogColor    bool
-	IsRedactDisabled   bool
-	ForceHTTPS         bool
-	HeatmapHeightPx    int
-	ExcludeSortName    string
-	ConfigPath         string
-	GenerateSummaryIds bool
+	ListenAddress        string
+	StashGraphQLUrl      string
+	StashApiKey          string
+	FavoriteTag          string
+	LogLevel             string
+	DisableLogColor      bool
+	IsRedactDisabled     bool
+	EnablePartsExpansion bool
+	ForceHTTPS           bool
+	HeatmapHeightPx      int
+	ExcludeSortName      string
+	ConfigPath           string
+	GenerateSummaryIds   bool
 }
 
 var applicationConfig ApplicationConfig
@@ -60,6 +62,9 @@ func Init() {
 
 	pflag.Bool(envKeyDisableRedact, false, "Disable redacting sensitive information from logs")
 	_ = viper.BindPFlag(envKeyDisableRedact, pflag.Lookup(envKeyDisableRedact))
+
+	pflag.Bool(envKeyEnablePartsExpansion, false, "Enable expanding multi-part scenes into separate items")
+	_ = viper.BindPFlag(envKeyEnablePartsExpansion, pflag.Lookup(envKeyEnablePartsExpansion))
 
 	pflag.Bool(envKeyForceHTTPS, false, "Force Stash-VR to use HTTPS")
 	_ = viper.BindPFlag(envKeyForceHTTPS, pflag.Lookup(envKeyForceHTTPS))
@@ -95,12 +100,12 @@ func Init() {
 	applicationConfig.LogLevel = strings.ToLower(viper.GetString(envKeyLogLevel))
 	applicationConfig.DisableLogColor = viper.GetBool(envKeyDisableLogColor)
 	applicationConfig.IsRedactDisabled = viper.GetBool(envKeyDisableRedact)
+	applicationConfig.EnablePartsExpansion = viper.GetBool(envKeyEnablePartsExpansion)
 	applicationConfig.ForceHTTPS = viper.GetBool(envKeyForceHTTPS)
 	applicationConfig.HeatmapHeightPx = viper.GetInt(envKeyHeatmapHeightPx)
 	applicationConfig.ExcludeSortName = viper.GetString(envKeyExcludeSortName)
 	applicationConfig.ConfigPath = viper.GetString(envKeyUserConfigPath)
 	applicationConfig.GenerateSummaryIds = viper.GetBool(envKeyGenerateSummaryIds)
-
 }
 
 func Application() ApplicationConfig {

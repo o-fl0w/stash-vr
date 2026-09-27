@@ -120,7 +120,7 @@ fragment SavedFilterParts on SavedFilter{
 
 fragment SceneParts on Scene{
     id, title, rating100, created_at, date
-    files{basename, duration, path, height, video_codec}
+    files{id, basename, duration, path, height, video_codec}
     studio{
         name
     },

@@ -12,6 +12,7 @@ func Router(libraryService *library.Service) http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/", internal.LogRoute("index", httpHandler.indexHandler))
+	r.Get("/play/{videoId}", internal.LogRoute("play", internal.LogVideoId(httpHandler.playHandler)))
 	r.Get("/{videoId}", internal.LogRoute("videoData", internal.LogVideoId(httpHandler.videoDataHandler)))
 	return r
 }

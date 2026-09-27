@@ -2,6 +2,7 @@ package heresphere
 
 import (
 	"stash-vr/internal/library"
+	"stash-vr/internal/multipart"
 )
 
 type indexDto struct {
@@ -14,18 +15,23 @@ type libraryDto struct {
 	List []string `json:"list"`
 }
 
-func buildIndex(sections []library.Section, baseUrl string) (indexDto, error) {
+func buildIndex(sections []library.Section, vds map[string]*library.VideoData, baseUrl string) (indexDto, error) {
 	index := indexDto{Access: 1, Library: make([]libraryDto, 0, len(sections))}
 
 	for _, section := range sections {
 		l := libraryDto{
 			Name: section.Name,
-			List: make([]string, len(section.Ids)),
+			List: make([]string, 0),
+		}
+
+		for _, sceneId := range section.Ids {
+			if vd, ok := vds[sceneId]; ok {
+				for _, item := range multipart.GetPlaybackItems(sceneId, vd.SceneParts.Files) {
+					l.List = append(l.List, getVideoDataUrl(baseUrl, item.VideoId))
+				}
+			}
 		}
 		index.Library = append(index.Library, l)
-		for i, sceneId := range section.Ids {
-			l.List[i] = getVideoDataUrl(baseUrl, sceneId)
-		}
 	}
 
 	return index, nil
