@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/rs/zerolog/log"
+	"runtime/debug"
 	"slices"
 	"stash-vr/internal/config"
 	"stash-vr/internal/stash"
@@ -91,6 +92,12 @@ func (libraryService *Service) getSectionsByFilters(ctx context.Context, filters
 		go func(i int, f gql.SavedFilterParts) {
 			defer wg.Done()
 			flog := log.Ctx(ctx).With().Str("filterId", f.Id).Str("name", f.Name).Logger()
+			defer func() {
+				if r := recover(); r != nil {
+					sections[i] = Section{}
+					flog.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Interface("savedFilter", f).Msg("Failed to build section, skipping")
+				}
+			}()
 
 			sceneFilter, err := filter.SavedFilterToSceneFilter(ctx, f)
 			if err != nil {
